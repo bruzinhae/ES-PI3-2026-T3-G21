@@ -14,8 +14,8 @@ Todas as operações realizadas na plataforma possuem caráter **exclusivamente 
 
 - Alinne Monteiro de Melo – 24801649
 - Bruna Barbour Fernandes – 23007950
-- Gabriel Padreca Nicoletti – 
-- Mateus Souza Marinho – 
+- Gabriel Padreca Nicoletti – 20013009
+- Mateus Souza Marinho – 24005497
 
 ---
 
