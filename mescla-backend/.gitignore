@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# TypeScript compiled output
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+
+# Firebase
+serviceAccount.json
+firebase-debug.log
+firestore-debug.log
+storage-debug.log
+.firebase/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Coverage
+coverage/
+
+#Json files
+.json
