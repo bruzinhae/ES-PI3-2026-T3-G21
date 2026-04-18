@@ -1,4 +1,6 @@
-import { FieldValue } from "firebase-admin/firestore";
+import { 
+  FieldValue
+} from "firebase-admin/firestore";
 
 import {
   StartupDocument,
@@ -9,9 +11,10 @@ import {
 
 import { db } from "../../shared/firebase";
 
-const startupsCollection = db.collection("startups");
+export const startupsCollection = db.collection("startups");
 
-const demoStartups: Array<StartupDocument & { id: string }> = [
+export const demoStartups: Array<StartupDocument & { id: string }> = [
+  
   {
     id: "biochip-campus",
     name: "BioChip Campus",
@@ -60,6 +63,8 @@ const demoStartups: Array<StartupDocument & { id: string }> = [
       "https://images.unsplash.com/photo-1581093458791-9d15482442f6",
     tags: ["healthtech", "iot", "educacao"],
   },
+
+
   {
     id: "rota-verde",
     name: "Rota Verde",
@@ -99,6 +104,8 @@ const demoStartups: Array<StartupDocument & { id: string }> = [
       "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
     tags: ["logtech", "sustentabilidade", "mobilidade"],
   },
+
+
   {
     id: "mentorai",
     name: "MentorAI",

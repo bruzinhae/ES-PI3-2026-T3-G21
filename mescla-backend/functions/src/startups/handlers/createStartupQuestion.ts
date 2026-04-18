@@ -17,6 +17,7 @@ import {
 import { QuestionVisibility, StartupQuestionDocument } from "../types/startupTypes";
 
 export const createStartupQuestion = onCall(async (request) => {
+  
   const user = requireAuthenticatedUser(request);
   const startupId = normalizeString(request.data?.startupId);
   const text = normalizeString(request.data?.text);

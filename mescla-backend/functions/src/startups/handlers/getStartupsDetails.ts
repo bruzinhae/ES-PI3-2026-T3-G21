@@ -9,6 +9,7 @@ import {
 } from "../repositories/startupsRepository";
 
 export const getStartupDetails = onCall(async (request) => {
+  
   const user = requireAuthenticatedUser(request);
   const startupId = normalizeString(request.data?.id);
 
