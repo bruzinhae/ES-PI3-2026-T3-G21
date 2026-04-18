@@ -172,6 +172,7 @@ export async function listStartupItems(): Promise<StartupListItem[]> {
 export async function getStartupById(
   startupId: string
 ): Promise<StartupDocument | undefined> {
+  
   const startupSnapshot = await startupsCollection.doc(startupId).get();
 
   if (!startupSnapshot.exists) {

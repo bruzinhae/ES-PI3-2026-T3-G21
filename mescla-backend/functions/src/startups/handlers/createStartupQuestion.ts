@@ -14,7 +14,10 @@ import {
   userIsInvestor,
 } from "../repositories/startupsRepository";
 
-import { QuestionVisibility, StartupQuestionDocument } from "../types/startupTypes";
+import { 
+  QuestionVisibility, 
+  StartupQuestionDocument 
+} from "../types/startupTypes";
 
 export const createStartupQuestion = onCall(async (request) => {
   

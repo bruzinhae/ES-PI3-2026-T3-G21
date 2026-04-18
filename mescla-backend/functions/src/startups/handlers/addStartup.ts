@@ -11,15 +11,59 @@ import {
     startupsCollection
 } from '../repositories/startupsRepository';
 
+import {
+    StartupDocument
+} from "../types/startupTypes";
 
-export const addStartup = onCall(async(request)=>{
+import { 
+    requireAuthenticatedUser //! descomentar quando acabar os testes
+} from "../../shared/auth";
+
+import { 
+    getUserByUid
+} from "../../users/repositories/usersRepository";
+
+import { Timestamp } from "firebase-admin/firestore";
+
+export const addStartupExample = onCall(async(request)=>{
     try{
         const newStartup = demoStartups[0];
-        await startupsCollection.add(newStartup);
+        await startupsCollection.add(newStartup); //! .add é usado quando eu  não tenho um ID específico para o doc.
         return {message: "Startup adicionada com sucesso!"};
     }
     catch(error){
         console.error("Error adding startup: ", error);
+        throw new HttpsError("internal", "Erro ao adicionar startup.");
+    }
+})
+
+
+export const addStartup  = onCall(async(request)=> {
+    try{
+        requireAuthenticatedUser(request);
+        
+        const uid = request.auth!.uid;
+
+        const user = await getUserByUid(uid);
+
+        if(!user || !user.isAdmin){
+            throw new HttpsError("permission-denied", "Apenas administradores podem adicionar startups.");
+        }
+
+        const startupData = request.data as StartupDocument;
+
+        const newStartup: StartupDocument = {
+            ...startupData,
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+        };
+
+        await startupsCollection.add(newStartup); //? talvez mudar para set depois para adcionar um ID especifico.
+        return {message: "Startup adicionada com sucesso!"};
+
+        }
+    catch(e){
+        console.error("Error adding startup: ", e);
         throw new HttpsError("internal", "Erro ao adicionar startup.");
     }
 })

@@ -9,7 +9,7 @@ export type AuthenticatedUser = {
   email?: string;
 };
 
-export type Founder = {
+export type Founder = { //? Talvez seja interessante ter o email do fundador para contato, mas isso pode ser adicionado depois
   name: string;
   role: string;
   equityPercent: number;
