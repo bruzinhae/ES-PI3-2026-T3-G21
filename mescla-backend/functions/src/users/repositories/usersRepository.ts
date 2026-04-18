@@ -6,11 +6,13 @@ import {
   db
 } from "../../shared/firebase";
 
-import { Timestamp } from 'firebase-admin/firestore';
+import { 
+  Timestamp
+} from 'firebase-admin/firestore';
 
-const usersCollection = db.collection("users");
+export const usersCollection = db.collection("users");
 
-const demoUsers: UserDocument[] = [
+export const demoUsers: UserDocument[] = [
   {
     uid: "1",
     name: "Alice",
@@ -24,10 +26,37 @@ const demoUsers: UserDocument[] = [
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
   },
+  {
+    uid: "2",
+    name: "Bob",
+    email: "bob@gmail.com",
+    emailLowerCase: "bob@gmail.com",
+    cpf: "987.654.321-00",
+    telefone: "(11) 88888-8888",
+    balanceCents: 15000,
+    mfaEnabled: true,
+    isAdmin: false,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  },
+  {
+    uid: "3",
+    name: "Charlie",
+    email: "charlie@gmail.com",
+    emailLowerCase: "charlie@gmail.com",
+    cpf: "456.789.123-00",
+    telefone: "(11) 77777-7777",
+    balanceCents: 20000,
+    mfaEnabled: false,
+    isAdmin: false,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+
+  },
 ];
 
 export async function getUserByUid(uid: string): Promise<UserDocument | undefined> {
-
+  try{
   const userRef = await usersCollection.doc(uid).get();
 
   if (!userRef.exists) {
@@ -35,4 +64,10 @@ export async function getUserByUid(uid: string): Promise<UserDocument | undefine
   }
 
   return userRef.data() as UserDocument;
+  }
+  catch(error){
+  console.error("Error fetching user by UID: ", error);
+  throw new Error("Erro ao buscar usuário por UID."); 
+}
+
 }
