@@ -1,2 +1,1 @@
-export {getUserByUid} from "./repositories/usersRepository";
-
+export {createUser} from "./handlers/createUser";
