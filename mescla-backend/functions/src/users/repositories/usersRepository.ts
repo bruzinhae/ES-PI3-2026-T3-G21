@@ -9,6 +9,7 @@ import {
 import { 
   Timestamp
 } from 'firebase-admin/firestore';
+import { https } from 'firebase-functions';
 
 export const usersCollection = db.collection("users");
 
@@ -55,16 +56,18 @@ export const demoUsers: UserDocument[] = [
   },
 ];
 
-export async function getUserByUid(uid: string): Promise<UserDocument | undefined> {
+export async function getUserByUid(uid: string): Promise<UserDocument> {
   try{
   const userRef = await usersCollection.doc(uid).get();
 
   if (!userRef.exists) {
-    return undefined;
+    console.error("User não encontrado");
+    throw new https.HttpsError("not-found", "Usuário não encontrado!");
   }
 
-  return userRef.data() as UserDocument;
+    return userRef.data() as UserDocument;
   }
+  
   catch(error){
   console.error("Error fetching user by UID: ", error);
   throw new Error("Erro ao buscar usuário por UID."); 
