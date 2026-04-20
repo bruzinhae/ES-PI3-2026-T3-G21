@@ -25,5 +25,5 @@ export const getMe = onCall(async (request) => {
     }
         console.error("Erro ao obter usuário:", error);
         throw new HttpsError("internal", "Erro ao obter usuário.");
-    }
+    }   
 });

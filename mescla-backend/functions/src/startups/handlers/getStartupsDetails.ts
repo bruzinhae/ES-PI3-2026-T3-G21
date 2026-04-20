@@ -13,7 +13,7 @@ export const getStartupDetails = onCall(async (request) => {
   const user = requireAuthenticatedUser(request);
   const startupId = normalizeString(request.data?.id);
 
-  if (!startupId) {
+  if(!startupId) {
     throw new HttpsError(
       "invalid-argument",
       "Informe o parametro id da startup."
