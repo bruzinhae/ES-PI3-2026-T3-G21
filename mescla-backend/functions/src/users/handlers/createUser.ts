@@ -1,96 +1,85 @@
 import {
-    usersCollection,
-    demoUsers,
-} from '../repositories/usersRepository';
-
-import { 
-    UserDocument 
-} from '../types/usersTypes';
-
-import { 
-    HttpsError, 
-    onCall 
-} from 'firebase-functions/v2/https';
+  usersCollection,
+  sendVerificationEmail,
+  verifyEmailExists,
+} from "../repositories/usersRepository";
 
 import {
-    auth,
-}from "../../shared/firebase";
+  HttpsError,
+  onCall,
+} from "firebase-functions/v2/https";
 
-import { Timestamp } from 'firebase-admin/firestore';
-
-
-export const createUserTest = onCall(async (request) => {
-  try {
-    const newUser: UserDocument = demoUsers[0];
-
-    // creates in Firebase Auth first!
-    const userRecord = await auth.createUser({
-      email:       newUser.email,
-      password:    "senha123",
-      displayName: newUser.name,
-    });
-
-    // saves in Firestore with Auth uid
-    await usersCollection.doc(userRecord.uid).set({
-      ...newUser,
-      uid:       userRecord.uid,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    });
-
-    // returns only safe data!
-    return {
-      message: "Usuario de teste criado com sucesso!",
-      uid:     userRecord.uid,
-      name:    newUser.name,
-      email:   newUser.email,
-    };
-
-  } catch (error) {
-    console.error("Error creating test user:", error);
-    throw new HttpsError('internal', 'Erro ao criar usuario de teste.');
-  }
-});
-
+import { auth } from "../../shared/firebase";
+import { Timestamp } from "firebase-admin/firestore";
 
 export const createUser = onCall(async (request) => {
-    try{
+  try {
+    const { name, email, password, cpf, telefone } = request.data;
 
-        const { name, email, password, cpf, telefone } = request.data;        
-
-        if (!name || !email || !password || !cpf || !telefone) {
-        throw new HttpsError(
+    if (!name || !email || !password || !cpf || !telefone) {
+      throw new HttpsError(
         "invalid-argument",
         "Campos obrigatórios: name, email, password, cpf, telefone."
-        );
-    }   
-        const userRecord = await auth.createUser({
+      );
+    }
+
+    const emailExists = await verifyEmailExists(email);
+
+    if (emailExists) {
+      throw new HttpsError("already-exists", "Email já cadastrado!");
+    }
+
+    let userRecord;
+    try {
+      userRecord = await auth.createUser({
         email,
         password,
         displayName: name,
+      });
+    } catch (error: any) {
+      if (error?.code === "auth/email-already-exists") {
+        throw new HttpsError("already-exists", "Email já cadastrado no Auth.");
+      }
+      throw error;
+    }
+
+    await usersCollection.doc(userRecord.uid).set({
+      ...request.data,
+      uid: userRecord.uid,
+      emailLowerCase: email.toLowerCase(),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+      mfaEnabled: false,
+      isAdmin: false,
+      startups: {},
+      balanceCents: 0,
     });
 
-        await usersCollection.doc(userRecord.uid).set({
-        ...request.data,
-        uid: userRecord.uid,
-        emailLowerCase: email.toLowerCase(),
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        mfaEnabled: false,
-        isAdmin: false,
-        balanceCents: 0,
-        });
+    try {
+      await sendVerificationEmail(email);
+    } catch (emailError) {
+      await auth.deleteUser(userRecord.uid);
+      await usersCollection.doc(userRecord.uid).delete();
 
+      throw new HttpsError(
+        "internal",
+        "Erro ao enviar e-mail de verificação. Tente novamente."
+      );
+    }
 
-        return {
-            message: "Usuario criado com sucesso",
-            uid:     userRecord.uid,
-            name: userRecord.displayName,
-            email: userRecord.email,
-        };
+    return {
+      message: "Usuario criado com sucesso",
+      uid: userRecord.uid,
+      name: userRecord.displayName,
+      email: userRecord.email,
+    };
+  } catch (error) {
+    console.error("Error creating user:", error);
+
+    if (error instanceof HttpsError) {
+      throw error;
     }
-    catch (error) {
-        console.error("Error creating user:", error);
-        throw new HttpsError('internal', 'Erro ao criar usuario');
-    }
-})
+
+    throw new HttpsError("internal", "Erro ao criar usuario");
+  }
+});

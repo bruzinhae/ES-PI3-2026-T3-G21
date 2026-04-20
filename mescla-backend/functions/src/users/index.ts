@@ -1,1 +1,2 @@
-export {createUser} from "./handlers/createUser";
+export { createUser } from "./handlers/createUser";
+export{ getMe }from "./handlers/login";

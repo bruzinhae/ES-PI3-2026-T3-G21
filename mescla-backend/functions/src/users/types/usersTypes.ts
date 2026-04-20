@@ -12,6 +12,7 @@ export interface UserDocument {
     balanceCents:   number;    
     mfaEnabled:     boolean;   
     isAdmin:        boolean;   
+    startups:       Map<string, string>; // startups que o usuario investe hoje
     createdAt:      Timestamp;
     updatedAt:      Timestamp;
 }
