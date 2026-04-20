@@ -42,6 +42,7 @@ export const addStartup  = onCall(async(request)=> {
     try{
         requireAuthenticatedUser(request);
         
+        
         const uid = request.auth!.uid;
 
         const user = await getUserByUid(uid);

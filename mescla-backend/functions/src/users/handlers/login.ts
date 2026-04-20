@@ -17,7 +17,7 @@ export const getMe = onCall(async (request) => {
         const uid = request.auth.uid;
         const userDoc = await getUserByUid(uid);
 
-        return { user: userDoc};
+        return {user: userDoc};
     }
     catch (error) {
         if (error instanceof HttpsError) {

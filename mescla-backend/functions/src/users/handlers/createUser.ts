@@ -51,7 +51,6 @@ export const createUser = onCall(async (request) => {
       updatedAt: Timestamp.now(),
       mfaEnabled: false,
       isAdmin: false,
-      startups: {},
       balanceCents: 0,
     });
 

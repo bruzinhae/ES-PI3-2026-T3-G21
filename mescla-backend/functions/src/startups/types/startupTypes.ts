@@ -32,6 +32,7 @@ export type StartupDocument = {
   totalTokensIssued: number;
   currentTokenPriceCents: number;
   founders: Founder[];
+  emailContact?: string;
   externalMembers: ExternalMember[];
   demoVideos: string[];
   pitchDeckUrl?: string;

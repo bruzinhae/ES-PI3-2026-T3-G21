@@ -147,17 +147,17 @@ export const demoStartups: Array<StartupDocument & { id: string }> = [
   },
 ];
 
-function toListItem(id: string, startup: StartupDocument): StartupListItem {
+function toListItem(id: string, startup: Partial<StartupDocument>): StartupListItem {
   return {
     id,
-    name: startup.name,
-    stage: startup.stage,
-    shortDescription: startup.shortDescription,
-    capitalRaisedCents: startup.capitalRaisedCents,
-    totalTokensIssued: startup.totalTokensIssued,
-    currentTokenPriceCents: startup.currentTokenPriceCents,
+    name: startup.name ?? "",
+    stage: startup.stage ?? "nova",
+    shortDescription: startup.shortDescription ?? "",
+    capitalRaisedCents: startup.capitalRaisedCents ?? 0,
+    totalTokensIssued: startup.totalTokensIssued ?? 0,
+    currentTokenPriceCents: startup.currentTokenPriceCents ?? 0,
     coverImageUrl: startup.coverImageUrl,
-    tags: startup.tags,
+    tags: Array.isArray(startup.tags) ? startup.tags : [],
   };
 }
 
@@ -186,11 +186,7 @@ export async function userIsInvestor(
   startupId: string,
   uid: string
 ): Promise<boolean> {
-  const investorSnapshot = await startupsCollection
-    .doc(startupId)
-    .collection("investors")
-    .doc(uid)
-    .get();
+  const investorSnapshot = await startupsCollection.doc(startupId).collection("investors").doc(uid).get();
 
   return investorSnapshot.exists;
 }
