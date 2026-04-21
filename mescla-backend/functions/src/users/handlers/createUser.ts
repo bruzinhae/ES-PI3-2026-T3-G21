@@ -31,11 +31,11 @@ export const createUser = onCall(async (request) => {
         password,
         displayName: name,
       });
-    } catch (emailExists: any) {
-      if (emailExists?.code === "auth/email-already-exists") {
+    } catch (emailAlreadyExists: any) {
+      if (emailAlreadyExists?.code === "auth/email-already-exists") {
         throw new HttpsError("already-exists", "Email já cadastrado.");
       }
-      throw emailExists;
+      throw emailAlreadyExists;
     }
 
     await usersCollection.doc(userRecord.uid).set({
