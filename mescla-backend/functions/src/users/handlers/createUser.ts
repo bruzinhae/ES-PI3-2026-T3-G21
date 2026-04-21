@@ -1,7 +1,5 @@
 import {
   usersCollection,
-  sendVerificationEmail,
-  verifyEmailExists,
 } from "../repositories/usersRepository";
 
 import {
@@ -10,7 +8,10 @@ import {
 } from "firebase-functions/v2/https";
 
 import { auth } from "../../shared/firebase";
+
 import { Timestamp } from "firebase-admin/firestore";
+
+import { sendVerificationEmail } from "../shared/sendVerificationEmail";
 
 export const createUser = onCall(async (request) => {
   try {
@@ -23,12 +24,6 @@ export const createUser = onCall(async (request) => {
       );
     }
 
-    const emailExists = await verifyEmailExists(email);
-
-    if (emailExists) {
-      throw new HttpsError("already-exists", "Email já cadastrado!");
-    }
-
     let userRecord;
     try {
       userRecord = await auth.createUser({
@@ -36,11 +31,11 @@ export const createUser = onCall(async (request) => {
         password,
         displayName: name,
       });
-    } catch (error: any) {
-      if (error?.code === "auth/email-already-exists") {
-        throw new HttpsError("already-exists", "Email já cadastrado no Auth.");
+    } catch (emailExists: any) {
+      if (emailExists?.code === "auth/email-already-exists") {
+        throw new HttpsError("already-exists", "Email já cadastrado.");
       }
-      throw error;
+      throw emailExists;
     }
 
     await usersCollection.doc(userRecord.uid).set({
