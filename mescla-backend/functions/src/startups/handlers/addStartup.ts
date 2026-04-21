@@ -7,7 +7,6 @@ import {
 } from "firebase-functions/https";
 
 import {
-    demoStartups,
     startupsCollection
 } from '../repositories/startupsRepository';
 
@@ -25,21 +24,9 @@ import {
 
 import { Timestamp } from "firebase-admin/firestore";
 
-export const addStartupExample = onCall(async(request)=>{
-    try{
-        const newStartup = demoStartups[0];
-        await startupsCollection.add(newStartup); //! .add é usado quando eu  não tenho um ID específico para o doc.
-        return {message: "Startup adicionada com sucesso!"};
-    }
-    catch(error){
-        console.error("Error adding startup: ", error);
-        throw new HttpsError("internal", "Erro ao adicionar startup.");
-    }
-})
-
-
 export const addStartup  = onCall(async(request)=> {
     try{
+        
         requireAuthenticatedUser(request);
         
         
