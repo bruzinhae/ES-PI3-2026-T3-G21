@@ -5,9 +5,14 @@ import {
 
 import { 
   db,
+  auth
 } from "../../shared/firebase";
 
+import {validateEmail} from "../shared/validation";
+
 import { HttpsError } from 'firebase-functions/https';
+import { sendVerificationEmail } from '../shared/sendVerificationEmail';
+
 
 export const usersCollection = db.collection("users");
 
@@ -31,20 +36,6 @@ export async function getUserByUid(uid: string): Promise<UserDocument> {
 
 }
 
-//verifica se o email já existe no banco de dados. 
-
-export async function verifyEmailExists(email: string): Promise<boolean> {
-  try{
-      const emailLowerCase = email.toLowerCase();
-      const emailExists = await usersCollection.where("emailLowerCase", "==", emailLowerCase).limit(1).get();
-
-      return !emailExists.empty;
-    }
-    catch(error){
-    console.error("Error verifying email existence: ", error);
-    throw new Error("Erro ao verificar existência de email.");
-  }
-}
 
 function tolistUsers(id: string, startup: Partial<UserDocument>): UserListItem {
   return {
@@ -64,3 +55,44 @@ export async function listUsersItens() : Promise<UserListItem[]> {
   return users.docs.map((doc : any) => tolistUsers(doc.id, doc.data() as UserDocument));
 
 } 
+
+
+export async function updateField(uid :string, data:Partial<UserDocument>){
+  
+  //! FUNÇÃO QUE VAI ATUALIZAR QUALQUER CAMPO DO USUARIO(EXCETO O BALANCE)
+  //! 1 - SE FOR EMAIL, VERIFICAR EMAIL NOVAMENTE, E SO AUTORIZAR A ATUALIZAÇÃO SE O USUARIO A VERIFICAÇÃO
+  //! 2 - CRIAR UM DOMINIO PARA CADA CAMPO QUE FOR ATUALIZAR PARA UTILIZAR ESSA FUNÇÃO 
+} 
+
+export async function updateEmail(uid : string, newEmail: string){
+  
+  if(!validateEmail(newEmail)) {
+    throw new HttpsError("invalid-argument", "Email inválido!");
+  }
+
+  const user = usersCollection.doc(uid);
+  const userSnap = await user.get();
+  
+  if(!userSnap.exists){
+    throw new HttpsError("invalid-argument", "Usuario não encontrado");
+  }
+  
+  await auth.updateUser(uid, {
+    email : newEmail,
+  })
+
+  await user.update({
+    email : newEmail,
+    emailLowerCase : newEmail.toLowerCase()
+
+  })
+  
+  await sendVerificationEmail(newEmail); //fazer a mesma verificação da criação de usuário
+
+  return {
+    message : "Email alterado com sucesso"
+  }
+}
+
+
+//criar autenticação de admin ou aqui ou n front 
