@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'register_screen.dart';
 
 void main() {
   runApp(const MesclaInvestApp());
@@ -290,26 +291,38 @@ class _LoginScreenState extends State<LoginScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 28),
                 child: Column(
                   children: [
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: const TextSpan(
+                  
+                    const SizedBox(height: 40),
+                    Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Não tem uma conta ainda? ',
                         style: TextStyle(
                           fontSize: 16,
                           color: Color(0xFF2F354A),
                         ),
-                        children: [
-                          TextSpan(text: 'Não tem uma conta ainda? '),
-                          TextSpan(
-                            text: 'Cadastre-se',
-                            style: TextStyle(
-                              color: Color(0xFF133BCE),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
                       ),
-                    ),
-                    const SizedBox(height: 40),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const CadastroScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          'Cadastre-se',
+                          style: TextStyle(
+                            color: Color(0xFF133BCE),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   ],
                 ),
               ),
