@@ -21,7 +21,7 @@ export async function sendVerificationEmail(email: string): Promise<void> {
                     color: white;
                     padding: 14px 20px;
                     text-decoration: none;
-                    border-radius: 4px;">
+                    border-radius: 4px;">+
             Verificar E-mail
           </a>
           <p>Se você não criou uma conta, ignore este e-mail.</p>

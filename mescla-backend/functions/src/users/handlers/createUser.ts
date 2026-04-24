@@ -13,6 +13,8 @@ import { Timestamp } from "firebase-admin/firestore";
 
 import { sendVerificationEmail } from "../shared/sendVerificationEmail";
 
+import { validateEmail, validatePhone } from "../shared/validation";
+
 export const createUser = onCall(async (request) => {
   try {
     const { name, email, password, cpf, telefone } = request.data;
@@ -23,6 +25,13 @@ export const createUser = onCall(async (request) => {
         "Campos obrigatórios: name, email, password, cpf, telefone."
       );
     }
+
+    if(!validateEmail(email)) {
+      throw new HttpsError("invalid-argument", "Email inválido!");
+    }
+    if(!validatePhone(telefone)) {
+      throw new HttpsError("invalid-argument", "Telefone inválido! Deve conter apenas números e ter 10 ou 11 dígitos.");
+    } 
 
     let userRecord;
     try {
@@ -39,9 +48,12 @@ export const createUser = onCall(async (request) => {
     }
 
     await usersCollection.doc(userRecord.uid).set({
-      ...request.data,
       uid: userRecord.uid,
+      name: name,
+      email: email,
       emailLowerCase: email.toLowerCase(),
+      cpf: cpf,
+      phone: telefone,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
       mfaEnabled: false,
