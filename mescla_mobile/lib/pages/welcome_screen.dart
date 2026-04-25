@@ -81,9 +81,11 @@ class SplashScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(40),
                         gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                           colors: [
-                            Color(0xFF1D44D5),
-                            Color(0xFF7B3FCB),
+                            Color(0xFFFFFFFF), // branco
+                            Color(0xFFEDEBFF), // branco levemente lilás
                           ],
                         ),
                       ),
@@ -92,7 +94,7 @@ class SplashScreen extends StatelessWidget {
                         child: const Text(
                           'Entrar',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Color(0xFF1D44D5),
                             fontSize: 22,
                             fontWeight: FontWeight.w600,
                           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'register_screen.dart';
+import 'recuperarSenha.dart';
 
 void main() {
   runApp(const MesclaInvestApp());
@@ -217,7 +218,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const RecuperarSenhaScreen(),
+                              ),
+                            );
+                          },
                           child: const Text(
                             'Esqueceu a senha?',
                             style: TextStyle(
