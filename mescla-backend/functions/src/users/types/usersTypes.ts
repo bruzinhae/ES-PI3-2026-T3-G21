@@ -16,6 +16,18 @@ export interface UserDocument {
     updatedAt:      Timestamp;
 }
 
+
+
+export interface UserListItem {
+    uid: string;
+    name: string;
+    email: string;
+    cpf: string;
+    telefone: string;
+    mfaEnabled: boolean;
+    isAdmin: boolean;
+}
+
 export type AuthenticatedUser = {
     uid: string;
     email?: string;

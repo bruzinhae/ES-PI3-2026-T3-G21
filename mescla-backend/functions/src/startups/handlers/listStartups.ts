@@ -2,7 +2,7 @@ import { HttpsError, onCall } from "firebase-functions/https";
 
 import { allowedStages } from "../shared/constants";
 
-//import { requireAuthenticatedUser } from "../../shared/auth";
+import { requireAuthenticatedUser } from "../../shared/auth";
 
 import { normalizeString } from "../shared/validation";
 
@@ -11,7 +11,7 @@ import { listStartupItems } from "../repositories/startupsRepository";
 import { StartupStage } from "../types/startupTypes";
 
 export const listStartups = onCall(async (request) => {
-  //requireAuthenticatedUser(request);
+  requireAuthenticatedUser(request);
 
   const stage = normalizeString(request.data?.stage);
   const search = normalizeString(request.data?.search)?.toLocaleLowerCase(
