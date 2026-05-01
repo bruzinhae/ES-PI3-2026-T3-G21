@@ -29,9 +29,7 @@ export const addStartup  = onCall(async(request)=> {
         
         requireAuthenticatedUser(request);
         
-        
         const uid = request.auth!.uid;
-
         const user = await getUserByUid(uid);
 
         if(!user || !user.isAdmin){
@@ -48,8 +46,7 @@ export const addStartup  = onCall(async(request)=> {
 
         await startupsCollection.add(newStartup); //? talvez mudar para set depois para adcionar um ID especifico.
         return {message: "Startup adicionada com sucesso!"};
-
-        }
+    }
     catch(e){
         console.error("Error adding startup: ", e);
         throw new HttpsError("internal", "Erro ao adicionar startup.");

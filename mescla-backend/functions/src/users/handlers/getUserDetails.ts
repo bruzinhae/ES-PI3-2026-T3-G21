@@ -1,8 +1,12 @@
+import { requireAuthenticatedUser } from "../../shared/auth";
 import { getUserByUid } from "../repositories/usersRepository";
 import {HttpsError, onCall} from "firebase-functions/https";
 
 export const getUserDetails = onCall (async(request) => {
     try{
+        
+        requireAuthenticatedUser(request)
+
         const {uid} = request.data;
         
         if(!uid){
