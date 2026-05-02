@@ -140,29 +140,53 @@ class CadastroScreen extends StatelessWidget {
                       ),
 
                       const SizedBox(height: 20),
-
                       SizedBox(
                         width: double.infinity,
-                        height: 58,
+                        height: 70,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(35),
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFF173FD2),
+                                Color(0xFF7A42C5),
+                              ],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF5A4CCB).withOpacity(0.35),
+                                blurRadius: 16,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+
                         child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF254EDB),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
+                            onPressed: () {},
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(35),
+                              ),
                             ),
-                          ),
-                          onPressed: () {},
-                          child: const Text(
-                            "Criar conta",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
+                          
+                          child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Cadastrar',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ]
+                          )
                         ),
                       ),
-
+                      ),
                       const SizedBox(height: 14),
 
                       const Text(

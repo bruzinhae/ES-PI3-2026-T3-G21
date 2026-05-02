@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import '../widgets/app_button.dart';
 
 class RecuperarSenhaScreen extends StatelessWidget {
   const RecuperarSenhaScreen({super.key});
@@ -98,27 +99,9 @@ class RecuperarSenhaScreen extends StatelessWidget {
 
                 const SizedBox(height: 28),
 
-                SizedBox(
-                  width: double.infinity,
-                  height: 58,
-                  child: ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.send),
-                    label: const Text(
-                      "Enviar Código de Recuperação",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: const Color(0xFF0035B9),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                  ),
+                AppButton(
+                  text: "Enviar Código de Recuperação",
+                  onPressed: () {},
                 ),
 
                 const SizedBox(height: 25),

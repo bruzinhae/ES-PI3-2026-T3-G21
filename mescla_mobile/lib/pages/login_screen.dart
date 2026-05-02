@@ -63,13 +63,35 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               child: Column(
                 children: [
-                  const SizedBox(height: 8),
-                  Image.asset(
-                    'assets/images/logoMescla.png',
-                    height: 110,
-                    fit: BoxFit.contain,
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: CircleAvatar(
+                          backgroundColor: Colors.white24,
+                          child: IconButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            icon: const Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      Image.asset(
+                        'assets/images/logoMescla.png',
+                        height: 110,
+                        fit: BoxFit.contain,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 18),
+
+                  const SizedBox(height: 10),
+
                   const Text(
                     'MesclaInvest',
                     style: TextStyle(
@@ -120,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: Color(0xFF0E1733),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       const Text(
                         'Acesse sua carteira e acompanhe seus rendimentos.',
                         style: TextStyle(
@@ -129,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: Color(0xFF3B4257),
                         ),
                       ),
-                      const SizedBox(height: 34),
+                      const SizedBox(height: 25),
                       const Text(
                         'E-mail ou CPF',
                         style: TextStyle(
@@ -214,7 +236,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 5),
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
@@ -236,7 +258,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 26),
+                      const SizedBox(height: 1),
                       SizedBox(
                         width: double.infinity,
                         height: 70,
@@ -300,7 +322,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   children: [
                   
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 0),
                     Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -338,16 +360,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: Colors.white,
-        elevation: 6,
-        child: const Icon(
-          Icons.question_mark_rounded,
-          color: Color(0xFF133BCE),
-          size: 30,
-        ),
-      ),
+      
     );
   }
 }
