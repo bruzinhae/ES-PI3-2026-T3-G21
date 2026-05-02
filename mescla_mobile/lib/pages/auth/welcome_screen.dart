@@ -1,9 +1,12 @@
+// Autor: Alinne Monteiro de Melo 
+// RA: 24801649
+
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
 
-class SplashScreen extends StatelessWidget {
-  const SplashScreen({super.key});
+class WelcomeScreen extends StatelessWidget {
+  const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +54,7 @@ class SplashScreen extends StatelessWidget {
                     'Startups, inovação e\noportunidades em um só lugar.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.85),
+                      color: Colors.white.withValues(alpha: 0.85),
                       fontSize: 18,
                     ),
                   ),

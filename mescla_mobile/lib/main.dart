@@ -1,7 +1,14 @@
-import 'package:flutter/material.dart';
-import 'pages/welcome_screen.dart';
+// Autor: Alinne Monteiro de Melo 
+// RA: 24801649
 
-void main() {
+import 'package:flutter/material.dart';
+import 'pages/auth/welcome_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
   runApp(const MesclaInvestApp());
 }
 
@@ -13,7 +20,7 @@ class MesclaInvestApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'MesclaInvest',
-      home: const SplashScreen(),
+      home: const WelcomeScreen(), 
     );
   }
 }

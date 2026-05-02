@@ -1,8 +1,123 @@
+// Autor: Alinne Monteiro de Melo 
+// RA: 24801649
+
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import '../../services/auth_service.dart';
+import 'package:mescla_mobile/utils/validators.dart';
+import '../../widgets/app_button.dart';
 
-class CadastroScreen extends StatelessWidget {
+class CadastroScreen extends StatefulWidget {
   const CadastroScreen({super.key});
+
+  @override
+  State<CadastroScreen> createState() => _CadastroScreenState();
+}
+
+class _CadastroScreenState extends State<CadastroScreen> {
+  final nomeController = TextEditingController();
+  final cpfController = TextEditingController();
+  final emailController = TextEditingController();
+  final telefoneController = TextEditingController();
+  final senhaController = TextEditingController();
+  final confirmarSenhaController = TextEditingController();
+
+  bool carregando = false;
+
+  @override
+  void dispose() {
+    nomeController.dispose();
+    cpfController.dispose();
+    emailController.dispose();
+    telefoneController.dispose();
+    senhaController.dispose();
+    confirmarSenhaController.dispose();
+    super.dispose();
+  }
+
+  bool validarCampos() {
+    if (nomeController.text.trim().isEmpty ||
+        cpfController.text.trim().isEmpty ||
+        emailController.text.trim().isEmpty ||
+        telefoneController.text.trim().isEmpty ||
+        senhaController.text.trim().isEmpty ||
+        confirmarSenhaController.text.trim().isEmpty) {
+      mostrarErro("Preencha todos os campos obrigatórios.");
+      return false;
+    }
+
+    if (!validarEmail(emailController.text)) {
+      mostrarErro("Email inválido.");
+      return false;
+    }
+
+    if (senhaController.text.length < 6) {
+      mostrarErro("A senha deve ter no mínimo 6 caracteres.");
+      return false;
+    }
+
+    if (senhaController.text != confirmarSenhaController.text) {
+      mostrarErro("As senhas não conferem.");
+      return false;
+    }
+
+    if (!validarCPF(cpfController.text)) {
+      mostrarErro("CPF inválido.");
+      return false;
+    }
+
+    return true;
+  }
+
+  Future<void> cadastrarUsuario() async {
+    if (!validarCampos()) return;
+
+    setState(() {
+      carregando = true;
+    });
+
+    try {
+      await AuthService.createUser(
+        name: nomeController.text.trim(),
+        email: emailController.text.trim(),
+        password: senhaController.text.trim(),
+        cpf: cpfController.text.trim(),
+        telefone: telefoneController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Conta criada com sucesso! Verifique seu e-mail."),
+        ),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const LoginScreen(),
+        ),
+      );
+    } catch (e) {
+      mostrarErro("Erro ao criar conta. Verifique os dados e tente novamente.");
+    } finally {
+      if (mounted) {
+        setState(() {
+          carregando = false;
+        });
+      }
+    }
+  }
+
+  void mostrarErro(String mensagem) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensagem),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +126,6 @@ class CadastroScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // HEADER
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 35),
@@ -38,10 +152,7 @@ class CadastroScreen extends StatelessWidget {
                           onPressed: () {
                             Navigator.pop(context);
                           },
-                          icon: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.white,
-                          ),
+                          icon: const Icon(Icons.arrow_back, color: Colors.white),
                         ),
                       ),
                       const Expanded(
@@ -92,11 +203,11 @@ class CadastroScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(32),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 18,
                         offset: const Offset(0, 8),
                       ),
@@ -104,89 +215,34 @@ class CadastroScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      campo(
-                        "Nome completo",
-                        Icons.person,
-                        "Como quer ser chamado?",
-                      ),
-                      campo(
-                        "CPF",
-                        Icons.badge,
-                        "000.000.000-00",
-                      ),
-                      campo(
-                        "E-mail",
-                        Icons.email,
-                        "seuemail@exemplo.com",
-                      ),
-                      campo(
-                        "Telefone",
-                        Icons.phone,
-                        "(00) 00000-0000",
-                      ),
+                      campo("Nome completo", Icons.person, "Como quer ser chamado?", nomeController),
+                      campo("CPF", Icons.badge, "000.000.000-00", cpfController),
+                      campo("E-mail", Icons.email, "seuemail@exemplo.com", emailController),
+                      campo("Telefone", Icons.phone, "(00) 00000-0000", telefoneController),
                       campo(
                         "Senha",
                         Icons.lock,
                         "••••••••",
+                        senhaController,
                         obscure: true,
                         mostrarAvisoSenha: true,
                       ),
-
                       campo(
                         "Confirme sua senha",
                         Icons.lock_reset,
                         "••••••••",
+                        confirmarSenhaController,
                         obscure: true,
                       ),
 
                       const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 70,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(35),
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFF173FD2),
-                                Color(0xFF7A42C5),
-                              ],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF5A4CCB).withOpacity(0.35),
-                                blurRadius: 16,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
 
-                        child: ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(35),
-                              ),
-                            ),
-                          
-                          child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Cadastrar',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ]
-                          )
-                        ),
+                      AppButton(
+                        text: "Criar conta",
+                        loading: carregando,
+                        onPressed: cadastrarUsuario,
                       ),
-                      ),
+
                       const SizedBox(height: 14),
 
                       const Text(
@@ -238,12 +294,11 @@ class CadastroScreen extends StatelessWidget {
   }
 }
 
-  
-
 Widget campo(
   String titulo,
   IconData icone,
-  String hint, {
+  String hint,
+  TextEditingController controller, {
   bool obscure = false,
   bool mostrarAvisoSenha = false,
 }) {
@@ -276,15 +331,14 @@ Widget campo(
         const SizedBox(height: 8),
 
         TextField(
+          controller: controller,
           obscureText: obscure,
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: Icon(icone),
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 18,
-            ),
+            contentPadding: const EdgeInsets.symmetric(vertical: 18),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(50),
               borderSide: BorderSide.none,

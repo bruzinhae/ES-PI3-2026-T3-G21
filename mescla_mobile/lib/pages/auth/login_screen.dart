@@ -1,27 +1,12 @@
+// Autor: Alinne Monteiro de Melo 
+// RA: 24801649
+
+
 import 'package:flutter/material.dart';
 import 'register_screen.dart';
-import 'recuperarSenha.dart';
+import 'recuperar_senha.dart';
+import '../../services/auth_service.dart';
 
-void main() {
-  runApp(const MesclaInvestApp());
-}
-
-class MesclaInvestApp extends StatelessWidget {
-  const MesclaInvestApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'MesclaInvest',
-      theme: ThemeData(
-        useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF2F3F8),
-      ),
-      home: const LoginScreen(),
-    );
-  }
-}
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -35,12 +20,99 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController senhaController = TextEditingController();
   bool obscurePassword = true;
 
-  @override
-  void dispose() {
-    emailController.dispose();
-    senhaController.dispose();
-    super.dispose();
+  bool carregando = false;
+
+  void mostrarErro(String mensagem) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensagem),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
+
+  bool validarLogin() {
+    final emailOuCpf = emailController.text.trim();
+    final senha = senhaController.text.trim();
+
+    if (emailOuCpf.isEmpty || senha.isEmpty) {
+      mostrarErro("Preencha e-mail/CPF e senha.");
+      return false;
+    }
+
+    if (senha.length < 6) {
+      mostrarErro("A senha deve ter no mínimo 6 caracteres.");
+      return false;
+    }
+
+    return true;
+  }
+
+  void mostrarPopup2FA() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          title: const Text("Ativar verificação em duas etapas?"),
+          content: const Text(
+            "Essa segurança extra protege sua conta com um código enviado por e-mail.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // depois vai para tela principal
+              },
+              child: const Text("Agora não"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // depois chama o back e vai para tela de código
+              },
+              child: const Text("Ativar agora"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> fazerLogin() async {
+    if (!validarLogin()) return;
+
+    setState(() {
+      carregando = true;
+    });
+
+    try {
+      await AuthService.login(
+        email: emailController.text.trim(),
+        password: senhaController.text.trim(),
+      );
+      mostrarPopup2FA();
+
+    } catch (e) {
+      mostrarErro("Erro ao entrar. Verifique seus dados.");
+    } finally {
+      if (mounted) {
+        setState(() {
+          carregando = false;
+        });
+      }
+    }
+  }
+
+    @override
+    void dispose() {
+      emailController.dispose();
+      senhaController.dispose();
+      super.dispose();
+    }
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     'Login',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 17,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1,
@@ -125,7 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     borderRadius: BorderRadius.circular(34),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 18,
                         offset: const Offset(0, 6),
                       ),
@@ -273,14 +345,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF5A4CCB).withOpacity(0.35),
+                                color: const Color(0xFF5A4CCB).withValues(alpha: 0.35),
                                 blurRadius: 16,
                                 offset: const Offset(0, 8),
                               ),
                             ],
                           ),
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: carregando ? null : fazerLogin,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
                               shadowColor: Colors.transparent,
@@ -288,25 +360,27 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(35),
                               ),
                             ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Entrar',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                            child: carregando
+                              ? const CircularProgressIndicator(color: Colors.white)
+                              : const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Entrar',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    SizedBox(width: 12),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: Colors.white,
+                                      size: 30,
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(width: 12),
-                                Icon(
-                                  Icons.arrow_forward_rounded,
-                                  color: Colors.white,
-                                  size: 30,
-                                ),
-                              ],
-                            ),
                           ),
                         ),
                       ),
