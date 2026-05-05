@@ -1,23 +1,37 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class StartupInicial extends StatelessWidget {
+  const StartupInicial({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: InvestPage(),
-    );
+    return const InvestPage();
   }
 }
 
-class InvestPage extends StatelessWidget {
+class InvestPage extends StatefulWidget {
   const InvestPage({super.key});
+
+  @override
+  State<InvestPage> createState() => _InvestPageState();
+}
+
+class _InvestPageState extends State<InvestPage> {
+
+  final TextEditingController _controller = TextEditingController();
+
+  List<Map<String, dynamic>> messages = [
+    {
+      "name": "Ricardo Camargo",
+      "message": "Como a EcoTech planeja mitigar o risco?",
+      "isUser": true
+    },
+    {
+      "name": "Time EcoTech",
+      "message": "Usamos contratos de longo prazo para estabilidade.",
+      "isUser": false
+    }
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -26,68 +40,123 @@ class InvestPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: const Icon(Icons.arrow_back, color: Colors.black),
         title: const Text("MesclaInvest", style: TextStyle(color: Colors.black)),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: Icon(Icons.favorite_border, color: Colors.black),
-          )
+      ),
+
+      body: Column(
+        children: [
+
+          /// 🔽 CHAT (lista rolável)
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                final msg = messages[index];
+                return _chatBubble(
+                  name: msg["name"],
+                  message: msg["message"],
+                  isUser: msg["isUser"],
+                );
+              },
+            ),
+          ),
+
+          /// 🔽 INPUT
+          _inputField(),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _header(),
-            const SizedBox(height: 16),
-            _metrics(),
-            const SizedBox(height: 16),
-            _chart(),
-            const SizedBox(height: 16),
-            _team(),
-            const SizedBox(height: 16),
-            _docs(),
-            const SizedBox(height: 16),
-            _messages(),
-            const SizedBox(height: 100),
-          ],
-        ),
-      ),
-      bottomNavigationBar: _bottomBar(),
     );
   }
 
-  Widget _header() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            _chip("SUSTENTABILIDADE"),
-            const SizedBox(width: 8),
-            _chip("Em expansão", isBlue: true),
-          ],
-        ),
-        const SizedBox(height: 10),
-        const Text("EcoTech Solutions", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 6),
-        Row(
-          children: const [
-            Icon(Icons.eco, color: Colors.blue, size: 18),
-            SizedBox(width: 6),
-            Text("Series A", style: TextStyle(color: Colors.blue)),
-          ],
-        ),
-        const SizedBox(height: 10),
-        const Text(
-          "Revolucionando a economia circular através de tecnologia proprietária de triagem automatizada e reciclagem química de alta eficiência.",
-          style: TextStyle(color: Colors.black54),
-        ),
-      ],
+  /// 💬 BOLHA
+  Widget _chatBubble({
+    required String name,
+    required String message,
+    required bool isUser,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        mainAxisAlignment:
+        isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          Flexible(
+            child: Column(
+              crossAxisAlignment:
+              isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                Text(name, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isUser ? Colors.blue : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    message,
+                    style: TextStyle(
+                      color: isUser ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
+
+  /// 🧠 INPUT + ENVIO
+  Widget _inputField() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      color: Colors.white,
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              decoration: const InputDecoration(
+                hintText: "Escreva sua pergunta...",
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.send, color: Colors.blue),
+            onPressed: () {
+              if (_controller.text.trim().isEmpty) return;
+
+              setState(() {
+                messages.add({
+                  "name": "Você",
+                  "message": _controller.text,
+                  "isUser": true,
+                });
+              });
+
+              _controller.clear();
+
+              /// resposta fake automática
+              Future.delayed(const Duration(seconds: 1), () {
+                setState(() {
+                  messages.add({
+                    "name": "EcoTech",
+                    "message": "Obrigado pela pergunta! Em breve responderemos.",
+                    "isUser": false,
+                  });
+                });
+              });
+            },
+          )
+        ],
+      ),
+    );
+  }
+}
 
   Widget _chip(String text, {bool isBlue = false}) {
     return Container(
@@ -186,8 +255,8 @@ class InvestPage extends StatelessWidget {
   }
 
   Widget _progress(String name, double value) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(name), Text("${(value*100).toInt()}%")]),
+    return Column(children: [
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(name), Text("${(value * 100).toInt()}%")]),
       const SizedBox(height: 6),
       ClipRRect(
         borderRadius: BorderRadius.circular(10),
@@ -198,16 +267,11 @@ class InvestPage extends StatelessWidget {
   }
 
   Widget _docs() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    return Column(children: [
       const Text("Documentação Pública"),
       const SizedBox(height: 10),
-      Row(children: [
-        _doc("Sumário Executivo"),
-        _doc("Plano de Negócios"),
-      ]),
-      Row(children: [
-        _doc("Vídeo Demo", icon: Icons.play_circle_outline),
-      ])
+      Row(children: [_doc("Sumário Executivo"), _doc("Plano de Negócios")]),
+      Row(children: [_doc("Vídeo Demo", icon: Icons.play_circle_outline)]),
     ]);
   }
 
@@ -218,83 +282,88 @@ class InvestPage extends StatelessWidget {
         height: 90,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+          border: Border.all(color: Colors.grey.shade300),
         ),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(icon, color: Colors.blue),
           const SizedBox(height: 6),
-          Text(text, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
+          Text(text, textAlign: TextAlign.center),
         ]),
       ),
     );
   }
 
+  // 🔥 NOVA PARTE DE MENSAGENS
+
   Widget _messages() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: const [
-        Text("Perguntas da Comunidade", style: TextStyle(fontWeight: FontWeight.bold)),
-        Text("Ver todas", style: TextStyle(color: Colors.blue))
-      ]),
-      const SizedBox(height: 12),
-      _userMessage(),
-      const SizedBox(height: 8),
-      _responseMessage(),
-    ]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: const [
+            Text("Perguntas da Comunidade", style: TextStyle(fontWeight: FontWeight.bold)),
+            Text("Ver todas", style: TextStyle(color: Colors.blue)),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        _chatBubble(
+          name: "Ricardo Camargo",
+          message: "Como a EcoTech planeja mitigar o risco de flutuação no preço das commodities recicladas?",
+          isUser: true,
+        ),
+
+        const SizedBox(height: 12),
+
+        _chatBubble(
+          name: "Time EcoTech (CEO)",
+          message: "Olá Ricardo! Mantemos contratos de longo prazo...",
+          isUser: false,
+        ),
+      ],
+    );
   }
 
-  Widget _userMessage() {
-    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const CircleAvatar(radius: 14, child: Text("RC", style: TextStyle(fontSize: 10))),
-      const SizedBox(width: 8),
-      Expanded(
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-          child: const Text("Ricardo Camargo\nComo a EcoTech planeja mitigar o risco de flutuação no preço das commodities recicladas?"),
+  Widget _chatBubble({
+    required String name,
+    required String message,
+    required bool isUser,
+  }) {
+    return Row(
+      mainAxisAlignment: isUser ? MainAxisAlignment.start : MainAxisAlignment.end,
+      children: [
+        if (isUser) ...[
+          const CircleAvatar(radius: 16, child: Text("RC")),
+          const SizedBox(width: 8),
+        ],
+        Flexible(
+          child: Column(
+            crossAxisAlignment: isUser ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+            children: [
+              Text(name, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isUser ? Colors.white : Colors.blue,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(message, style: TextStyle(color: isUser ? Colors.black : Colors.white)),
+              ),
+            ],
+          ),
         ),
-      )
-    ]);
-  }
-
-  Widget _responseMessage() {
-    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const CircleAvatar(radius: 14, backgroundColor: Colors.blue, child: Icon(Icons.business, size: 14, color: Colors.white)),
-      const SizedBox(width: 8),
-      Expanded(
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12)),
-          child: const Text("Time EcoTech (CEO)\nOlá Ricardo! Mantemos contratos de longo prazo (take-or-pay) com grandes indústrias que garantem estabilidade de margem independente do spot."),
-        ),
-      )
-    ]);
+      ],
+    );
   }
 
   Widget _bottomBar() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(color: Colors.white),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: const LinearGradient(colors: [Colors.blue, Colors.purple]),
-        ),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
-          onPressed: () {},
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text("Quero Investir"),
-              SizedBox(width: 8),
-              Icon(Icons.arrow_forward)
-            ],
-          ),
-        ),
+      child: ElevatedButton(
+        onPressed: () {},
+        child: const Text("Quero Investir"),
       ),
     );
   }
