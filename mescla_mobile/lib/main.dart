@@ -13,7 +13,7 @@ class MesclaInvestApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'MesclaInvest',
-      home: CatalogoStartUp(), // 👈 agora funciona
+      home: CatalogoStartUp(),
     );
   }
 }
