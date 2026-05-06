@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'confirmacao.dart';
 
 void main() {
   runApp(const TradingApp());
@@ -620,22 +621,24 @@ class _TradingPageState extends State<TradingPage>
     return GestureDetector(
       onTap: () {
         HapticFeedback.mediumImpact();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Transação confirmada com sucesso!'),
-            backgroundColor: const Color(0xFF10B981),
-            behavior: SnackBarBehavior.floating,
-            shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ConfirmacaoPage(),
           ),
         );
       },
+
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF1A56DB), Color(0xFF2563EB)],
+            colors: [
+              Color(0xFF1A56DB),
+              Color(0xFF2563EB),
+            ],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),
@@ -648,6 +651,7 @@ class _TradingPageState extends State<TradingPage>
             ),
           ],
         ),
+
         child: const Text(
           'Confirmar Transação',
           textAlign: TextAlign.center,

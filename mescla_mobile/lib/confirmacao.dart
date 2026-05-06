@@ -16,29 +16,34 @@ class MesclaInvestApp extends StatelessWidget {
         fontFamily: 'Roboto',
         scaffoldBackgroundColor: const Color(0xFFEDEEFF),
       ),
-      home: const ResgatePage(),
+      home: const ConfirmacaoPage(),
     );
   }
 }
 
-class ResgatePage extends StatelessWidget {
-  const ResgatePage({super.key});
+class ConfirmacaoPage extends StatelessWidget {
+  const ConfirmacaoPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFEDEEFF),
+
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 430),
+
             child: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(22),
+
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+
                     // HEADER
+
                     Row(
                       children: [
                         Container(
@@ -58,7 +63,9 @@ class ResgatePage extends StatelessWidget {
                             ),
                           ),
                         ),
+
                         const SizedBox(width: 14),
+
                         const Expanded(
                           child: Text(
                             'MesclaInvest',
@@ -69,27 +76,24 @@ class ResgatePage extends StatelessWidget {
                             ),
                           ),
                         ),
+
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 28,
                             vertical: 16,
                           ),
+
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(18),
+
                             gradient: const LinearGradient(
                               colors: [
                                 Color(0xFF3055E8),
                                 Color(0xFF8D35E6),
                               ],
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(.12),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
                           ),
+
                           child: const Text(
                             'Resgatar',
                             style: TextStyle(
@@ -105,10 +109,12 @@ class ResgatePage extends StatelessWidget {
                     const SizedBox(height: 28),
 
                     // SALDO CARD
+
                     _card(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+
                           const Text(
                             'SALDO TOTAL',
                             style: TextStyle(
@@ -117,10 +123,13 @@ class ResgatePage extends StatelessWidget {
                               fontSize: 15,
                             ),
                           ),
+
                           const SizedBox(height: 10),
+
                           RichText(
                             text: const TextSpan(
                               children: [
+
                                 TextSpan(
                                   text: 'R\$ 15.420,00 ',
                                   style: TextStyle(
@@ -129,6 +138,7 @@ class ResgatePage extends StatelessWidget {
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
+
                                 TextSpan(
                                   text: '850 tokens',
                                   style: TextStyle(
@@ -140,9 +150,12 @@ class ResgatePage extends StatelessWidget {
                               ],
                             ),
                           ),
+
                           const SizedBox(height: 26),
+
                           Row(
                             children: [
+
                               Expanded(
                                 child: _actionButton(
                                   title: 'Carregar\nSaldo',
@@ -151,7 +164,9 @@ class ResgatePage extends StatelessWidget {
                                   icon: Icons.add_circle_outline,
                                 ),
                               ),
+
                               const SizedBox(width: 16),
+
                               Expanded(
                                 child: _gradientButton(
                                   title: 'Resgatar\nLucros',
@@ -166,27 +181,34 @@ class ResgatePage extends StatelessWidget {
 
                     const SizedBox(height: 22),
 
-                    // DISPONIVEL
+                    // DISPONÍVEL
+
                     _card(
                       child: Row(
                         children: [
+
                           Container(
                             width: 68,
                             height: 68,
+
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(18),
                               color: const Color(0xFFDDE3F1),
                             ),
+
                             child: const Icon(
                               Icons.account_balance_wallet_outlined,
                               color: Color(0xFF0D2CC8),
                               size: 34,
                             ),
                           ),
+
                           const SizedBox(width: 18),
+
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: const [
+
                               Text(
                                 'Disponível para resgate',
                                 style: TextStyle(
@@ -194,7 +216,9 @@ class ResgatePage extends StatelessWidget {
                                   fontSize: 15,
                                 ),
                               ),
+
                               SizedBox(height: 6),
+
                               Text(
                                 'R\$ 1.240,00',
                                 style: TextStyle(
@@ -211,10 +235,12 @@ class ResgatePage extends StatelessWidget {
                     const SizedBox(height: 22),
 
                     // CONTA DESTINO
+
                     _card(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+
                           const Text(
                             'Conta de Destino',
                             style: TextStyle(
@@ -222,27 +248,36 @@ class ResgatePage extends StatelessWidget {
                               fontSize: 16,
                             ),
                           ),
+
                           const SizedBox(height: 22),
+
                           Row(
                             children: [
+
                               Container(
                                 width: 52,
                                 height: 52,
+
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12),
                                   color: const Color(0xFFDDE3F1),
                                 ),
+
                                 child: const Icon(
                                   Icons.account_balance,
                                   color: Color(0xFF3055E8),
                                 ),
                               ),
+
                               const SizedBox(width: 16),
+
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment:
                                   CrossAxisAlignment.start,
+
                                   children: const [
+
                                     Text(
                                       'Itaú Unibanco',
                                       style: TextStyle(
@@ -250,7 +285,9 @@ class ResgatePage extends StatelessWidget {
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
+
                                     SizedBox(height: 4),
+
                                     Text(
                                       'Ag 0432 • CC 29384-1',
                                       style: TextStyle(
@@ -261,6 +298,7 @@ class ResgatePage extends StatelessWidget {
                                   ],
                                 ),
                               ),
+
                               const Icon(
                                 Icons.chevron_right,
                                 size: 34,
@@ -285,22 +323,27 @@ class ResgatePage extends StatelessWidget {
                     const SizedBox(height: 16),
 
                     // INPUT
+
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 12,
                       ),
+
                       decoration: BoxDecoration(
                         color: const Color(0xFFE6EAF4),
                         borderRadius: BorderRadius.circular(40),
                       ),
+
                       child: Row(
                         children: [
+
                           const Expanded(
                             child: TextField(
                               decoration: InputDecoration(
                                 border: InputBorder.none,
                                 hintText: 'R\$ 0,00',
+
                                 hintStyle: TextStyle(
                                   fontSize: 18,
                                   color: Color(0xFF7D8192),
@@ -308,15 +351,18 @@ class ResgatePage extends StatelessWidget {
                               ),
                             ),
                           ),
+
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 24,
                               vertical: 14,
                             ),
+
                             decoration: BoxDecoration(
                               color: const Color(0xFFD9E1F3),
                               borderRadius: BorderRadius.circular(30),
                             ),
+
                             child: const Text(
                               'Resgatar tudo',
                               style: TextStyle(
@@ -334,7 +380,9 @@ class ResgatePage extends StatelessWidget {
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
                       children: const [
+
                         Text(
                           'Histórico de Rendimentos',
                           style: TextStyle(
@@ -342,6 +390,7 @@ class ResgatePage extends StatelessWidget {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
+
                         Text(
                           'Ver todos',
                           style: TextStyle(
@@ -387,29 +436,28 @@ class ResgatePage extends StatelessWidget {
 
                     const SizedBox(height: 24),
 
-                    // BUTTON
+                    // BOTÃO
+
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 22),
+
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(22),
+
                         gradient: const LinearGradient(
                           colors: [
                             Color(0xFF0A2CCF),
                             Color(0xFF7B39D8),
                           ],
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(.15),
-                            blurRadius: 12,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
                       ),
+
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
+
                         children: const [
+
                           Text(
                             'Confirmar Resgate',
                             style: TextStyle(
@@ -418,7 +466,9 @@ class ResgatePage extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
+
                           SizedBox(width: 14),
+
                           Icon(
                             Icons.arrow_forward,
                             color: Colors.white,
@@ -438,16 +488,21 @@ class ResgatePage extends StatelessWidget {
       ),
 
       // BOTTOM NAV
+
       bottomNavigationBar: Container(
         height: 95,
+
         decoration: const BoxDecoration(
           color: Colors.white,
+
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(28),
           ),
         ),
+
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
+
           children: [
             _navItem(Icons.menu_book_outlined, 'Catálogo'),
             _navActive(),
@@ -464,10 +519,12 @@ class ResgatePage extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(26),
+
       decoration: BoxDecoration(
         color: const Color(0xFFF7F7FB),
         borderRadius: BorderRadius.circular(28),
       ),
+
       child: child,
     );
   }
@@ -480,20 +537,22 @@ class ResgatePage extends StatelessWidget {
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18),
+
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.black.withOpacity(.08),
-        ),
       ),
+
       child: Column(
         children: [
           Icon(icon, color: textColor),
+
           const SizedBox(height: 8),
+
           Text(
             title,
             textAlign: TextAlign.center,
+
             style: TextStyle(
               color: textColor,
               fontSize: 16,
@@ -510,8 +569,10 @@ class ResgatePage extends StatelessWidget {
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18),
+
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
+
         gradient: const LinearGradient(
           colors: [
             Color(0xFF0D2CC8),
@@ -519,13 +580,17 @@ class ResgatePage extends StatelessWidget {
           ],
         ),
       ),
+
       child: Column(
         children: [
           Icon(icon, color: Colors.white),
+
           const SizedBox(height: 8),
+
           Text(
             title,
             textAlign: TextAlign.center,
+
             style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
@@ -548,26 +613,39 @@ class ResgatePage extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(22),
+
       decoration: BoxDecoration(
         color: const Color(0xFFF7F7FB),
         borderRadius: BorderRadius.circular(28),
       ),
+
       child: Row(
         children: [
+
           Container(
             width: 66,
             height: 66,
+
             decoration: BoxDecoration(
               color: iconBg,
               borderRadius: BorderRadius.circular(18),
             ),
-            child: Icon(icon, color: iconColor, size: 34),
+
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: 34,
+            ),
           ),
+
           const SizedBox(width: 18),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+
               children: [
+
                 Text(
                   title,
                   style: const TextStyle(
@@ -575,7 +653,9 @@ class ResgatePage extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+
                 const SizedBox(height: 4),
+
                 Text(
                   subtitle,
                   style: const TextStyle(
@@ -587,9 +667,12 @@ class ResgatePage extends StatelessWidget {
               ],
             ),
           ),
+
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
+
             children: [
+
               Text(
                 value,
                 style: const TextStyle(
@@ -598,7 +681,9 @@ class ResgatePage extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
+
               const SizedBox(height: 8),
+
               Text(
                 date,
                 style: const TextStyle(
@@ -616,9 +701,16 @@ class ResgatePage extends StatelessWidget {
   static Widget _navItem(IconData icon, String label) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
+
       children: [
-        Icon(icon, color: const Color(0xFF67748E)),
+
+        Icon(
+          icon,
+          color: const Color(0xFF67748E),
+        ),
+
         const SizedBox(height: 6),
+
         Text(
           label,
           style: const TextStyle(
@@ -636,8 +728,10 @@ class ResgatePage extends StatelessWidget {
         horizontal: 22,
         vertical: 12,
       ),
+
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
+
         gradient: const LinearGradient(
           colors: [
             Color(0xFF0D2CC8),
@@ -645,14 +739,19 @@ class ResgatePage extends StatelessWidget {
           ],
         ),
       ),
+
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+
         children: const [
+
           Icon(
             Icons.currency_exchange,
             color: Colors.white,
           ),
+
           SizedBox(height: 4),
+
           Text(
             'Negociar',
             style: TextStyle(
