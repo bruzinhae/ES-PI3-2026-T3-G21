@@ -13,11 +13,87 @@ class CatalogoStartUp extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String filtroSelecionado = "Todas";
+
+  final List<Map<String, dynamic>> startups = [
+    {
+      "title": "GreenfarmTech",
+      "category": "AGRICULTURA",
+      "tag": "Nova",
+      "tagColor": Color(0xFFDDE5F7),
+      "description":
+      "Desenvolvimento de soluções tecnológicas para otimizar a produção agrícola sustentável utilizando IA e IoT.",
+      "value": "R\$ 280.000",
+      "tokens": "1000000",
+      "growth": "+12,4%",
+      "icon": Icons.eco,
+    },
+    {
+      "title": "TechHome Solutions",
+      "category": "TECNOLOGIA",
+      "tag": "Em operação",
+      "tagColor": Color(0xFFE5E8F5),
+      "description":
+      "Plataforma que utiliza automação residencial para tornar a casa mais inteligente e eficiente energeticamente.",
+      "value": "R\$ 150.000",
+      "tokens": "3000000",
+      "growth": "+4,2%",
+      "icon": Icons.home,
+    },
+    {
+      "title": "HealthTrack",
+      "category": "SAÚDE",
+      "tag": "Expansão",
+      "tagColor": Color(0xFFDFF3E4),
+      "description":
+      "Tecnologia para monitoramento de condições de saúde em tempo real e prevenção personalizada.",
+      "value": "R\$ 5.000.000",
+      "tokens": "18.200",
+      "growth": "+22,8%",
+      "icon": Icons.health_and_safety,
+    },
+    {
+      "title": "SmartRetail",
+      "category": "VAREJO INTELIGENTE",
+      "tag": "Em operação",
+      "tagColor": Color(0xFFDFF3E4),
+      "description":
+      "Plataforma de análise de dados para otimização do varejo, utilizando IA para prever tendências de consumo.",
+      "value": "R\$ 2.000.000",
+      "tokens": "18.200",
+      "growth": "+22,8%",
+      "icon": Icons.store,
+    },
+    {
+      "title": "FinPrime",
+      "category": "FINANÇAS",
+      "tag": "Expansão",
+      "tagColor": Color(0xFFDFF3E4),
+      "description":
+      "Plataforma de investimentos em pequenas e médias empresas com foco em inovação financeira.",
+      "value": "R\$ 1.500.000",
+      "tokens": "18.200",
+      "growth": "+22,8%",
+      "icon": Icons.attach_money,
+    },
+  ];
+
+  @override
   Widget build(BuildContext context) {
+    final startupsFiltradas = filtroSelecionado == "Todas"
+        ? startups
+        : startups.where((startup) {
+      return startup["tag"] == filtroSelecionado;
+    }).toList();
+
     return Scaffold(
       backgroundColor: const Color(0xFFEDEFF5),
       body: SafeArea(
@@ -28,6 +104,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               _topBar(),
               const SizedBox(height: 16),
+
               const Text(
                 "Olá, Investidor",
                 style: TextStyle(
@@ -35,73 +112,20 @@ class HomeScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+
               const SizedBox(height: 16),
+
               _search(),
+
               const SizedBox(height: 16),
+
               _filters(),
+
               const SizedBox(height: 20),
 
-              _startupCard(
-                context,
-                title: "GreenfarmTech",
-                category: "AGRICULTURA",
-                tag: "NOVA",
-                tagColor: const Color(0xFFDDE5F7),
-                description:
-                "Desenvolvimento de soluções tecnológicas para otimizar a produção agrícola sustentável utilizando IA e IoT.",
-                value: "R\$ 280.000",
-                tokens: "1000000",
-                growth: "+12,4%",
-              ),
-
-              _startupCard(
-                context,
-                title: "TechHome Solutions",
-                category: "TECNOLOGIA",
-                tag: "EM OPERAÇÃO",
-                tagColor: const Color(0xFFE5E8F5),
-                description:
-                "Plataforma que utiliza automação residencial para tornar a casa mais inteligente e eficiente energeticamente.",
-                value: "R\$ 150.000",
-                tokens: "3000000",
-                growth: "+4,2%",
-              ),
-
-              _startupCard(context,
-                title: "HealthTrack",
-                category: "SAÚDE",
-                tag: "EM EXPANSÃO",
-                tagColor: const Color(0xFFDFF3E4),
-                description:
-                "Tecnologia para monitoramento de condições de saúde em tempo real e prevenção personalizada.",
-                value: "5000000",
-                tokens: "18.200",
-                growth: "+22,8%",
-              ),
-
-              _startupCard(context,
-                title: "SmartRetail",
-                category: "VAREJO INTELIGENTE",
-                tag: "EM OPERAÇÃO",
-                tagColor: const Color(0xFFDFF3E4),
-                description:
-                "Plataforma de análise de dados para otimização do varejo, utilizando IA para prever tendências de consumo.",
-                value: "2000000",
-                tokens: "18.200",
-                growth: "+22,8%",
-              ),
-
-              _startupCard(context,
-                title: "FinPrime",
-                category: "FINANÇAS",
-                tag: "EM EXPANSÃO",
-                tagColor: const Color(0xFFDFF3E4),
-                description:
-                "Plataforma de investimentos em pequenas e médias empresas com foco em inovação financeira.",
-                value: "1500000",
-                tokens: "18.200",
-                growth: "+22,8%",
-              ),
+              ...startupsFiltradas.map((startup) {
+                return _startupCard(context, startup);
+              }).toList(),
 
               const SizedBox(height: 80),
             ],
@@ -145,51 +169,57 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _filters() {
-    return Row(
-      children: [
-        _chip("Todas", true),
-        _chip("Nova", false),
-        _chip("Em operação", false),
-        _chip("Expansão", false),
-      ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _chip("Todas"),
+          _chip("Nova"),
+          _chip("Em operação"),
+          _chip("Expansão"),
+        ],
+      ),
     );
   }
 
-  Widget _chip(String text, bool selected) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-        decoration: BoxDecoration(
-          gradient: selected
-              ? const LinearGradient(
-            colors: [Color(0xFF3D5AFE), Color(0xFF7B1FA2)],
-          )
-              : null,
-          color: selected ? null : Colors.white,
-          borderRadius: BorderRadius.circular(25),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: selected ? Colors.white : Colors.black54,
+  Widget _chip(String text) {
+    final selected = filtroSelecionado == text;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          filtroSelecionado = text;
+        });
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          decoration: BoxDecoration(
+            gradient: selected
+                ? const LinearGradient(
+              colors: [
+                Color(0xFF3D5AFE),
+                Color(0xFF7B1FA2),
+              ],
+            )
+                : null,
+            color: selected ? null : Colors.white,
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: Text(
+            text,
+            style: TextStyle(
+              color: selected ? Colors.white : Colors.black54,
+              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _startupCard(
-      BuildContext context, {
-        required String title,
-        required String category,
-        required String tag,
-        required Color tagColor,
-        required String description,
-        required String value,
-        required String tokens,
-        required String growth,
-      }) {
+  Widget _startupCard(BuildContext context, Map<String, dynamic> startup) {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(18),
@@ -207,54 +237,85 @@ class HomeScreen extends StatelessWidget {
                 height: 50,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF3D5AFE), Color(0xFF7B1FA2)],
+                    colors: [
+                      Color(0xFF3D5AFE),
+                      Color(0xFF7B1FA2),
+                    ],
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.eco, color: Colors.white),
+                child: Icon(
+                  startup["icon"],
+                  color: Colors.white,
+                ),
               ),
+
               const SizedBox(width: 12),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text(category,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            letterSpacing: 1.2,
-                            color: Colors.blue)),
+                    Text(
+                      startup["title"],
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      startup["category"],
+                      style: const TextStyle(
+                        fontSize: 12,
+                        letterSpacing: 1.2,
+                        color: Colors.blue,
+                      ),
+                    ),
                   ],
                 ),
               ),
+
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: tagColor,
+                  color: startup["tagColor"],
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text(tag, style: const TextStyle(fontSize: 12)),
-              )
+                child: Text(
+                  startup["tag"],
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
             ],
           ),
+
           const SizedBox(height: 12),
-          Text(description,
-              style: const TextStyle(color: Colors.black54, height: 1.4)),
+
+          Text(
+            startup["description"],
+            style: const TextStyle(
+              color: Colors.black54,
+              height: 1.4,
+            ),
+          ),
+
           const SizedBox(height: 16),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _info("Aportado", value),
-              _info("Tokens", tokens),
-              _info("Valorização", growth, color: Colors.purple),
+              _info("Aportado", startup["value"]),
+              _info("Tokens", startup["tokens"]),
+              _info(
+                "Valorização",
+                startup["growth"],
+                color: Colors.purple,
+              ),
             ],
           ),
+
           const SizedBox(height: 16),
 
-          // 🔥 BOTÃO BRANCO + NAVEGAÇÃO
           Align(
             alignment: Alignment.centerRight,
             child: ElevatedButton(
@@ -279,7 +340,7 @@ class HomeScreen extends StatelessWidget {
               ),
               child: const Text("Ver detalhes"),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -289,14 +350,22 @@ class HomeScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title,
-            style: const TextStyle(fontSize: 12, color: Colors.black45)),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.black45,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text(value,
-            style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: color ?? Colors.black)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: color ?? Colors.black,
+          ),
+        ),
       ],
     );
   }
@@ -309,7 +378,9 @@ class HomeScreen extends StatelessWidget {
         BottomNavigationBarItem(icon: Icon(Icons.home), label: "Início"),
         BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: "Catálogo"),
         BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet), label: "Carteira"),
+          icon: Icon(Icons.account_balance_wallet),
+          label: "Carteira",
+        ),
         BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: "Dashboard"),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: "Perfil"),
       ],
