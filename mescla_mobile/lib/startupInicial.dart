@@ -20,59 +20,348 @@ class InvestPage extends StatefulWidget {
 }
 
 class _InvestPageState extends State<InvestPage> {
-
   final TextEditingController _controller = TextEditingController();
+
+  String filtroSelecionado = "Todas";
+
+  final List<Map<String, dynamic>> startups = [
+    {
+      "nome": "GreenfarmTech",
+      "categoria": "Nova",
+      "descricao":
+      "Desenvolvimento de soluções tecnológicas para agricultura sustentável utilizando IA e IoT.",
+      "valor": "R\$ 280.000",
+      "token": "1.000.000",
+      "valorizacao": "+12,4%",
+    },
+
+    {
+      "nome": "TechHome Solutions",
+      "categoria": "EM operação",
+      "descricao":
+      "Automação residencial inteligente focada em eficiência energética.",
+      "valor": "R\$ 150.000",
+      "token": "3.000.000",
+      "valorizacao": "+4,2%",
+    },
+
+    {
+      "nome": "UrbanLog",
+      "categoria": "Expansão",
+      "descricao":
+      "Logística urbana inteligente com rastreamento em tempo real.",
+      "valor": "R\$ 500.000",
+      "token": "2.500.000",
+      "valorizacao": "+18,1%",
+    },
+
+    {
+      "nome": "EcoCharge",
+      "categoria": "Nova",
+      "descricao":
+      "Infraestrutura para carregamento rápido de veículos elétricos.",
+      "valor": "R\$ 320.000",
+      "token": "850.000",
+      "valorizacao": "+9,7%",
+    },
+
+    {
+      "nome": "FinFlow",
+      "categoria": "EM operação",
+      "descricao":
+      "Fintech focada em pagamentos digitais e tokenização financeira.",
+      "valor": "R\$ 420.000",
+      "token": "1.900.000",
+      "valorizacao": "+15,3%",
+    },
+
+    {
+      "nome": "AgroFuture",
+      "categoria": "Expansão",
+      "descricao":
+      "Tecnologia agrícola inteligente para produtividade no campo.",
+      "valor": "R\$ 600.000",
+      "token": "3.400.000",
+      "valorizacao": "+22,8%",
+    },
+  ];
 
   List<Map<String, dynamic>> messages = [
     {
       "name": "Ricardo Camargo",
       "message": "Como a EcoTech planeja mitigar o risco?",
-      "isUser": true
+      "isUser": true,
     },
     {
       "name": "Time EcoTech",
       "message": "Usamos contratos de longo prazo para estabilidade.",
-      "isUser": false
-    }
+      "isUser": false,
+    },
   ];
 
   @override
   Widget build(BuildContext context) {
+    final startupsFiltradas = filtroSelecionado == "Todas"
+        ? startups
+        : startups.where((startup) {
+      return startup["categoria"] == filtroSelecionado;
+    }).toList();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6FA),
+
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text("MesclaInvest", style: TextStyle(color: Colors.black)),
+        title: const Text(
+          "MesclaInvest",
+          style: TextStyle(color: Colors.black),
+        ),
       ),
 
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: _filtros(),
+          ),
 
-          /// 🔽 CHAT (lista rolável)
           Expanded(
-            child: ListView.builder(
+            child: ListView(
               padding: const EdgeInsets.all(16),
-              itemCount: messages.length,
-              itemBuilder: (context, index) {
-                final msg = messages[index];
-                return _chatBubble(
-                  name: msg["name"],
-                  message: msg["message"],
-                  isUser: msg["isUser"],
-                );
-              },
+              children: [
+                ...startupsFiltradas.map((startup) {
+                  return _startupCard(startup);
+                }).toList(),
+
+                const SizedBox(height: 16),
+
+                _messages(),
+
+                const SizedBox(height: 90),
+              ],
             ),
           ),
 
-          /// 🔽 INPUT
           _inputField(),
+        ],
+      ),
+
+      bottomNavigationBar: _bottomBar(),
+    );
+  }
+
+  Widget _filtros() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _filtroChip("Todas"),
+          const SizedBox(width: 8),
+          _filtroChip("Nova"),
+          const SizedBox(width: 8),
+          _filtroChip("EM operação"),
+          const SizedBox(width: 8),
+          _filtroChip("Expansão"),
         ],
       ),
     );
   }
 
-  /// 💬 BOLHA
+  Widget _filtroChip(String filtro) {
+    final ativo = filtroSelecionado == filtro;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          filtroSelecionado = filtro;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: ativo ? const Color(0xFF0D2CC8) : Colors.white,
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Text(
+          filtro,
+          style: TextStyle(
+            color: ativo ? Colors.white : Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _startupCard(Map<String, dynamic> startup) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: const Color(0xFF0D2CC8).withOpacity(0.12),
+                child: Text(
+                  startup["nome"].toString()[0],
+                  style: const TextStyle(
+                    color: Color(0xFF0D2CC8),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      startup["nome"],
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    _chip(
+                      startup["categoria"],
+                      isBlue: startup["categoria"] == "Nova",
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          Text(
+            startup["descricao"],
+            style: const TextStyle(
+              fontSize: 13,
+              color: Colors.black54,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          Row(
+            children: [
+              _miniInfo("Capital", startup["valor"]),
+              _miniInfo("Token", startup["token"]),
+              _miniInfo(
+                "Valorização",
+                startup["valorizacao"],
+                green: true,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniInfo(String title, String value, {bool green = false}) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.only(right: 6),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF4F6FA),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Colors.black54,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: green ? Colors.green : Colors.black,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _chip(String text, {bool isBlue = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: isBlue ? Colors.blue.shade50 : Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          color: isBlue ? Colors.blue : Colors.black87,
+        ),
+      ),
+    );
+  }
+
+  Widget _messages() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: const [
+            Text(
+              "Perguntas da Comunidade",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text(
+              "Ver todas",
+              style: TextStyle(color: Colors.blue),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        ...messages.map((msg) {
+          return _chatBubble(
+            name: msg["name"],
+            message: msg["message"],
+            isUser: msg["isUser"],
+          );
+        }).toList(),
+      ],
+    );
+  }
+
   Widget _chatBubble({
     required String name,
     required String message,
@@ -82,25 +371,38 @@ class _InvestPageState extends State<InvestPage> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         mainAxisAlignment:
-        isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        isUser ? MainAxisAlignment.start : MainAxisAlignment.end,
         children: [
+          if (isUser) ...[
+            const CircleAvatar(radius: 16, child: Text("RC")),
+            const SizedBox(width: 8),
+          ],
+
           Flexible(
             child: Column(
               crossAxisAlignment:
-              isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              isUser ? CrossAxisAlignment.start : CrossAxisAlignment.end,
               children: [
-                Text(name, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+
                 const SizedBox(height: 4),
+
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isUser ? Colors.blue : Colors.white,
+                    color: isUser ? Colors.white : Colors.blue,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
                     message,
                     style: TextStyle(
-                      color: isUser ? Colors.white : Colors.black,
+                      color: isUser ? Colors.black : Colors.white,
                     ),
                   ),
                 ),
@@ -112,7 +414,6 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
-  /// 🧠 INPUT + ENVIO
   Widget _inputField() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -128,6 +429,7 @@ class _InvestPageState extends State<InvestPage> {
               ),
             ),
           ),
+
           IconButton(
             icon: const Icon(Icons.send, color: Colors.blue),
             onPressed: () {
@@ -143,7 +445,6 @@ class _InvestPageState extends State<InvestPage> {
 
               _controller.clear();
 
-              /// resposta fake automática
               Future.delayed(const Duration(seconds: 1), () {
                 setState(() {
                   messages.add({
@@ -154,217 +455,22 @@ class _InvestPageState extends State<InvestPage> {
                 });
               });
             },
-          )
-        ],
-      ),
-    );
-  }
-}
-
-  Widget _chip(String text, {bool isBlue = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: isBlue ? Colors.blue.shade50 : Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(text, style: TextStyle(fontSize: 12, color: isBlue ? Colors.blue : Colors.black87)),
-    );
-  }
-
-  Widget _metrics() {
-    return Column(
-      children: [
-        Row(children: [_card("Capital aportado", "R\$ 280k"), _card("Tokens totais", "10.000")]),
-        Row(children: [_card("Valor do Token", "R\$ 28,00"), _card("Valorização", "+12.4%", green: true)]),
-      ],
-    );
-  }
-
-  Widget _card(String title, String value, {bool green = false}) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.all(6),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: const TextStyle(fontSize: 12, color: Colors.black54)),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                if (green) const Icon(Icons.trending_up, color: Colors.green, size: 16),
-                if (green) const SizedBox(width: 4),
-                Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: green ? Colors.green : Colors.black)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _chart() {
-    final heights = [40.0, 70.0, 60.0, 110.0, 140.0, 170.0];
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text("Histórico de Valorização", style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        const Text("Desempenho acumulado do token no período", style: TextStyle(fontSize: 12, color: Colors.black54)),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: List.generate(6, (i) {
-            return Column(
-              children: [
-                Container(
-                  width: 28,
-                  height: heights[i],
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [Colors.blue.shade200, Colors.blue.shade700]),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(["Jan","Fev","Mar","Abr","Mai","Jun"][i], style: const TextStyle(fontSize: 10)),
-              ],
-            );
-          }),
-        )
-      ]),
-    );
-  }
-
-  Widget _team() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text("Equipe e Governança", style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        _progress("João Silva (CEO)", 0.45),
-        _progress("Maria Costa (CTO)", 0.30),
-        _progress("Lucas Mendes (COO)", 0.25),
-      ]),
-    );
-  }
-
-  Widget _progress(String name, double value) {
-    return Column(children: [
-      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(name), Text("${(value * 100).toInt()}%")]),
-      const SizedBox(height: 6),
-      ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: LinearProgressIndicator(value: value, minHeight: 6),
-      ),
-      const SizedBox(height: 10),
-    ]);
-  }
-
-  Widget _docs() {
-    return Column(children: [
-      const Text("Documentação Pública"),
-      const SizedBox(height: 10),
-      Row(children: [_doc("Sumário Executivo"), _doc("Plano de Negócios")]),
-      Row(children: [_doc("Vídeo Demo", icon: Icons.play_circle_outline)]),
-    ]);
-  }
-
-  Widget _doc(String text, {IconData icon = Icons.description_outlined}) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.all(6),
-        height: 90,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(icon, color: Colors.blue),
-          const SizedBox(height: 6),
-          Text(text, textAlign: TextAlign.center),
-        ]),
-      ),
-    );
-  }
-
-  // 🔥 NOVA PARTE DE MENSAGENS
-
-  Widget _messages() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: const [
-            Text("Perguntas da Comunidade", style: TextStyle(fontWeight: FontWeight.bold)),
-            Text("Ver todas", style: TextStyle(color: Colors.blue)),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        _chatBubble(
-          name: "Ricardo Camargo",
-          message: "Como a EcoTech planeja mitigar o risco de flutuação no preço das commodities recicladas?",
-          isUser: true,
-        ),
-
-        const SizedBox(height: 12),
-
-        _chatBubble(
-          name: "Time EcoTech (CEO)",
-          message: "Olá Ricardo! Mantemos contratos de longo prazo...",
-          isUser: false,
-        ),
-      ],
-    );
-  }
-
-  Widget _chatBubble({
-    required String name,
-    required String message,
-    required bool isUser,
-  }) {
-    return Row(
-      mainAxisAlignment: isUser ? MainAxisAlignment.start : MainAxisAlignment.end,
-      children: [
-        if (isUser) ...[
-          const CircleAvatar(radius: 16, child: Text("RC")),
-          const SizedBox(width: 8),
-        ],
-        Flexible(
-          child: Column(
-            crossAxisAlignment: isUser ? CrossAxisAlignment.start : CrossAxisAlignment.end,
-            children: [
-              Text(name, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isUser ? Colors.white : Colors.blue,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(message, style: TextStyle(color: isUser ? Colors.black : Colors.white)),
-              ),
-            ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _bottomBar() {
     return Container(
       padding: const EdgeInsets.all(16),
+      color: Colors.white,
       child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF0D2CC8),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+        ),
         onPressed: () {},
         child: const Text("Quero Investir"),
       ),
