@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+void main() {
+  runApp(const TradingApp());
+}
+
 class TradingApp extends StatelessWidget {
   const TradingApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -69,7 +72,7 @@ class TradingPage extends StatefulWidget {
 
 class _TradingPageState extends State<TradingPage>
     with TickerProviderStateMixin {
-  int _selectedTab = 1; // Negociar tab
+  int _selectedTab = 1;
   String _selectedStartup = 'Green Energy Co.';
   final TextEditingController _quantityController = TextEditingController();
   double _totalPrice = 0.0;
@@ -88,11 +91,11 @@ class _TradingPageState extends State<TradingPage>
   ];
 
   final List<OfferItem> _offers = const [
-    OfferItem(quantity: 128, pricePerToken: 28.30, total: 3.622.40),
-    OfferItem(quantity: 75, pricePerToken: 28.60, total: 2.145.00),
-    OfferItem(quantity: 302, pricePerToken: 28.90, total: 8.727.80),
-    OfferItem(quantity: 56, pricePerToken: 29.10, total: 1.629.60),
-    OfferItem(quantity: 1.003, pricePerToken: 28.20, total: 28.284.60),
+    OfferItem(quantity: 128, pricePerToken: 28.30, total: 3622.40),
+    OfferItem(quantity: 75, pricePerToken: 28.60, total: 2145.00),
+    OfferItem(quantity: 302, pricePerToken: 28.90, total: 8727.80),
+    OfferItem(quantity: 56, pricePerToken: 29.10, total: 1629.60),
+    OfferItem(quantity: 1003, pricePerToken: 28.20, total: 28284.60),
   ];
 
   final List<HistoryItem> _history = const [
@@ -102,7 +105,7 @@ class _TradingPageState extends State<TradingPage>
       companyColor: Color(0xFF10B981),
       quantity: 50,
       tokens: 15,
-      value: 1.180.00,
+      value: 1180.00,
       status: 'Concluido',
       statusColor: Color(0xFF10B981),
     ),
@@ -122,7 +125,7 @@ class _TradingPageState extends State<TradingPage>
       companyColor: Color(0xFF6366F1),
       quantity: 51,
       tokens: 48,
-      value: 28.628.00,
+      value: 28628.00,
       status: 'Concluido',
       statusColor: Color(0xFF10B981),
     ),
@@ -163,11 +166,13 @@ class _TradingPageState extends State<TradingPage>
     final decPart = parts[1];
     final buffer = StringBuffer();
     int count = 0;
+
     for (int i = intPart.length - 1; i >= 0; i--) {
       if (count > 0 && count % 3 == 0) buffer.write('.');
       buffer.write(intPart[i]);
       count++;
     }
+
     return 'R\$ ${buffer.toString().split('').reversed.join()},$decPart';
   }
 
@@ -235,7 +240,7 @@ class _TradingPageState extends State<TradingPage>
           ),
           const Expanded(
             child: Text(
-              'Balanco de Negociacao',
+              'Balanço de Negociação',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -288,7 +293,7 @@ class _TradingPageState extends State<TradingPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Patrimonio em Movimentos',
+            'Patrimônio em Movimentos',
             style: TextStyle(
               color: Colors.white70,
               fontSize: 12,
@@ -463,7 +468,7 @@ class _TradingPageState extends State<TradingPage>
           const SizedBox(height: 10),
           Center(
             child: Text(
-              'Taxa de corretagem de 2% sera aplicada no valor total da operacao',
+              'Taxa de corretagem de 2% será aplicada no valor total da operação',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 10,
@@ -513,7 +518,10 @@ class _TradingPageState extends State<TradingPage>
           items: _startups
               .map((s) => DropdownMenuItem(value: s, child: Text(s)))
               .toList(),
-          onChanged: (val) => setState(() => _selectedStartup = val!),
+          onChanged: (val) {
+            if (val == null) return;
+            setState(() => _selectedStartup = val);
+          },
         ),
       ),
     );
@@ -566,7 +574,7 @@ class _TradingPageState extends State<TradingPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Preco por token',
+                'Preço por token',
                 style: TextStyle(fontSize: 10, color: Colors.grey[600]),
               ),
               const SizedBox(height: 2),
@@ -614,7 +622,7 @@ class _TradingPageState extends State<TradingPage>
         HapticFeedback.mediumImpact();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Transacao confirmada com sucesso!'),
+            content: const Text('Transação confirmada com sucesso!'),
             backgroundColor: const Color(0xFF10B981),
             behavior: SnackBarBehavior.floating,
             shape:
@@ -641,7 +649,7 @@ class _TradingPageState extends State<TradingPage>
           ],
         ),
         child: const Text(
-          'Confirmar Transacao',
+          'Confirmar Transação',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: Colors.white,
@@ -657,8 +665,7 @@ class _TradingPageState extends State<TradingPage>
   // ── Order Book ────────────────────────────────────────────────────────────
 
   Widget _buildOrderBook() {
-    final displayedOffers =
-    _showAllOffers ? _offers : _offers.take(4).toList();
+    final displayedOffers = _showAllOffers ? _offers : _offers.take(4).toList();
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -713,9 +720,7 @@ class _TradingPageState extends State<TradingPage>
           const SizedBox(height: 14),
           _buildOrderBookHeader(),
           const SizedBox(height: 4),
-          ...displayedOffers
-              .map((offer) => _buildOfferRow(offer))
-              .toList(),
+          ...displayedOffers.map((offer) => _buildOfferRow(offer)),
           const SizedBox(height: 8),
           GestureDetector(
             onTap: () => setState(() => _showAllOffers = !_showAllOffers),
@@ -765,31 +770,43 @@ class _TradingPageState extends State<TradingPage>
         color: const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        children: const [
+      child: const Row(
+        children: [
           Expanded(
-              flex: 2,
-              child: Text('Quantidade',
-                  style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF6B7280)))),
+            flex: 2,
+            child: Text(
+              'Quantidade',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+          ),
           Expanded(
-              flex: 2,
-              child: Text('Preco/Token',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF6B7280)))),
+            flex: 2,
+            child: Text(
+              'Preço/Token',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+          ),
           Expanded(
-              flex: 2,
-              child: Text('Total',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF6B7280)))),
+            flex: 2,
+            child: Text(
+              'Total',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+          ),
           SizedBox(width: 64),
         ],
       ),
@@ -809,7 +826,7 @@ class _TradingPageState extends State<TradingPage>
           Expanded(
             flex: 2,
             child: Text(
-              '${offer.quantity.toInt()} tokens',
+              '${offer.quantity} tokens',
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -847,18 +864,19 @@ class _TradingPageState extends State<TradingPage>
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                      'Comprando ${offer.quantity.toInt()} tokens por ${_formatCurrency(offer.pricePerToken)}'),
+                    'Comprando ${offer.quantity} tokens por ${_formatCurrency(offer.pricePerToken)}',
+                  ),
                   backgroundColor: const Color(0xFF1A56DB),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   duration: const Duration(seconds: 2),
                 ),
               );
             },
             child: Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
                 color: const Color(0xFF1A56DB),
                 borderRadius: BorderRadius.circular(8),
@@ -910,7 +928,7 @@ class _TradingPageState extends State<TradingPage>
               ),
               const SizedBox(width: 8),
               const Text(
-                'Historico Recente',
+                'Histórico Recente',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -921,7 +939,7 @@ class _TradingPageState extends State<TradingPage>
           ),
           const SizedBox(height: 14),
           _buildHistoryHeader(),
-          ..._history.map((item) => _buildHistoryRow(item)).toList(),
+          ..._history.map((item) => _buildHistoryRow(item)),
         ],
       ),
     );
@@ -933,29 +951,32 @@ class _TradingPageState extends State<TradingPage>
       fontWeight: FontWeight.w700,
       color: Color(0xFF6B7280),
     );
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       decoration: BoxDecoration(
         color: const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        children: const [
-          Expanded(flex: 3, child: Text('Titulo', style: style)),
+      child: const Row(
+        children: [
+          Expanded(flex: 3, child: Text('Título', style: style)),
           Expanded(
-              flex: 2,
-              child: Text('Qtd', textAlign: TextAlign.center, style: style)),
+            flex: 2,
+            child: Text('Qtd', textAlign: TextAlign.center, style: style),
+          ),
           Expanded(
-              flex: 2,
-              child:
-              Text('Tokens', textAlign: TextAlign.center, style: style)),
+            flex: 2,
+            child: Text('Tokens', textAlign: TextAlign.center, style: style),
+          ),
           Expanded(
-              flex: 2,
-              child: Text('Valor', textAlign: TextAlign.center, style: style)),
+            flex: 2,
+            child: Text('Valor', textAlign: TextAlign.center, style: style),
+          ),
           Expanded(
-              flex: 2,
-              child:
-              Text('Status', textAlign: TextAlign.center, style: style)),
+            flex: 2,
+            child: Text('Status', textAlign: TextAlign.center, style: style),
+          ),
         ],
       ),
     );
@@ -1073,7 +1094,7 @@ class _TradingPageState extends State<TradingPage>
 
   Widget _buildBottomNav() {
     final items = [
-      {'icon': Icons.home_outlined, 'label': 'Inicio'},
+      {'icon': Icons.home_outlined, 'label': 'Início'},
       {'icon': Icons.swap_horiz, 'label': 'Negociar'},
       {'icon': Icons.bar_chart_outlined, 'label': 'Mercado'},
       {'icon': Icons.account_balance_wallet_outlined, 'label': 'Carteira'},
@@ -1097,12 +1118,13 @@ class _TradingPageState extends State<TradingPage>
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(items.length, (i) {
               final isActive = i == _selectedTab;
+
               return GestureDetector(
                 onTap: () => setState(() => _selectedTab = i),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: isActive
                         ? const Color(0xFF1A56DB).withOpacity(0.1)
@@ -1124,9 +1146,8 @@ class _TradingPageState extends State<TradingPage>
                         items[i]['label'] as String,
                         style: TextStyle(
                           fontSize: 10,
-                          fontWeight: isActive
-                              ? FontWeight.w700
-                              : FontWeight.w500,
+                          fontWeight:
+                          isActive ? FontWeight.w700 : FontWeight.w500,
                           color: isActive
                               ? const Color(0xFF1A56DB)
                               : Colors.grey[400],
