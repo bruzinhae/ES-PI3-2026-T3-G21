@@ -2,17 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'confirmacao.dart';
 
+// Função principal do app.
+// É o ponto inicial onde o Flutter começa a executar o projeto.
 void main() {
   runApp(const TradingApp());
 }
 
+// Widget principal do aplicativo.
+// Ele configura o MaterialApp, tema, fonte e tela inicial.
 class TradingApp extends StatelessWidget {
   const TradingApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      // Remove a faixa vermelha de "Debug" no canto da tela.
       debugShowCheckedModeBanner: false,
+
+      // Define o tema visual do aplicativo.
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -21,6 +28,8 @@ class TradingApp extends StatelessWidget {
         ),
         fontFamily: 'Roboto',
       ),
+
+      // Define a primeira tela que será aberta no app.
       home: const TradingPage(),
     );
   }
@@ -28,6 +37,8 @@ class TradingApp extends StatelessWidget {
 
 // ─── Data Models ────────────────────────────────────────────────────────────
 
+// Modelo de dados para cada oferta do livro de ofertas.
+// Ele guarda quantidade, preço por token e valor total.
 class OfferItem {
   final int quantity;
   final double pricePerToken;
@@ -40,6 +51,8 @@ class OfferItem {
   });
 }
 
+// Modelo de dados para cada item do histórico de negociações.
+// Guarda informações como empresa, quantidade, tokens, valor e status.
 class HistoryItem {
   final String company;
   final String companyInitial;
@@ -64,6 +77,9 @@ class HistoryItem {
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
+// Tela principal de negociação.
+// StatefulWidget porque a tela muda conforme o usuário interage.
+// Exemplo: muda aba, digita quantidade, mostra mais ofertas etc.
 class TradingPage extends StatefulWidget {
   const TradingPage({super.key});
 
@@ -73,17 +89,34 @@ class TradingPage extends StatefulWidget {
 
 class _TradingPageState extends State<TradingPage>
     with TickerProviderStateMixin {
+  // Controla qual item do menu inferior está selecionado.
   int _selectedTab = 1;
+
+  // Guarda a startup selecionada no dropdown.
   String _selectedStartup = 'Green Energy Co.';
+
+  // Controla o campo onde o usuário digita a quantidade de tokens.
   final TextEditingController _quantityController = TextEditingController();
+
+  // Guarda o valor total da negociação calculado automaticamente.
   double _totalPrice = 0.0;
+
+  // Preço fixo usado para calcular o total.
   final double _pricePerToken = 29.50;
+
+  // Controla se o livro de ofertas mostra todas as ofertas ou só algumas.
   bool _showAllOffers = false;
+
+  // Controla se a aba ativa do livro de ofertas é Comprar ou Vender.
   bool _offerTabComprar = true;
 
+  // Controlador da animação de fade da tela.
   late AnimationController _fadeController;
+
+  // Animação usada para fazer a tela aparecer suavemente.
   late Animation<double> _fadeAnimation;
 
+  // Lista de startups exibidas no dropdown.
   final List<String> _startups = [
     'Green Energy Co.',
     'BioTech Solutions',
@@ -91,6 +124,7 @@ class _TradingPageState extends State<TradingPage>
     'AgriTech Brasil',
   ];
 
+  // Lista fixa com ofertas exibidas no livro de ofertas.
   final List<OfferItem> _offers = const [
     OfferItem(quantity: 128, pricePerToken: 28.30, total: 3622.40),
     OfferItem(quantity: 75, pricePerToken: 28.60, total: 2145.00),
@@ -99,6 +133,7 @@ class _TradingPageState extends State<TradingPage>
     OfferItem(quantity: 1003, pricePerToken: 28.20, total: 28284.60),
   ];
 
+  // Lista fixa com o histórico de negociações recentes.
   final List<HistoryItem> _history = const [
     HistoryItem(
       company: 'Green Energy Co.',
@@ -135,16 +170,24 @@ class _TradingPageState extends State<TradingPage>
   @override
   void initState() {
     super.initState();
+
+    // Cria o controlador da animação de entrada da tela.
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
+
+    // Define a curva da animação para ela ficar mais suave.
     _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
       curve: Curves.easeOut,
     );
+
+    // Inicia a animação quando a tela abre.
     _fadeController.forward();
 
+    // Escuta tudo que o usuário digita no campo de quantidade.
+    // Quando o número muda, o total é recalculado automaticamente.
     _quantityController.addListener(() {
       final qty = double.tryParse(_quantityController.text) ?? 0;
       setState(() {
@@ -155,11 +198,15 @@ class _TradingPageState extends State<TradingPage>
 
   @override
   void dispose() {
+    // Libera os controladores da memória quando a tela é fechada.
+    // Isso evita vazamento de memória.
     _fadeController.dispose();
     _quantityController.dispose();
     super.dispose();
   }
 
+  // Formata valores para moeda brasileira.
+  // Exemplo: 15420.00 vira R$ 15.420,00.
   String _formatCurrency(double value) {
     final formatted = value.toStringAsFixed(2).replaceAll('.', ',');
     final parts = formatted.split(',');
@@ -180,29 +227,47 @@ class _TradingPageState extends State<TradingPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Cor de fundo da tela inteira.
       backgroundColor: const Color(0xFFF4F6FA),
+
+      // FadeTransition aplica a animação de entrada na tela.
       body: FadeTransition(
         opacity: _fadeAnimation,
+
+        // Column organiza os principais blocos da tela na vertical.
         child: Column(
           children: [
+            // Barra superior da tela.
             _buildAppBar(),
+
+            // Expanded faz a parte central ocupar todo o espaço disponível.
             Expanded(
+              // Permite rolar a tela quando o conteúdo for maior que a altura disponível.
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
+                    // Card com patrimônio e tokens.
                     _buildBalanceCard(),
                     const SizedBox(height: 16),
+
+                    // Área principal para negociar tokens.
                     _buildTradeSection(),
                     const SizedBox(height: 16),
+
+                    // Livro com ofertas de compra/venda.
                     _buildOrderBook(),
                     const SizedBox(height: 16),
+
+                    // Histórico recente de operações.
                     _buildRecentHistory(),
                     const SizedBox(height: 24),
                   ],
                 ),
               ),
             ),
+
+            // Menu inferior da tela.
             _buildBottomNav(),
           ],
         ),
@@ -212,10 +277,12 @@ class _TradingPageState extends State<TradingPage>
 
   // ── AppBar ────────────────────────────────────────────────────────────────
 
+  // Cria a barra superior da tela com botão de voltar, título e ícone de perfil.
   Widget _buildAppBar() {
     return Container(
       color: Colors.white,
       padding: EdgeInsets.only(
+        // Usa MediaQuery para respeitar a área segura superior do celular.
         top: MediaQuery.of(context).padding.top + 8,
         left: 16,
         right: 16,
@@ -223,6 +290,7 @@ class _TradingPageState extends State<TradingPage>
       ),
       child: Row(
         children: [
+          // Botão de voltar visual.
           GestureDetector(
             onTap: () {},
             child: Container(
@@ -239,6 +307,8 @@ class _TradingPageState extends State<TradingPage>
               ),
             ),
           ),
+
+          // Expanded centraliza o título ocupando o espaço entre os botões.
           const Expanded(
             child: Text(
               'Balanço de Negociação',
@@ -251,6 +321,8 @@ class _TradingPageState extends State<TradingPage>
               ),
             ),
           ),
+
+          // Botão/ícone de perfil do usuário.
           Container(
             width: 36,
             height: 36,
@@ -271,15 +343,18 @@ class _TradingPageState extends State<TradingPage>
 
   // ── Balance Card ──────────────────────────────────────────────────────────
 
+  // Card azul/roxo que mostra patrimônio, quantidade total de tokens e botões de ação.
   Widget _buildBalanceCard() {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
+        // Gradiente de fundo do card.
         gradient: const LinearGradient(
-          colors: [Color(0xFF1A56DB), Color(0xFF1E40AF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF0D2CC8),
+            Color(0xFF8D35E6),
+          ],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -293,6 +368,7 @@ class _TradingPageState extends State<TradingPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Texto pequeno acima do valor principal.
           const Text(
             'Patrimônio em Movimentos',
             style: TextStyle(
@@ -303,6 +379,8 @@ class _TradingPageState extends State<TradingPage>
             ),
           ),
           const SizedBox(height: 8),
+
+          // Linha que mostra valor em reais e total de tokens.
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -317,6 +395,8 @@ class _TradingPageState extends State<TradingPage>
                   ),
                 ),
               ),
+
+              // Coluna com quantidade de tokens.
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -348,6 +428,8 @@ class _TradingPageState extends State<TradingPage>
             ],
           ),
           const SizedBox(height: 16),
+
+          // Botões de ação dentro do card.
           Row(
             children: [
               Expanded(
@@ -374,6 +456,8 @@ class _TradingPageState extends State<TradingPage>
     );
   }
 
+  // Cria os botões pequenos dentro do card de saldo.
+  // O parâmetro filled decide se o botão será branco ou transparente.
   Widget _buildBalanceButton({
     required String label,
     required IconData icon,
@@ -415,6 +499,7 @@ class _TradingPageState extends State<TradingPage>
 
   // ── Trade Section ─────────────────────────────────────────────────────────
 
+  // Card principal onde o usuário escolhe startup, digita quantidade e confirma transação.
   Widget _buildTradeSection() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -433,6 +518,7 @@ class _TradingPageState extends State<TradingPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Título do card de negociação com barrinha colorida.
           Row(
             children: [
               Container(
@@ -455,18 +541,28 @@ class _TradingPageState extends State<TradingPage>
             ],
           ),
           const SizedBox(height: 16),
+
+          // Label e dropdown da startup.
           _buildLabel('Selecionar Startup'),
           const SizedBox(height: 6),
           _buildStartupDropdown(),
           const SizedBox(height: 14),
+
+          // Label e campo de quantidade.
           _buildLabel('Quantidade de Tokens'),
           const SizedBox(height: 6),
           _buildQuantityField(),
           const SizedBox(height: 14),
+
+          // Linha com preço por token e valor total calculado.
           _buildPriceRow(),
           const SizedBox(height: 16),
+
+          // Botão que confirma e navega para a página confirmacao.dart.
           _buildConfirmButton(),
           const SizedBox(height: 10),
+
+          // Aviso da taxa de corretagem.
           Center(
             child: Text(
               'Taxa de corretagem de 2% será aplicada no valor total da operação',
@@ -483,6 +579,7 @@ class _TradingPageState extends State<TradingPage>
     );
   }
 
+  // Cria labels pequenos usados acima de campos.
   Widget _buildLabel(String text) {
     return Text(
       text,
@@ -495,6 +592,7 @@ class _TradingPageState extends State<TradingPage>
     );
   }
 
+  // Dropdown para escolher a startup.
   Widget _buildStartupDropdown() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
@@ -504,6 +602,7 @@ class _TradingPageState extends State<TradingPage>
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: DropdownButtonHideUnderline(
+        // Remove a linha padrão do DropdownButton.
         child: DropdownButton<String>(
           value: _selectedStartup,
           isExpanded: true,
@@ -516,9 +615,11 @@ class _TradingPageState extends State<TradingPage>
             fontWeight: FontWeight.w600,
             color: Color(0xFF111827),
           ),
+          // Transforma cada startup da lista em uma opção do dropdown.
           items: _startups
               .map((s) => DropdownMenuItem(value: s, child: Text(s)))
               .toList(),
+          // Quando o usuário escolhe outra startup, atualiza a tela.
           onChanged: (val) {
             if (val == null) return;
             setState(() => _selectedStartup = val);
@@ -528,6 +629,7 @@ class _TradingPageState extends State<TradingPage>
     );
   }
 
+  // Campo onde o usuário digita a quantidade de tokens.
   Widget _buildQuantityField() {
     return Container(
       decoration: BoxDecoration(
@@ -538,6 +640,7 @@ class _TradingPageState extends State<TradingPage>
       child: TextField(
         controller: _quantityController,
         keyboardType: TextInputType.number,
+        // Permite apenas números.
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         style: const TextStyle(
           fontSize: 14,
@@ -561,6 +664,7 @@ class _TradingPageState extends State<TradingPage>
     );
   }
 
+  // Mostra preço por token e valor total da operação.
   Widget _buildPriceRow() {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -571,6 +675,7 @@ class _TradingPageState extends State<TradingPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          // Valor unitário do token.
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -589,11 +694,15 @@ class _TradingPageState extends State<TradingPage>
               ),
             ],
           ),
+
+          // Divisor vertical entre preço e total.
           Container(
             width: 1,
             height: 36,
             color: Colors.blue[100],
           ),
+
+          // Total calculado conforme a quantidade digitada.
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -617,6 +726,8 @@ class _TradingPageState extends State<TradingPage>
     );
   }
 
+  // Botão principal de confirmação da transação.
+  // Ao clicar, vibra levemente e abre a página ConfirmacaoPage.
   Widget _buildConfirmButton() {
     return GestureDetector(
       onTap: () {
@@ -629,7 +740,6 @@ class _TradingPageState extends State<TradingPage>
           ),
         );
       },
-
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -651,7 +761,6 @@ class _TradingPageState extends State<TradingPage>
             ),
           ],
         ),
-
         child: const Text(
           'Confirmar Transação',
           textAlign: TextAlign.center,
@@ -668,6 +777,8 @@ class _TradingPageState extends State<TradingPage>
 
   // ── Order Book ────────────────────────────────────────────────────────────
 
+  // Card que mostra o livro de ofertas.
+  // Ele lista ofertas disponíveis e permite alternar entre Comprar/Vender.
   Widget _buildOrderBook() {
     final displayedOffers = _showAllOffers ? _offers : _offers.take(4).toList();
 
@@ -688,6 +799,7 @@ class _TradingPageState extends State<TradingPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Cabeçalho do livro de ofertas.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -712,6 +824,8 @@ class _TradingPageState extends State<TradingPage>
                   ),
                 ],
               ),
+
+              // Chips Comprar/Vender.
               Row(
                 children: [
                   _buildTabChip('Comprar', true),
@@ -722,10 +836,16 @@ class _TradingPageState extends State<TradingPage>
             ],
           ),
           const SizedBox(height: 14),
+
+          // Cabeçalho da tabela.
           _buildOrderBookHeader(),
           const SizedBox(height: 4),
+
+          // Linhas das ofertas exibidas.
           ...displayedOffers.map((offer) => _buildOfferRow(offer)),
           const SizedBox(height: 8),
+
+          // Botão para ver todas ou esconder ofertas.
           GestureDetector(
             onTap: () => setState(() => _showAllOffers = !_showAllOffers),
             child: Center(
@@ -744,6 +864,8 @@ class _TradingPageState extends State<TradingPage>
     );
   }
 
+  // Cria os chips Comprar e Vender.
+  // O chip ativo fica azul, o inativo fica cinza.
   Widget _buildTabChip(String label, bool isComprar) {
     final isActive = _offerTabComprar == isComprar;
     return GestureDetector(
@@ -767,6 +889,7 @@ class _TradingPageState extends State<TradingPage>
     );
   }
 
+  // Cabeçalho da tabela de ofertas.
   Widget _buildOrderBookHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -817,6 +940,7 @@ class _TradingPageState extends State<TradingPage>
     );
   }
 
+  // Cria cada linha de oferta com quantidade, preço, total e botão Comprar.
   Widget _buildOfferRow(OfferItem offer) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
@@ -827,6 +951,7 @@ class _TradingPageState extends State<TradingPage>
       ),
       child: Row(
         children: [
+          // Quantidade de tokens da oferta.
           Expanded(
             flex: 2,
             child: Text(
@@ -838,6 +963,8 @@ class _TradingPageState extends State<TradingPage>
               ),
             ),
           ),
+
+          // Preço por token da oferta.
           Expanded(
             flex: 2,
             child: Text(
@@ -850,6 +977,8 @@ class _TradingPageState extends State<TradingPage>
               ),
             ),
           ),
+
+          // Total da oferta.
           Expanded(
             flex: 2,
             child: Text(
@@ -862,6 +991,8 @@ class _TradingPageState extends State<TradingPage>
               ),
             ),
           ),
+
+          // Botão Comprar da linha.
           GestureDetector(
             onTap: () {
               HapticFeedback.selectionClick();
@@ -902,6 +1033,7 @@ class _TradingPageState extends State<TradingPage>
 
   // ── Recent History ────────────────────────────────────────────────────────
 
+  // Card com o histórico recente das operações.
   Widget _buildRecentHistory() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -920,6 +1052,7 @@ class _TradingPageState extends State<TradingPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Título do histórico.
           Row(
             children: [
               Container(
@@ -942,13 +1075,18 @@ class _TradingPageState extends State<TradingPage>
             ],
           ),
           const SizedBox(height: 14),
+
+          // Cabeçalho da tabela de histórico.
           _buildHistoryHeader(),
+
+          // Gera uma linha para cada item do histórico.
           ..._history.map((item) => _buildHistoryRow(item)),
         ],
       ),
     );
   }
 
+  // Cabeçalho da tabela do histórico.
   Widget _buildHistoryHeader() {
     const style = TextStyle(
       fontSize: 10,
@@ -986,6 +1124,7 @@ class _TradingPageState extends State<TradingPage>
     );
   }
 
+  // Cria cada linha do histórico.
   Widget _buildHistoryRow(HistoryItem item) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
@@ -996,6 +1135,7 @@ class _TradingPageState extends State<TradingPage>
       ),
       child: Row(
         children: [
+          // Coluna com avatar/letra da empresa e nome.
           Expanded(
             flex: 3,
             child: Row(
@@ -1034,6 +1174,8 @@ class _TradingPageState extends State<TradingPage>
               ],
             ),
           ),
+
+          // Quantidade negociada.
           Expanded(
             flex: 2,
             child: Text(
@@ -1046,6 +1188,8 @@ class _TradingPageState extends State<TradingPage>
               ),
             ),
           ),
+
+          // Tokens recebidos/negociados.
           Expanded(
             flex: 2,
             child: Text(
@@ -1058,6 +1202,8 @@ class _TradingPageState extends State<TradingPage>
               ),
             ),
           ),
+
+          // Valor da operação.
           Expanded(
             flex: 2,
             child: Text(
@@ -1070,6 +1216,8 @@ class _TradingPageState extends State<TradingPage>
               ),
             ),
           ),
+
+          // Status da operação, com cor própria.
           Expanded(
             flex: 2,
             child: Container(
@@ -1096,6 +1244,8 @@ class _TradingPageState extends State<TradingPage>
 
   // ── Bottom Navigation ─────────────────────────────────────────────────────
 
+  // Menu inferior da tela.
+  // Mostra as seções: Início, Negociar, Mercado e Carteira.
   Widget _buildBottomNav() {
     final items = [
       {'icon': Icons.home_outlined, 'label': 'Início'},
@@ -1121,6 +1271,7 @@ class _TradingPageState extends State<TradingPage>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(items.length, (i) {
+              // Verifica se o item atual é o selecionado.
               final isActive = i == _selectedTab;
 
               return GestureDetector(
@@ -1138,6 +1289,7 @@ class _TradingPageState extends State<TradingPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Ícone do item do menu.
                       Icon(
                         items[i]['icon'] as IconData,
                         size: 22,
@@ -1146,6 +1298,8 @@ class _TradingPageState extends State<TradingPage>
                             : Colors.grey[400],
                       ),
                       const SizedBox(height: 3),
+
+                      // Texto do item do menu.
                       Text(
                         items[i]['label'] as String,
                         style: TextStyle(
