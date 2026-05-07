@@ -2,19 +2,30 @@
 // RA: 23007950
 
 import 'package:flutter/material.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'catalogoStartUp.dart';
 
 class StartupInicial extends StatelessWidget {
-  const StartupInicial({super.key});
+  final String startupId;
+
+  const StartupInicial({
+    super.key,
+    required this.startupId,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return const InvestPage();
+    return InvestPage(startupId: startupId);
   }
 }
 
 class InvestPage extends StatefulWidget {
-  const InvestPage({super.key});
+  final String startupId;
+
+  const InvestPage({
+    super.key,
+    required this.startupId,
+  });
 
   @override
   State<InvestPage> createState() => _InvestPageState();
@@ -23,23 +34,183 @@ class InvestPage extends StatefulWidget {
 class _InvestPageState extends State<InvestPage> {
   final TextEditingController _controller = TextEditingController();
 
-  List<Map<String, dynamic>> messages = [
-    {
-      "name": "Ricardo Camargo",
-      "message":
-      "Como a EcoTech planeja mitigar o risco de flutuação no preço das commodities recicladas?",
-      "isUser": true,
-    },
-    {
-      "name": "Time EcoTech (CEO)",
-      "message":
-      "Olá Ricardo! Mantemos contratos de longo prazo com grandes indústrias que garantem estabilidade de margem.",
-      "isUser": false,
-    },
-  ];
+  bool carregando = true;
+  bool enviandoPergunta = false;
+  String? erro;
+
+  Map<String, dynamic>? startup;
+  List<Map<String, dynamic>> messages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    carregarDadosDaTela();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> carregarDadosDaTela() async {
+    setState(() {
+      carregando = true;
+      erro = null;
+    });
+
+    try {
+      await carregarDetalhesStartup();
+      await carregarPerguntas();
+
+      setState(() {
+        carregando = false;
+      });
+    } on FirebaseFunctionsException catch (e) {
+      setState(() {
+        carregando = false;
+        erro = "Erro: ${e.message}";
+      });
+
+      debugPrint("Código: ${e.code}");
+      debugPrint("Mensagem: ${e.message}");
+      debugPrint("Detalhes: ${e.details}");
+    } catch (e) {
+      setState(() {
+        carregando = false;
+        erro = "Erro inesperado ao carregar dados.";
+      });
+
+      debugPrint("Erro inesperado: $e");
+    }
+  }
+
+  Future<void> carregarDetalhesStartup() async {
+    final result = await FirebaseFunctions.instanceFor(
+      region: "southamerica-east1",
+    ).httpsCallable("getStartupDetails").call({
+      "startupId": widget.startupId,
+    });
+
+    startup = Map<String, dynamic>.from(result.data["data"]);
+  }
+
+  Future<void> carregarPerguntas() async {
+    final result = await FirebaseFunctions.instanceFor(
+      region: "southamerica-east1",
+    ).httpsCallable("listStartupQuestions").call({
+      "startupId": widget.startupId,
+    });
+
+    final List data = result.data["data"] ?? [];
+
+    messages = data.map((item) {
+      return Map<String, dynamic>.from(item);
+    }).toList();
+  }
+
+  Future<void> enviarPergunta() async {
+    final texto = _controller.text.trim();
+
+    if (texto.isEmpty) return;
+
+    setState(() {
+      enviandoPergunta = true;
+    });
+
+    try {
+      await FirebaseFunctions.instanceFor(
+        region: "southamerica-east1",
+      ).httpsCallable("createStartupQuestion").call({
+        "startupId": widget.startupId,
+        "message": texto,
+      });
+
+      _controller.clear();
+
+      await carregarPerguntas();
+
+      setState(() {
+        enviandoPergunta = false;
+      });
+    } on FirebaseFunctionsException catch (e) {
+      setState(() {
+        enviandoPergunta = false;
+        erro = "Erro: ${e.message}";
+      });
+
+      debugPrint("Código: ${e.code}");
+      debugPrint("Mensagem: ${e.message}");
+    } catch (e) {
+      setState(() {
+        enviandoPergunta = false;
+        erro = "Erro inesperado ao enviar pergunta.";
+      });
+
+      debugPrint("Erro inesperado: $e");
+    }
+  }
+
+  String texto(dynamic valor, String padrao) {
+    if (valor == null) return padrao;
+    return valor.toString();
+  }
+
+  String formatarStage(dynamic stage) {
+    if (stage == "nova") return "Nova";
+    if (stage == "em_operacao") return "Em operação";
+    if (stage == "em_expansao") return "Em expansão";
+    return texto(stage, "Sem estágio");
+  }
+
+  String formatarTags(dynamic tags) {
+    if (tags is List && tags.isNotEmpty) {
+      return tags.join(" • ").toUpperCase();
+    }
+
+    return "STARTUP";
+  }
+
+  String iniciais(String nome) {
+    final partes = nome.trim().split(" ");
+
+    if (partes.isEmpty) return "?";
+    if (partes.length == 1) return partes.first[0].toUpperCase();
+
+    return "${partes.first[0]}${partes.last[0]}".toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (carregando) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFEFF4FF),
+        body: SafeArea(
+          child: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
+    if (erro != null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFEFF4FF),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Center(
+              child: Text(
+                erro!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFEFF4FF),
       bottomNavigationBar: _bottomNav(),
@@ -56,9 +227,9 @@ class _InvestPageState extends State<InvestPage> {
                     const SizedBox(height: 24),
                     _chips(),
                     const SizedBox(height: 16),
-                    const Text(
-                      "EcoTech Solutions",
-                      style: TextStyle(
+                    Text(
+                      texto(startup?["name"], "Startup"),
+                      style: const TextStyle(
                         fontSize: 16,
                         color: Color(0xFF1F2937),
                       ),
@@ -66,9 +237,12 @@ class _InvestPageState extends State<InvestPage> {
                     const SizedBox(height: 20),
                     _series(),
                     const SizedBox(height: 18),
-                    const Text(
-                      "Revolucionando a economia circular através de tecnologia proprietária de triagem automatizada e reciclagem química de alta eficiência.",
-                      style: TextStyle(
+                    Text(
+                      texto(
+                        startup?["description"] ?? startup?["shortDescription"],
+                        "Sem descrição.",
+                      ),
+                      style: const TextStyle(
                         fontSize: 14,
                         height: 1.6,
                         color: Color(0xFF4B5563),
@@ -108,26 +282,22 @@ class _InvestPageState extends State<InvestPage> {
   Widget _topBar() {
     return Row(
       children: [
-
         GestureDetector(
           onTap: () {
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (context) => const CatalogoStartUp(),
               ),
             );
           },
-
           child: const Icon(
             Icons.arrow_back,
             color: Color(0xFF0D2CC8),
             size: 22,
           ),
         ),
-
         const SizedBox(width: 18),
-
         const Expanded(
           child: Text(
             "MesclaInvest",
@@ -138,7 +308,6 @@ class _InvestPageState extends State<InvestPage> {
             ),
           ),
         ),
-
         const Icon(
           Icons.favorite_border,
           color: Color(0xFF0D2CC8),
@@ -149,11 +318,12 @@ class _InvestPageState extends State<InvestPage> {
   }
 
   Widget _chips() {
-    return Row(
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
       children: [
-        _chip("SUSTENTABILIDADE"),
-        const SizedBox(width: 10),
-        _chip("Em expansão"),
+        _chip(formatarTags(startup?["tags"])),
+        _chip(formatarStage(startup?["stage"])),
       ],
     );
   }
@@ -179,12 +349,12 @@ class _InvestPageState extends State<InvestPage> {
 
   Widget _series() {
     return Row(
-      children: const [
-        Icon(Icons.eco_outlined, color: Color(0xFF0D2CC8), size: 26),
-        SizedBox(width: 12),
+      children: [
+        const Icon(Icons.eco_outlined, color: Color(0xFF0D2CC8), size: 26),
+        const SizedBox(width: 12),
         Text(
-          "Series A",
-          style: TextStyle(
+          texto(startup?["round"] ?? startup?["series"], "Rodada não informada"),
+          style: const TextStyle(
             color: Color(0xFF0D2CC8),
             fontSize: 16,
             fontWeight: FontWeight.w700,
@@ -202,13 +372,22 @@ class _InvestPageState extends State<InvestPage> {
       childAspectRatio: 2,
       crossAxisSpacing: 14,
       mainAxisSpacing: 14,
-      children: const [
-        _MetricCard(title: "Capital aportado", value: "R\$ 280k"),
-        _MetricCard(title: "Tokens totais", value: "10.000"),
-        _MetricCard(title: "Valor do Token", value: "R\$ 28,00"),
+      children: [
+        _MetricCard(
+          title: "Capital aportado",
+          value: texto(startup?["amountRaised"] ?? startup?["value"], "-"),
+        ),
+        _MetricCard(
+          title: "Tokens totais",
+          value: texto(startup?["tokens"] ?? startup?["totalTokens"], "-"),
+        ),
+        _MetricCard(
+          title: "Valor do Token",
+          value: texto(startup?["tokenValue"], "-"),
+        ),
         _MetricCard(
           title: "Valorização",
-          value: "+12,4%",
+          value: texto(startup?["growth"] ?? startup?["profitability"], "-"),
           green: true,
         ),
       ],
@@ -329,6 +508,20 @@ class _InvestPageState extends State<InvestPage> {
   }
 
   Widget _teamCard() {
+    final team = startup?["team"];
+
+    if (team is! List || team.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: _cardDecoration(),
+        child: const Text(
+          "Equipe e Governança não informada.",
+          style: TextStyle(fontSize: 14),
+        ),
+      );
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -343,18 +536,18 @@ class _InvestPageState extends State<InvestPage> {
             style: TextStyle(fontSize: 10, letterSpacing: 2, color: Colors.grey),
           ),
           const SizedBox(height: 16),
-          _progress("João Silva (CEO)", 0.45, "45%"),
-          _progress("Maria Costa (CTO)", 0.30, "30%"),
-          _progress("Lucas Mendes (COO)", 0.25, "25%"),
-          const SizedBox(height: 20),
-          const Text(
-            "MENTORES E CONSELHEIROS",
-            style: TextStyle(fontSize: 10, letterSpacing: 2, color: Colors.grey),
-          ),
-          const SizedBox(height: 16),
-          _person("Roberto Alencar", "Estrategista ESG"),
-          const SizedBox(height: 12),
-          _person("Sandra Rocha", "Ex-Diretora BNDES"),
+          ...team.map((person) {
+            final item = Map<String, dynamic>.from(person);
+            final name = texto(item["name"], "Integrante");
+            final role = texto(item["role"], "Cargo não informado");
+            final percent = item["equity"] ?? 0;
+
+            return _progress(
+              "$name ($role)",
+              percent is num ? percent / 100 : 0,
+              "${texto(percent, "0")}%",
+            );
+          }).toList(),
         ],
       ),
     );
@@ -386,48 +579,27 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
-  Widget _person(String name, String role) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF4FF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFD9E4FA)),
-      ),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            radius: 23,
-            backgroundImage: NetworkImage("https://i.imgur.com/BoN9kdC.png"),
-          ),
-          const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-              ),
-              Text(
-                role,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _docs() {
+    final docs = startup?["documents"];
+
+    if (docs is! List || docs.isEmpty) {
+      return const Text(
+        "Nenhum documento público disponível.",
+        style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
+      );
+    }
+
     return Wrap(
       spacing: 14,
       runSpacing: 14,
-      children: [
-        _doc("Sumário Executivo", Icons.description_outlined),
-        _doc("Plano de Negócios", Icons.assignment_outlined),
-        _doc("Vídeo Demo", Icons.play_circle_outline),
-      ],
+      children: docs.map((doc) {
+        final item = Map<String, dynamic>.from(doc);
+
+        return _doc(
+          texto(item["title"], "Documento"),
+          Icons.description_outlined,
+        );
+      }).toList(),
     );
   }
 
@@ -447,6 +619,7 @@ class _InvestPageState extends State<InvestPage> {
           const SizedBox(height: 12),
           Text(
             text,
+            textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
           ),
         ],
@@ -462,34 +635,34 @@ class _InvestPageState extends State<InvestPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          Row(
-            children: const [
-              Expanded(
-                child: Text(
-                  "Perguntas da\nComunidade",
-                ),
-              ),
-            ],
+          const Text(
+            "Perguntas da\nComunidade",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
-
           const SizedBox(height: 18),
-
           _inputField(),
-
           const SizedBox(height: 18),
+          if (messages.isEmpty)
+            const Text(
+              "Nenhuma pergunta enviada ainda.",
+              style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
+            )
+          else
+            ...messages.map((msg) {
+              final name = texto(msg["name"] ?? msg["authorName"], "Usuário");
+              final message = texto(msg["message"], "");
+              final isAnswer = msg["isAnswer"] == true || msg["isUser"] == false;
 
-          ...messages.map((msg) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: _questionBubble(
-                initials: msg["isUser"] ? "RC" : "◎",
-                name: msg["name"],
-                text: msg["message"],
-                isAnswer: !msg["isUser"],
-              ),
-            );
-          }).toList(),
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _questionBubble(
+                  initials: isAnswer ? "◎" : iniciais(name),
+                  name: name,
+                  text: message,
+                  isAnswer: isAnswer,
+                ),
+              );
+            }).toList(),
         ],
       ),
     );
@@ -506,8 +679,9 @@ class _InvestPageState extends State<InvestPage> {
       children: [
         CircleAvatar(
           radius: 18,
-          backgroundColor:
-          isAnswer ? const Color(0xFF0D2CC8) : const Color(0xFFEBD5FF),
+          backgroundColor: isAnswer
+              ? const Color(0xFF0D2CC8)
+              : const Color(0xFFEBD5FF),
           child: Text(
             initials,
             style: TextStyle(
@@ -524,7 +698,9 @@ class _InvestPageState extends State<InvestPage> {
             decoration: BoxDecoration(
               color: isAnswer ? Colors.white : const Color(0xFFEFF4FF),
               borderRadius: BorderRadius.circular(16),
-              border: isAnswer ? Border.all(color: const Color(0xFFCBD5E1)) : null,
+              border: isAnswer
+                  ? Border.all(color: const Color(0xFFCBD5E1))
+                  : null,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -549,7 +725,10 @@ class _InvestPageState extends State<InvestPage> {
   Widget _inputField() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      color: Colors.white,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
       child: Row(
         children: [
           Expanded(
@@ -562,30 +741,14 @@ class _InvestPageState extends State<InvestPage> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.send, color: Color(0xFF0D2CC8)),
-            onPressed: () {
-              if (_controller.text.trim().isEmpty) return;
-
-              setState(() {
-                messages.add({
-                  "name": "Você",
-                  "message": _controller.text,
-                  "isUser": true,
-                });
-              });
-
-              _controller.clear();
-
-              Future.delayed(const Duration(seconds: 1), () {
-                setState(() {
-                  messages.add({
-                    "name": "Time EcoTech",
-                    "message": "Obrigado pela pergunta! Em breve responderemos.",
-                    "isUser": false,
-                  });
-                });
-              });
-            },
+            icon: enviandoPergunta
+                ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+                : const Icon(Icons.send, color: Color(0xFF0D2CC8)),
+            onPressed: enviandoPergunta ? null : enviarPergunta,
           ),
         ],
       ),
@@ -593,19 +756,24 @@ class _InvestPageState extends State<InvestPage> {
   }
 
   Widget _investButton() {
-    return Container(
-      width: double.infinity,
-      height: 58,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0D2CC8), Color(0xFF8D35E6)],
+    return GestureDetector(
+      onTap: () {
+        debugPrint("Investir na startup: ${widget.startupId}");
+      },
+      child: Container(
+        width: double.infinity,
+        height: 58,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0D2CC8), Color(0xFF8D35E6)],
+          ),
         ),
-      ),
-      child: const Center(
-        child: Text(
-          "Quero Investir  →",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        child: const Center(
+          child: Text(
+            "Quero Investir  →",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          ),
         ),
       ),
     );
@@ -659,18 +827,25 @@ class _MetricCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(title, style: const TextStyle(fontSize: 11, color: Color(0xFF4B5563))),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 11, color: Color(0xFF4B5563)),
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
-              if (green) const Icon(Icons.trending_up, color: Colors.green, size: 16),
+              if (green)
+                const Icon(Icons.trending_up, color: Colors.green, size: 16),
               if (green) const SizedBox(width: 4),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: green ? Colors.green : Colors.black,
+              Expanded(
+                child: Text(
+                  value,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: green ? Colors.green : Colors.black,
+                  ),
                 ),
               ),
             ],
