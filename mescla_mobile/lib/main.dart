@@ -2,9 +2,14 @@
 // RA: 23007950
 
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'catalogoStartUp.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp();
+
   runApp(const MesclaInvestApp());
 }
 
@@ -16,7 +21,7 @@ class MesclaInvestApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'MesclaInvest',
-      home: CatalogoStartUp(),
+      home: const CatalogoStartUp(),
     );
   }
 }
