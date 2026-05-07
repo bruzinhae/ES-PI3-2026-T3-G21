@@ -2,74 +2,115 @@
 // RA: 23007950
 
 import 'package:flutter/material.dart';
+import 'services/resgate_service.dart';
 
-// Função principal do app.
-// É por aqui que o Flutter inicia a execução.
 void main() {
   runApp(const MesclaInvestApp());
 }
 
-// Widget principal do aplicativo.
-// Configura o MaterialApp, tema, título e tela inicial.
 class MesclaInvestApp extends StatelessWidget {
   const MesclaInvestApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      // Remove a faixa de debug do canto da tela.
       debugShowCheckedModeBanner: false,
-
-      // Título do aplicativo.
       title: 'MesclaInvest',
-
-      // Define o tema visual geral do app.
       theme: ThemeData(
         fontFamily: 'Roboto',
         scaffoldBackgroundColor: const Color(0xFFEDEEFF),
       ),
-
-      // Tela inicial do app.
       home: const ConfirmacaoPage(),
     );
   }
 }
 
-// Tela de confirmação/resgate.
-// StatelessWidget porque, neste código, a tela não altera estado interno.
-class ConfirmacaoPage extends StatelessWidget {
+class ConfirmacaoPage extends StatefulWidget {
   const ConfirmacaoPage({super.key});
+
+  @override
+  State<ConfirmacaoPage> createState() => _ConfirmacaoPageState();
+}
+
+class _ConfirmacaoPageState extends State<ConfirmacaoPage> {
+  final ResgateService _resgateService = ResgateService();
+  final TextEditingController _valorController = TextEditingController();
+
+  double saldoTotal = 15420.00;
+  double saldoDisponivel = 1240.00;
+  int totalTokens = 850;
+
+  @override
+  void dispose() {
+    _valorController.dispose();
+    super.dispose();
+  }
+
+  String formatCurrency(double value) {
+    return 'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}';
+  }
+
+  void _resgatarTudo() {
+    _valorController.text = saldoDisponivel.toStringAsFixed(2);
+  }
+
+  void _confirmarResgate() {
+    final valor = double.tryParse(
+      _valorController.text.replaceAll(',', '.'),
+    ) ??
+        0;
+
+    final erro = _resgateService.validarResgate(
+      valor: valor,
+      saldoDisponivel: saldoDisponivel,
+    );
+
+    if (erro != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(erro),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      saldoDisponivel = _resgateService.calcularNovoSaldo(
+        saldoAtual: saldoDisponivel,
+        valorResgate: valor,
+      );
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Resgate de ${formatCurrency(valor)} solicitado com sucesso!',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    _valorController.clear();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Cor de fundo geral da tela.
       backgroundColor: const Color(0xFFEDEEFF),
 
-      // SafeArea evita que o conteúdo fique atrás da câmera, barra de status ou barra inferior.
       body: SafeArea(
-        // Center centraliza o conteúdo principal na tela.
         child: Center(
-          // ConstrainedBox limita a largura máxima da tela.
-          // Isso ajuda principalmente no Flutter Web ou telas grandes.
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 430),
-
-            // SingleChildScrollView permite rolagem quando o conteúdo não cabe na tela.
             child: SingleChildScrollView(
-              // Padding cria espaçamento interno em volta de todo o conteúdo.
               child: Padding(
                 padding: const EdgeInsets.all(22),
-
-                // Column organiza os elementos principais verticalmente.
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ─── HEADER ─────────────────────────────────────────────
-                    // Cabeçalho com logo, nome do app e botão "Resgatar".
                     Row(
                       children: [
-                        // Container circular usado como imagem/logo do app.
                         Container(
                           width: 52,
                           height: 52,
@@ -88,10 +129,8 @@ class ConfirmacaoPage extends StatelessWidget {
                           ),
                         ),
 
-                        // Espaçamento horizontal entre logo e título.
                         const SizedBox(width: 14),
 
-                        // Expanded faz o título ocupar o espaço disponível.
                         const Expanded(
                           child: Text(
                             'MesclaInvest',
@@ -103,7 +142,6 @@ class ConfirmacaoPage extends StatelessWidget {
                           ),
                         ),
 
-                        // Botão visual "Resgatar" no topo.
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 28,
@@ -132,13 +170,10 @@ class ConfirmacaoPage extends StatelessWidget {
 
                     const SizedBox(height: 28),
 
-                    // ─── SALDO CARD ─────────────────────────────────────────
-                    // Card que mostra o saldo total e os botões de ação.
                     _card(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Título pequeno do card.
                           const Text(
                             'SALDO TOTAL',
                             style: TextStyle(
@@ -150,22 +185,20 @@ class ConfirmacaoPage extends StatelessWidget {
 
                           const SizedBox(height: 10),
 
-                          // RichText permite misturar estilos diferentes no mesmo texto.
-                          // Aqui o valor fica preto e os tokens ficam azuis.
                           RichText(
-                            text: const TextSpan(
+                            text: TextSpan(
                               children: [
                                 TextSpan(
-                                  text: 'R\$ 15.420,00 ',
-                                  style: TextStyle(
+                                  text: '${formatCurrency(saldoTotal)} ',
+                                  style: const TextStyle(
                                     color: Colors.black,
                                     fontSize: 20,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
                                 TextSpan(
-                                  text: '850 tokens',
-                                  style: TextStyle(
+                                  text: '$totalTokens tokens',
+                                  style: const TextStyle(
                                     color: Color(0xFF0D2CC8),
                                     fontSize: 20,
                                     fontWeight: FontWeight.w700,
@@ -177,7 +210,6 @@ class ConfirmacaoPage extends StatelessWidget {
 
                           const SizedBox(height: 26),
 
-                          // Linha com dois botões: Carregar Saldo e Resgatar Lucros.
                           Row(
                             children: [
                               Expanded(
@@ -188,7 +220,9 @@ class ConfirmacaoPage extends StatelessWidget {
                                   icon: Icons.add_circle_outline,
                                 ),
                               ),
+
                               const SizedBox(width: 16),
+
                               Expanded(
                                 child: _gradientButton(
                                   title: 'Resgatar\nLucros',
@@ -203,12 +237,9 @@ class ConfirmacaoPage extends StatelessWidget {
 
                     const SizedBox(height: 22),
 
-                    // ─── DISPONÍVEL PARA RESGATE ─────────────────────────────
-                    // Card que mostra quanto dinheiro está disponível para resgatar.
                     _card(
                       child: Row(
                         children: [
-                          // Ícone de carteira dentro de um quadrado arredondado.
                           Container(
                             width: 68,
                             height: 68,
@@ -225,21 +256,20 @@ class ConfirmacaoPage extends StatelessWidget {
 
                           const SizedBox(width: 18),
 
-                          // Texto com descrição e valor disponível.
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text(
+                            children: [
+                              const Text(
                                 'Disponível para resgate',
                                 style: TextStyle(
                                   color: Color(0xFF717484),
                                   fontSize: 15,
                                 ),
                               ),
-                              SizedBox(height: 6),
+                              const SizedBox(height: 6),
                               Text(
-                                'R\$ 1.240,00',
-                                style: TextStyle(
+                                formatCurrency(saldoDisponivel),
+                                style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -252,8 +282,6 @@ class ConfirmacaoPage extends StatelessWidget {
 
                     const SizedBox(height: 22),
 
-                    // ─── CONTA DESTINO ───────────────────────────────────────
-                    // Card que mostra a conta bancária para onde o resgate será enviado.
                     _card(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,7 +298,6 @@ class ConfirmacaoPage extends StatelessWidget {
 
                           Row(
                             children: [
-                              // Ícone do banco.
                               Container(
                                 width: 52,
                                 height: 52,
@@ -286,11 +313,10 @@ class ConfirmacaoPage extends StatelessWidget {
 
                               const SizedBox(width: 16),
 
-                              // Nome do banco e dados da conta.
-                              Expanded(
+                              const Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [
+                                  children: [
                                     Text(
                                       'Itaú Unibanco',
                                       style: TextStyle(
@@ -310,7 +336,6 @@ class ConfirmacaoPage extends StatelessWidget {
                                 ),
                               ),
 
-                              // Ícone indicando que a conta pode ser alterada ou aberta.
                               const Icon(
                                 Icons.chevron_right,
                                 size: 34,
@@ -324,7 +349,6 @@ class ConfirmacaoPage extends StatelessWidget {
 
                     const SizedBox(height: 26),
 
-                    // Título do campo de valor do resgate.
                     const Text(
                       'Valor do resgate',
                       style: TextStyle(
@@ -335,8 +359,6 @@ class ConfirmacaoPage extends StatelessWidget {
 
                     const SizedBox(height: 16),
 
-                    // ─── INPUT DE VALOR ─────────────────────────────────────
-                    // Campo onde o usuário digita o valor que deseja resgatar.
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -348,10 +370,11 @@ class ConfirmacaoPage extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          // Campo de texto para digitar o valor.
-                          const Expanded(
+                          Expanded(
                             child: TextField(
-                              decoration: InputDecoration(
+                              controller: _valorController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
                                 border: InputBorder.none,
                                 hintText: 'R\$ 0,00',
                                 hintStyle: TextStyle(
@@ -362,22 +385,24 @@ class ConfirmacaoPage extends StatelessWidget {
                             ),
                           ),
 
-                          // Botão visual para preencher o valor total disponível.
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFD9E1F3),
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            child: const Text(
-                              'Resgatar tudo',
-                              style: TextStyle(
-                                color: Color(0xFF0D2CC8),
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
+                          GestureDetector(
+                            onTap: _resgatarTudo,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD9E1F3),
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              child: const Text(
+                                'Resgatar tudo',
+                                style: TextStyle(
+                                  color: Color(0xFF0D2CC8),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ),
@@ -387,8 +412,6 @@ class ConfirmacaoPage extends StatelessWidget {
 
                     const SizedBox(height: 34),
 
-                    // ─── TÍTULO DO HISTÓRICO ────────────────────────────────
-                    // Linha com título e link "Ver todos".
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: const [
@@ -412,7 +435,6 @@ class ConfirmacaoPage extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    // Cards do histórico de rendimentos.
                     _historyTile(
                       icon: Icons.ev_station,
                       iconColor: Colors.green,
@@ -445,38 +467,39 @@ class ConfirmacaoPage extends StatelessWidget {
 
                     const SizedBox(height: 24),
 
-                    // ─── BOTÃO CONFIRMAR RESGATE ────────────────────────────
-                    // Botão principal da tela para confirmar o resgate.
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 22),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(22),
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF0A2CCF),
-                            Color(0xFF7B39D8),
+                    GestureDetector(
+                      onTap: _confirmarResgate,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 22),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(22),
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF0A2CCF),
+                              Color(0xFF7B39D8),
+                            ],
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Text(
+                              'Confirmar Resgate',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            SizedBox(width: 14),
+                            Icon(
+                              Icons.arrow_forward,
+                              color: Colors.white,
+                              size: 30,
+                            ),
                           ],
                         ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Text(
-                            'Confirmar Resgate',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(width: 14),
-                          Icon(
-                            Icons.arrow_forward,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                        ],
                       ),
                     ),
 
@@ -489,8 +512,6 @@ class ConfirmacaoPage extends StatelessWidget {
         ),
       ),
 
-      // ─── BOTTOM NAV ───────────────────────────────────────────────────────
-      // Menu inferior fixo da tela.
       bottomNavigationBar: Container(
         height: 95,
         decoration: const BoxDecoration(
@@ -513,7 +534,6 @@ class ConfirmacaoPage extends StatelessWidget {
     );
   }
 
-  // Widget reutilizável para criar cards brancos arredondados.
   static Widget _card({required Widget child}) {
     return Container(
       width: double.infinity,
@@ -526,8 +546,6 @@ class ConfirmacaoPage extends StatelessWidget {
     );
   }
 
-  // Botão simples usado no card de saldo.
-  // Recebe título, cor de fundo, cor do texto e ícone.
   static Widget _actionButton({
     required String title,
     required Color background,
@@ -557,7 +575,6 @@ class ConfirmacaoPage extends StatelessWidget {
     );
   }
 
-  // Botão com gradiente usado para destacar a ação principal do card de saldo.
   static Widget _gradientButton({
     required String title,
     required IconData icon,
@@ -590,7 +607,6 @@ class ConfirmacaoPage extends StatelessWidget {
     );
   }
 
-  // Widget reutilizável para cada item do histórico de rendimentos.
   static Widget _historyTile({
     required IconData icon,
     required Color iconColor,
@@ -609,7 +625,6 @@ class ConfirmacaoPage extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Ícone colorido do investimento/startup.
           Container(
             width: 66,
             height: 66,
@@ -626,7 +641,6 @@ class ConfirmacaoPage extends StatelessWidget {
 
           const SizedBox(width: 18),
 
-          // Nome da empresa e tipo de rendimento.
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -651,7 +665,6 @@ class ConfirmacaoPage extends StatelessWidget {
             ),
           ),
 
-          // Valor recebido e data.
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -678,7 +691,6 @@ class ConfirmacaoPage extends StatelessWidget {
     );
   }
 
-  // Item comum/inativo do menu inferior.
   static Widget _navItem(IconData icon, String label) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -699,8 +711,6 @@ class ConfirmacaoPage extends StatelessWidget {
     );
   }
 
-  // Item ativo do menu inferior.
-  // Tem fundo com gradiente para destacar a aba atual.
   static Widget _navActive() {
     return Container(
       padding: const EdgeInsets.symmetric(
