@@ -2,12 +2,12 @@
 // RA: 24801649
 import 'package:flutter/material.dart';
 // import 'pages/auth/welcome_screen.dart';
-// import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:mescla_mobile/carteira.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await Firebase.initializeApp();
+  await Firebase.initializeApp();
   runApp(const MesclaInvestApp());
 }
 
