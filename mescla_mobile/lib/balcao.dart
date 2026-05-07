@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'confirmacao.dart';
+import 'trading_service.dart';
 
 void main() {
   runApp(const TradingApp());
@@ -663,47 +664,129 @@ class _TradingPageState extends State<TradingPage>
       onTap: () {
         HapticFeedback.mediumImpact();
 
+        final quantidade =
+            int.tryParse(_quantityController.text) ?? 0;
+
+        if (_selectedStartup.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Selecione uma startup.',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              backgroundColor: const Color(0xFFDC2626),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          );
+          return;
+        }
+
+        if (quantidade <= 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Informe uma quantidade válida de tokens.',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              backgroundColor: const Color(0xFFDC2626),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          );
+          return;
+        }
+
+        final total = quantidade * _pricePerToken;
+        final taxaCorretagem = total * 0.02;
+        final valorFinal = total + taxaCorretagem;
+
+        final transacao = {
+          'startup': _selectedStartup,
+          'quantidadeTokens': quantidade,
+          'precoPorToken': _pricePerToken,
+          'valorTotal': total,
+          'taxaCorretagem': taxaCorretagem,
+          'valorFinal': valorFinal,
+          'status': 'Pendente',
+          'dataCriacao': DateTime.now().toIso8601String(),
+        };
+
+        print(transacao);
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Transação confirmada com sucesso!'),
+            content: Text(
+              'Transação registrada • ${_formatCurrency(valorFinal)}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             backgroundColor: const Color(0xFF10B981),
             behavior: SnackBarBehavior.floating,
+            elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
             ),
           ),
         );
       },
+
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 15),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [
+              Color(0xFF0D2CC8),
               Color(0xFF1A56DB),
               Color(0xFF2563EB),
             ],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1A56DB).withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+              color: const Color(0xFF1A56DB).withOpacity(0.35),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
-        child: const Text(
-          'Confirmar Transação',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.3,
-          ),
+
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(
+              Icons.verified_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+
+            SizedBox(width: 8),
+
+            Text(
+              'Confirmar Transação',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
         ),
       ),
     );
