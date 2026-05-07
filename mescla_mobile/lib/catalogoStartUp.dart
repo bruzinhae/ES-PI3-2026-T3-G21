@@ -53,9 +53,9 @@ class _HomeScreenState extends State<HomeScreen> {
         stage = "em_expansao";
       }
 
-      final result = await FirebaseFunctions.instance
-          .httpsCallable("listStartups")
-          .call({
+      final result = await FirebaseFunctions.instanceFor(
+        region: "southamerica-east1",
+      ).httpsCallable("listStartups").call({
         "stage": stage,
         "search": busca,
       });
