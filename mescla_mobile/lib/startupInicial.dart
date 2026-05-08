@@ -547,7 +547,7 @@ class _InvestPageState extends State<InvestPage> {
               percent is num ? percent / 100 : 0,
               "${texto(percent, "0")}%",
             );
-          }).toList(),
+          }),
         ],
       ),
     );
@@ -662,7 +662,7 @@ class _InvestPageState extends State<InvestPage> {
                   isAnswer: isAnswer,
                 ),
               );
-            }).toList(),
+            }),
         ],
       ),
     );

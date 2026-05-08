@@ -194,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 else
                   ...startups.map((startup) {
                     return _startupCard(context, startup);
-                  }).toList(),
+                  }),
 
               const SizedBox(height: 80),
             ],

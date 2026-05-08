@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'register_screen.dart';
 import 'recuperar_senha.dart';
 import '../../services/auth_service.dart';
+import '../../catalogoStartUp.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -95,6 +96,15 @@ class _LoginScreenState extends State<LoginScreen> {
         password: senhaController.text.trim(),
       );
       mostrarPopup2FA();
+
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CatalogoStartUp(),
+      ),
+    );
 
     } catch (e) {
       mostrarErro("Erro ao entrar. Verifique seus dados.");
