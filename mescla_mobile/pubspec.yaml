@@ -3,6 +3,7 @@ description: A new Flutter project
 
 publish_to: 'none'
 
+
 version: 1.0.0+1
 
 environment:
@@ -17,6 +18,10 @@ dependencies:
   cloud_functions: ^5.0.0
 
   cupertino_icons: ^1.0.8
+  cloud_functions: ^6.2.0
+  firebase_auth: ^6.4.0
+  firebase_core: ^4.7.0
+  cloud_firestore: 6.3.0
 
 dev_dependencies:
   flutter_test:
@@ -26,3 +31,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  uses-material-design: true
+  assets:
+    - assets/images/logoMescla.png

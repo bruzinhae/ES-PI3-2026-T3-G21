@@ -35,6 +35,9 @@ class DefaultFirebaseOptions {
           'DefaultFirebaseOptions have not been configured for macos - '
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
+        return ios;
+      case TargetPlatform.macOS:
+        return macos;
       case TargetPlatform.windows:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for windows - '
@@ -58,5 +61,23 @@ class DefaultFirebaseOptions {
     messagingSenderId: '481209266323',
     projectId: 'mesclainvest123',
     storageBucket: 'mesclainvest123.firebasestorage.app',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyDXWp0EHWaYevjK1EhgE-2Qi68g0yoXXqs',
+    appId: '1:481209266323:ios:cdd17946835f58c4f3dd66',
+    messagingSenderId: '481209266323',
+    projectId: 'mesclainvest123',
+    storageBucket: 'mesclainvest123.firebasestorage.app',
+    iosBundleId: 'com.example.mesclaMobile',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyDXWp0EHWaYevjK1EhgE-2Qi68g0yoXXqs',
+    appId: '1:481209266323:ios:0e061da7713aed20f3dd66',
+    messagingSenderId: '481209266323',
+    projectId: 'mesclainvest123',
+    storageBucket: 'mesclainvest123.firebasestorage.app',
+    iosBundleId: 'q',
   );
 }

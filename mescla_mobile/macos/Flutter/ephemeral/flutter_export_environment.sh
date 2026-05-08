@@ -2,6 +2,8 @@
 # This is a generated file; do not edit or check into version control.
 export "FLUTTER_ROOT=/Users/brunabarbourfernandes/Documents/flutter"
 export "FLUTTER_APPLICATION_PATH=/Users/brunabarbourfernandes/Documents/GitHub/ES-PI3-2026-T3-G21/mescla_mobile"
+export "FLUTTER_ROOT=C:\Users\linne\Desktop\flutter"
+export "FLUTTER_APPLICATION_PATH=C:\Users\linne\Desktop\Puc Campinas\ES-PI3-2026-T3-G21\mescla_mobile"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_BUILD_DIR=build"
 export "FLUTTER_BUILD_NAME=1.0.0"
