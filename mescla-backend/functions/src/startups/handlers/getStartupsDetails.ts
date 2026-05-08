@@ -11,7 +11,7 @@ import {
 export const getStartupDetails = onCall(async (request) => {
   
   const user = requireAuthenticatedUser(request);
-  const startupId = normalizeString(request.data?.id);
+  const startupId = normalizeString(request.data?.startupId);
 
   if(!startupId) {
     throw new HttpsError(

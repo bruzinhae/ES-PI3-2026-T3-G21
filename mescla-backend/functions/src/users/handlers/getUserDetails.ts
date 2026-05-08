@@ -5,9 +5,7 @@ import {HttpsError, onCall} from "firebase-functions/https";
 export const getUserDetails = onCall (async(request) => {
     try{
         
-        requireAuthenticatedUser(request)
-
-        const {uid} = request.data;
+        const {uid} = requireAuthenticatedUser(request)
         
         if(!uid){
             throw new HttpsError("invalid-argument", "UID é obrigatório.");

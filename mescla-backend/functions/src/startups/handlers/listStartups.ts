@@ -11,6 +11,7 @@ import { listStartupItems } from "../repositories/startupsRepository";
 import { StartupStage } from "../types/startupTypes";
 
 export const listStartups = onCall(async (request) => {
+
   requireAuthenticatedUser(request);
 
   const stage = normalizeString(request.data?.stage);
