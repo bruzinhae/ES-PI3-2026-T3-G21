@@ -87,7 +87,7 @@ class _InvestPageState extends State<InvestPage> {
 
   Future<void> carregarDetalhesStartup() async {
     final result = await FirebaseFunctions.instanceFor(
-      region: "southamerica-east1",
+      region: "us-central1",
     ).httpsCallable("getStartupDetails").call({
       "startupId": widget.startupId,
     });
@@ -97,7 +97,7 @@ class _InvestPageState extends State<InvestPage> {
 
   Future<void> carregarPerguntas() async {
     final result = await FirebaseFunctions.instanceFor(
-      region: "southamerica-east1",
+      region: "us-central1",
     ).httpsCallable("listStartupQuestions").call({
       "startupId": widget.startupId,
     });
@@ -120,7 +120,7 @@ class _InvestPageState extends State<InvestPage> {
 
     try {
       await FirebaseFunctions.instanceFor(
-        region: "southamerica-east1",
+        region: "us-central1",
       ).httpsCallable("createStartupQuestion").call({
         "startupId": widget.startupId,
         "message": texto,

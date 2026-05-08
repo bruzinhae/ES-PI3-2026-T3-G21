@@ -5,6 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'startupInicial.dart';
 
+const kPrimary   = Color(0xFF0035B9);
+const kSecondary = Color(0xFF7E41AD);
+const kSurface   = Color(0xFFF8F9FF);
+const kOnSurface = Color(0xFF0B1C30);
+const kOutline   = Color(0xFF747686);
+
 class CatalogoStartUp extends StatelessWidget {
   const CatalogoStartUp({super.key});
 
@@ -22,6 +28,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _navIndex = 0;
+
   String filtroSelecionado = "Todas";
   String busca = "";
 
@@ -54,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       final result = await FirebaseFunctions.instanceFor(
-        region: "southamerica-east1",
+        region: "us-central1",
       ).httpsCallable("listStartups").call({
         "stage": stage,
         "search": busca,
@@ -193,7 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _bottomNav(),
+      bottomNavigationBar: _buildNavBar(),
     );
   }
 
@@ -441,20 +449,55 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _bottomNav() {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: const Color(0xFF3D5AFE),
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: "Início"),
-        BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: "Catálogo"),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.account_balance_wallet),
-          label: "Carteira",
+  Widget _buildNavBar() {
+    final items = [
+      {'icon': Icons.grid_view_rounded,              'label': 'Catálogo'},
+      {'icon': Icons.swap_horiz_rounded,             'label': 'Negociar'},
+      {'icon': Icons.account_balance_wallet_rounded, 'label': 'Carteira'},
+      {'icon': Icons.dashboard_rounded,              'label': 'Dashboard'},
+      {'icon': Icons.person_rounded,                 'label': 'Perfil'},
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.85),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -4))],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(items.length, (i) {
+              final selected = i == _navIndex;
+              return GestureDetector(
+                onTap: () => setState(() => _navIndex = i),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: selected ? const Color(0xFFEFF6FF) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(items[i]['icon'] as IconData, size: 24, color: selected ? kPrimary : Colors.blueGrey),
+                      const SizedBox(height: 4),
+                      Text(
+                        items[i]['label'] as String,
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: selected ? kPrimary : Colors.blueGrey),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: "Dashboard"),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Perfil"),
-      ],
+      ),
     );
   }
 }
