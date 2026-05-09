@@ -61,7 +61,7 @@ class _InvestPageState extends State<InvestPage> {
 
     try {
       await carregarDetalhesStartup();
-      await carregarPerguntas();
+      //await carregarPerguntas();
 
       setState(() {
         carregando = false;
@@ -86,21 +86,28 @@ class _InvestPageState extends State<InvestPage> {
   }
 
   Future<void> carregarDetalhesStartup() async {
+    debugPrint("Chamando getStartupDetails com id: ${widget.startupId}");
+
     final result = await FirebaseFunctions.instanceFor(
       region: "us-central1",
     ).httpsCallable("getStartupDetails").call({
       "startupId": widget.startupId,
     });
 
+    debugPrint("Resposta recebida: ${result.data}");
     startup = Map<String, dynamic>.from(result.data["data"]);
+    final List perguntas = startup?["publicQuestions"] ?? [];
+    messages = perguntas.map((item) => Map<String, dynamic>.from(item)).toList();
   }
 
-  Future<void> carregarPerguntas() async {
+  /* Future<void> carregarPerguntas() async {
     final result = await FirebaseFunctions.instanceFor(
       region: "us-central1",
     ).httpsCallable("listStartupQuestions").call({
       "startupId": widget.startupId,
     });
+
+    debugPrint("Resposta perguntas: ${result.data}");
 
     final List data = result.data["data"] ?? [];
 
@@ -108,6 +115,7 @@ class _InvestPageState extends State<InvestPage> {
       return Map<String, dynamic>.from(item);
     }).toList();
   }
+  */
 
   Future<void> enviarPergunta() async {
     final texto = _controller.text.trim();
@@ -128,7 +136,7 @@ class _InvestPageState extends State<InvestPage> {
 
       _controller.clear();
 
-      await carregarPerguntas();
+      //await carregarPerguntas();
 
       setState(() {
         enviandoPergunta = false;
