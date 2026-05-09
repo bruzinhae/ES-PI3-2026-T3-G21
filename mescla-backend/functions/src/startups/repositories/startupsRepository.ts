@@ -48,6 +48,12 @@ export async function userIsInvestor(
   startupId: string,
   uid: string
 ): Promise<boolean> {
+  
+  if (!startupId || !uid) {
+    console.log("INVALID DATA", { startupId, uid });
+    return false;
+  }
+
   const investorSnapshot = await startupsCollection.doc(startupId).collection("investors").doc(uid).get();
 
   return investorSnapshot.exists;
