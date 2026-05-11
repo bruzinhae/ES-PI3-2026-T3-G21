@@ -10,10 +10,10 @@ import {
 
 export const getStartupDetails = onCall(async (request) => {
   
-  const user = requireAuthenticatedUser(request);
-  const startupId = normalizeString(request.data?.id);
+  requireAuthenticatedUser(request);
+  const startupId = normalizeString(request.data?.startupId);
 
-  if(!startupId) {
+  if (!startupId) {
     throw new HttpsError(
       "invalid-argument",
       "Informe o parametro id da startup."
@@ -23,21 +23,44 @@ export const getStartupDetails = onCall(async (request) => {
   const startup = await getStartupById(startupId);
 
   if (!startup) {
-    throw new HttpsError("not-found", "Startup nao encontrada.");
+    throw new HttpsError(
+      "not-found",
+      "Startup nao encontrada."
+    );
   }
 
-  const isInvestor = await userIsInvestor(startupId, user.uid);
+  const uid = request.auth?.uid;
+
+  const isInvestor = uid
+    ? await userIsInvestor(startupId, uid)
+    : false;
+
   const questions = await listPublicQuestions(startupId);
 
-  return {
+return {
     data: {
       id: startupId,
+
       ...startup,
-      createdAt: startup.createdAt?.toDate().toISOString() ?? null,
-      updatedAt: startup.updatedAt?.toDate().toISOString() ?? null,
+
+      createdAt: startup.createdAt
+        ? new Date(
+            ((startup.createdAt as any)._seconds ??
+              (startup.createdAt as any).seconds) * 1000
+          ).toISOString()
+        : null,
+
+      updatedAt: startup.updatedAt
+        ? new Date(
+            ((startup.updatedAt as any)._seconds ??
+              (startup.updatedAt as any).seconds) * 1000
+          ).toISOString()
+        : null,
+
       publicQuestions: questions,
+
       access: {
-        isInvestor,
+        isInvestor: isInvestor,
         canTradeTokens: isInvestor,
         canSendPrivateQuestions: isInvestor,
       },

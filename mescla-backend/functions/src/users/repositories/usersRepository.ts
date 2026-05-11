@@ -1,15 +1,18 @@
 import {
-  UserDocument
+  UserDocument,
+  UserListItem
 } from '../types/usersTypes';
 
 import { 
   db,
-  auth,
+  auth
 } from "../../shared/firebase";
 
-import { https } from 'firebase-functions';
+import {validateEmail} from "../shared/validation";
 
-import { transporter } from '../shared/mailer';
+import { HttpsError } from 'firebase-functions/https';
+import { sendVerificationEmail } from '../shared/sendVerificationEmail';
+
 
 export const usersCollection = db.collection("users");
 
@@ -20,7 +23,7 @@ export async function getUserByUid(uid: string): Promise<UserDocument> {
 
   if (!userRef.exists) {
     console.error("User não encontrado");
-    throw new https.HttpsError("not-found", "Usuário não encontrado!");
+    throw new HttpsError("not-found", "Usuário não encontrado!");
   }
 
     return userRef.data() as UserDocument;
@@ -28,53 +31,68 @@ export async function getUserByUid(uid: string): Promise<UserDocument> {
   
   catch(error){
   console.error("Error fetching user by UID: ", error);
-  throw new Error("Erro ao buscar usuário por UID."); 
+  throw new HttpsError("internal", "Erro ao buscar usuário por UID."); 
 }
 
 }
 
 
-export async function verifyEmailExists(email: string): Promise<boolean> {
-  try{
-      const emailLowerCase = email.toLowerCase();
-      const emailExists = await usersCollection.where("emailLowerCase", "==", emailLowerCase).limit(1).get();
+function tolistUsers(id: string, startup: Partial<UserDocument>): UserListItem {
+  return {
+    uid: id,
+    name: startup.name ?? "",
+    email: startup.email ?? "",
+    cpf: startup.cpf ?? "",
+    telefone: startup.telefone ?? "",
+    mfaEnabled: startup.mfaEnabled ?? false,
+    isAdmin: startup.isAdmin ?? false,
+  };
+}
 
-      return !emailExists.empty;
-    }
-    catch(error){
-    console.error("Error verifying email existence: ", error);
-    throw new Error("Erro ao verificar existência de email.");
+export async function listUsersItens() : Promise<UserListItem[]> {
+
+  const users = await usersCollection.limit(100).get();
+  return users.docs.map((doc : any) => tolistUsers(doc.id, doc.data() as UserDocument));
+
+} 
+
+
+export async function updateField(uid :string, data:Partial<UserDocument>){
+  
+  //! FUNÇÃO QUE VAI ATUALIZAR QUALQUER CAMPO DO USUARIO(EXCETO O BALANCE)
+  //! 1 - SE FOR EMAIL, VERIFICAR EMAIL NOVAMENTE, E SO AUTORIZAR A ATUALIZAÇÃO SE O USUARIO A VERIFICAÇÃO
+  //! 2 - CRIAR UM DOMINIO PARA CADA CAMPO QUE FOR ATUALIZAR PARA UTILIZAR ESSA FUNÇÃO 
+} 
+
+export async function updateEmail(uid : string, newEmail: string){
+  
+  if(!validateEmail(newEmail)) {
+    throw new HttpsError("invalid-argument", "Email inválido!");
+  }
+
+  const user = usersCollection.doc(uid);
+  const userSnap = await user.get();
+  
+  if(!userSnap.exists){
+    throw new HttpsError("invalid-argument", "Usuario não encontrado");
+  }
+  
+  await auth.updateUser(uid, {
+    email : newEmail,
+  })
+
+  await user.update({
+    email : newEmail,
+    emailLowerCase : newEmail.toLowerCase()
+
+  })
+  
+  await sendVerificationEmail(newEmail); //fazer a mesma verificação da criação de usuário
+
+  return {
+    message : "Email alterado com sucesso"
   }
 }
 
-export async function sendVerificationEmail(email: string): Promise<void> {
-  try {
-    const verificationLink = await auth.generateEmailVerificationLink(email);
 
-    await transporter.sendMail({
-      from: `"MesclaInvest" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: 'Verifique seu e-mail - MesclaInvest',
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px;">
-          <h2>Bem-vindo ao MesclaInvest!</h2>
-          <p>Clique no botão abaixo para verificar seu e-mail:</p>
-          <a href="${verificationLink}" 
-             style="background-color: #4CAF50;
-                    color: white;
-                    padding: 14px 20px;
-                    text-decoration: none;
-                    border-radius: 4px;">
-            Verificar E-mail
-          </a>
-          <p>Se você não criou uma conta, ignore este e-mail.</p>
-          <p>O link expira em 24 horas.</p>
-        </div>
-      `
-    });
-
-  } catch(error) {
-    console.error("Erro ao enviar e-mail de verificação: ", error);
-    throw new Error("Erro ao enviar e-mail de verificação.");
-  }
-}
+//criar autenticação de admin ou aqui ou n front 

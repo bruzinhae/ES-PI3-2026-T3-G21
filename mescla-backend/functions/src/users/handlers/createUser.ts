@@ -1,7 +1,5 @@
 import {
   usersCollection,
-  sendVerificationEmail,
-  verifyEmailExists,
 } from "../repositories/usersRepository";
 
 import {
@@ -10,7 +8,12 @@ import {
 } from "firebase-functions/v2/https";
 
 import { auth } from "../../shared/firebase";
+
 import { Timestamp } from "firebase-admin/firestore";
+
+import { sendVerificationEmail } from "../shared/sendVerificationEmail";
+
+import { validateEmail, validatePhone } from "../shared/validation";
 
 export const createUser = onCall(async (request) => {
   try {
@@ -23,11 +26,12 @@ export const createUser = onCall(async (request) => {
       );
     }
 
-    const emailExists = await verifyEmailExists(email);
-
-    if (emailExists) {
-      throw new HttpsError("already-exists", "Email já cadastrado!");
+    if(!validateEmail(email)) {
+      throw new HttpsError("invalid-argument", "Email inválido!");
     }
+    if(!validatePhone(telefone)) {
+      throw new HttpsError("invalid-argument", "Telefone inválido! Deve conter apenas números e ter 10 ou 11 dígitos.");
+    } 
 
     let userRecord;
     try {
@@ -36,17 +40,20 @@ export const createUser = onCall(async (request) => {
         password,
         displayName: name,
       });
-    } catch (error: any) {
-      if (error?.code === "auth/email-already-exists") {
-        throw new HttpsError("already-exists", "Email já cadastrado no Auth.");
+    } catch (emailAlreadyExists: any) {
+      if (emailAlreadyExists?.code === "auth/email-already-exists") {
+        throw new HttpsError("already-exists", "Email já cadastrado.");
       }
-      throw error;
+      throw emailAlreadyExists;
     }
 
     await usersCollection.doc(userRecord.uid).set({
-      ...request.data,
       uid: userRecord.uid,
+      name: name,
+      email: email,
       emailLowerCase: email.toLowerCase(),
+      cpf: cpf,
+      phone: telefone,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
       mfaEnabled: false,
