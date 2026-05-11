@@ -1,3 +1,6 @@
+//Nome: Mateus Souza Marinho
+//RA: 24005497
+
 import { HttpsError, onCall } from "firebase-functions/https";
 import { requireAuthenticatedUser } from "../../shared/auth";
 import { normalizeString } from "../shared/validation";
@@ -31,9 +34,7 @@ export const getStartupDetails = onCall(async (request) => {
 
   const uid = request.auth?.uid;
 
-  const isInvestor = uid
-    ? await userIsInvestor(startupId, uid)
-    : false;
+  const isInvestor = uid? await userIsInvestor(startupId, uid): false;
 
   const questions = await listPublicQuestions(startupId);
 
