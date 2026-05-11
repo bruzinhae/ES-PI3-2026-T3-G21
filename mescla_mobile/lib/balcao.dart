@@ -3,8 +3,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+
 import 'confirmacao.dart';
-import 'trading_service.dart';
 
 void main() {
   runApp(const TradingApp());
@@ -74,7 +75,14 @@ class TradingPage extends StatefulWidget {
 class _TradingPageState extends State<TradingPage>
     with TickerProviderStateMixin {
   int _selectedTab = 1;
-  String _selectedStartup = 'Green Energy Co.';
+
+  String? _selectedStartupId;
+  Map<String, dynamic>? _selectedStartup;
+
+  bool _loadingStartups = true;
+  String? _startupError;
+
+  List<Map<String, dynamic>> _startups = [];
 
   final TextEditingController _quantityController = TextEditingController();
 
@@ -86,13 +94,6 @@ class _TradingPageState extends State<TradingPage>
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
-
-  final List<String> _startups = [
-    'Green Energy Co.',
-    'BioTech Solutions',
-    'FinTech Hub',
-    'AgriTech Brasil',
-  ];
 
   final List<OfferItem> _offers = const [
     OfferItem(quantity: 128, pricePerToken: 28.30, total: 3622.40),
@@ -139,6 +140,8 @@ class _TradingPageState extends State<TradingPage>
   void initState() {
     super.initState();
 
+    _loadStartups();
+
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -158,6 +161,55 @@ class _TradingPageState extends State<TradingPage>
         _totalPrice = qty * _pricePerToken;
       });
     });
+  }
+
+  Future<void> _loadStartups() async {
+    setState(() {
+      _loadingStartups = true;
+      _startupError = null;
+    });
+
+    try {
+      final result = await FirebaseFunctions.instanceFor(
+        region: "us-central1",
+      ).httpsCallable("listStartups").call({
+        "stage": null,
+        "search": "",
+      });
+
+      final List data = result.data["data"];
+
+      final loadedStartups = data.map((item) {
+        return Map<String, dynamic>.from(item);
+      }).toList();
+
+      setState(() {
+        _startups = loadedStartups;
+
+        if (_startups.isNotEmpty) {
+          _selectedStartup = _startups.first;
+          _selectedStartupId = _startups.first["id"]?.toString();
+        }
+
+        _loadingStartups = false;
+      });
+    } on FirebaseFunctionsException catch (e) {
+      setState(() {
+        _loadingStartups = false;
+        _startupError = "Erro: ${e.message}";
+      });
+
+      debugPrint("Código: ${e.code}");
+      debugPrint("Mensagem: ${e.message}");
+      debugPrint("Detalhes: ${e.details}");
+    } catch (e) {
+      setState(() {
+        _loadingStartups = false;
+        _startupError = "Erro inesperado ao carregar startups.";
+      });
+
+      debugPrint("Erro inesperado: $e");
+    }
   }
 
   @override
@@ -193,7 +245,6 @@ class _TradingPageState extends State<TradingPage>
         child: Column(
           children: [
             _buildAppBar(),
-
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -201,20 +252,16 @@ class _TradingPageState extends State<TradingPage>
                   children: [
                     _buildBalanceCard(),
                     const SizedBox(height: 16),
-
                     _buildTradeSection(),
                     const SizedBox(height: 16),
-
                     _buildOrderBook(),
                     const SizedBox(height: 16),
-
                     _buildRecentHistory(),
                     const SizedBox(height: 24),
                   ],
                 ),
               ),
             ),
-
             _buildBottomNav(),
           ],
         ),
@@ -234,7 +281,9 @@ class _TradingPageState extends State<TradingPage>
       child: Row(
         children: [
           GestureDetector(
-            onTap: () {},
+            onTap: () {
+              Navigator.pop(context);
+            },
             child: Container(
               width: 36,
               height: 36,
@@ -249,7 +298,6 @@ class _TradingPageState extends State<TradingPage>
               ),
             ),
           ),
-
           const Expanded(
             child: Text(
               'Balanço de Negociação',
@@ -262,7 +310,6 @@ class _TradingPageState extends State<TradingPage>
               ),
             ),
           ),
-
           Container(
             width: 36,
             height: 36,
@@ -301,7 +348,6 @@ class _TradingPageState extends State<TradingPage>
           ),
         ],
       ),
-
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -314,9 +360,7 @@ class _TradingPageState extends State<TradingPage>
               letterSpacing: 0.5,
             ),
           ),
-
           const SizedBox(height: 8),
-
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -331,7 +375,6 @@ class _TradingPageState extends State<TradingPage>
                   ),
                 ),
               ),
-
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -362,9 +405,7 @@ class _TradingPageState extends State<TradingPage>
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
           Row(
             children: [
               Expanded(
@@ -375,9 +416,7 @@ class _TradingPageState extends State<TradingPage>
                   onTap: () {},
                 ),
               ),
-
               const SizedBox(width: 10),
-
               Expanded(
                 child: _buildBalanceButton(
                   label: 'Negociar Lucros',
@@ -456,7 +495,6 @@ class _TradingPageState extends State<TradingPage>
           ),
         ],
       ),
-
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -481,29 +519,19 @@ class _TradingPageState extends State<TradingPage>
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
           _buildLabel('Selecionar Startup'),
           const SizedBox(height: 6),
           _buildStartupDropdown(),
-
           const SizedBox(height: 14),
-
           _buildLabel('Quantidade de Tokens'),
           const SizedBox(height: 6),
           _buildQuantityField(),
-
           const SizedBox(height: 14),
-
           _buildPriceRow(),
-
           const SizedBox(height: 16),
-
           _buildConfirmButton(),
-
           const SizedBox(height: 10),
-
           Center(
             child: Text(
               'Taxa de corretagem de 2% será aplicada no valor total da operação',
@@ -533,6 +561,66 @@ class _TradingPageState extends State<TradingPage>
   }
 
   Widget _buildStartupDropdown() {
+    if (_loadingStartups) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: const Text(
+          "Carregando startups...",
+          style: TextStyle(
+            fontSize: 14,
+            color: Color(0xFF6B7280),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+
+    if (_startupError != null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF1F2),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFFCA5A5)),
+        ),
+        child: Text(
+          _startupError!,
+          style: const TextStyle(
+            fontSize: 13,
+            color: Color(0xFFDC2626),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+
+    if (_startups.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: const Text(
+          "Nenhuma startup disponível.",
+          style: TextStyle(
+            fontSize: 14,
+            color: Color(0xFF6B7280),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       decoration: BoxDecoration(
@@ -542,7 +630,7 @@ class _TradingPageState extends State<TradingPage>
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: _selectedStartup,
+          value: _selectedStartupId,
           isExpanded: true,
           icon: const Icon(
             Icons.keyboard_arrow_down,
@@ -553,12 +641,26 @@ class _TradingPageState extends State<TradingPage>
             fontWeight: FontWeight.w600,
             color: Color(0xFF111827),
           ),
-          items: _startups
-              .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-              .toList(),
-          onChanged: (val) {
-            if (val == null) return;
-            setState(() => _selectedStartup = val);
+          items: _startups.map((startup) {
+            final id = startup["id"]?.toString() ?? "";
+            final name = startup["name"]?.toString() ?? "Startup sem nome";
+
+            return DropdownMenuItem<String>(
+              value: id,
+              child: Text(name),
+            );
+          }).toList(),
+          onChanged: (id) {
+            if (id == null) return;
+
+            final startup = _startups.firstWhere(
+                  (item) => item["id"]?.toString() == id,
+            );
+
+            setState(() {
+              _selectedStartupId = id;
+              _selectedStartup = startup;
+            });
           },
         ),
       ),
@@ -607,7 +709,6 @@ class _TradingPageState extends State<TradingPage>
         color: const Color(0xFFF0F4FF),
         borderRadius: BorderRadius.circular(12),
       ),
-
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -629,13 +730,11 @@ class _TradingPageState extends State<TradingPage>
               ),
             ],
           ),
-
           Container(
             width: 1,
             height: 36,
             color: Colors.blue[100],
           ),
-
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -664,10 +763,9 @@ class _TradingPageState extends State<TradingPage>
       onTap: () {
         HapticFeedback.mediumImpact();
 
-        final quantidade =
-            int.tryParse(_quantityController.text) ?? 0;
+        final quantidade = int.tryParse(_quantityController.text) ?? 0;
 
-        if (_selectedStartup.isEmpty) {
+        if (_selectedStartup == null || _selectedStartupId == null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text(
@@ -712,7 +810,8 @@ class _TradingPageState extends State<TradingPage>
         final valorFinal = total + taxaCorretagem;
 
         final transacao = {
-          'startup': _selectedStartup,
+          'startupId': _selectedStartupId,
+          'startupName': _selectedStartup?["name"],
           'quantidadeTokens': quantidade,
           'precoPorToken': _pricePerToken,
           'valorTotal': total,
@@ -722,7 +821,7 @@ class _TradingPageState extends State<TradingPage>
           'dataCriacao': DateTime.now().toIso8601String(),
         };
 
-        print(transacao);
+        debugPrint(transacao.toString());
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -742,7 +841,6 @@ class _TradingPageState extends State<TradingPage>
           ),
         );
       },
-
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 15),
@@ -765,18 +863,15 @@ class _TradingPageState extends State<TradingPage>
             ),
           ],
         ),
-
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children: [
             Icon(
               Icons.verified_rounded,
               color: Colors.white,
               size: 18,
             ),
-
             SizedBox(width: 8),
-
             Text(
               'Confirmar Transação',
               style: TextStyle(
@@ -809,7 +904,6 @@ class _TradingPageState extends State<TradingPage>
           ),
         ],
       ),
-
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -837,7 +931,6 @@ class _TradingPageState extends State<TradingPage>
                   ),
                 ],
               ),
-
               Row(
                 children: [
                   _buildTabChip('Comprar', true),
@@ -847,17 +940,11 @@ class _TradingPageState extends State<TradingPage>
               ),
             ],
           ),
-
           const SizedBox(height: 14),
-
           _buildOrderBookHeader(),
-
           const SizedBox(height: 4),
-
           ...displayedOffers.map((offer) => _buildOfferRow(offer)),
-
           const SizedBox(height: 8),
-
           GestureDetector(
             onTap: () => setState(() => _showAllOffers = !_showAllOffers),
             child: Center(
@@ -958,7 +1045,6 @@ class _TradingPageState extends State<TradingPage>
           bottom: BorderSide(color: Colors.grey[100]!, width: 1),
         ),
       ),
-
       child: Row(
         children: [
           Expanded(
@@ -972,7 +1058,6 @@ class _TradingPageState extends State<TradingPage>
               ),
             ),
           ),
-
           Expanded(
             flex: 2,
             child: Text(
@@ -985,7 +1070,6 @@ class _TradingPageState extends State<TradingPage>
               ),
             ),
           ),
-
           Expanded(
             flex: 2,
             child: Text(
@@ -998,7 +1082,6 @@ class _TradingPageState extends State<TradingPage>
               ),
             ),
           ),
-
           GestureDetector(
             onTap: () {
               HapticFeedback.selectionClick();
@@ -1053,7 +1136,6 @@ class _TradingPageState extends State<TradingPage>
           ),
         ],
       ),
-
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1078,11 +1160,8 @@ class _TradingPageState extends State<TradingPage>
               ),
             ],
           ),
-
           const SizedBox(height: 14),
-
           _buildHistoryHeader(),
-
           ..._history.map((item) => _buildHistoryRow(item)),
         ],
       ),
@@ -1102,7 +1181,6 @@ class _TradingPageState extends State<TradingPage>
         color: const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(8),
       ),
-
       child: const Row(
         children: [
           Expanded(flex: 3, child: Text('Título', style: style)),
@@ -1135,7 +1213,6 @@ class _TradingPageState extends State<TradingPage>
           bottom: BorderSide(color: Colors.grey[100]!, width: 1),
         ),
       ),
-
       child: Row(
         children: [
           Expanded(
@@ -1176,7 +1253,6 @@ class _TradingPageState extends State<TradingPage>
               ],
             ),
           ),
-
           Expanded(
             flex: 2,
             child: Text(
@@ -1189,7 +1265,6 @@ class _TradingPageState extends State<TradingPage>
               ),
             ),
           ),
-
           Expanded(
             flex: 2,
             child: Text(
@@ -1202,7 +1277,6 @@ class _TradingPageState extends State<TradingPage>
               ),
             ),
           ),
-
           Expanded(
             flex: 2,
             child: Text(
@@ -1215,7 +1289,6 @@ class _TradingPageState extends State<TradingPage>
               ),
             ),
           ),
-
           Expanded(
             flex: 2,
             child: Container(
@@ -1259,7 +1332,6 @@ class _TradingPageState extends State<TradingPage>
           ),
         ],
       ),
-
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
