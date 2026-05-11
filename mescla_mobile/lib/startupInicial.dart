@@ -361,7 +361,7 @@ class _InvestPageState extends State<InvestPage> {
         const Icon(Icons.eco_outlined, color: Color(0xFF0D2CC8), size: 26),
         const SizedBox(width: 12),
         Text(
-          texto(startup?["round"] ?? startup?["series"], "Rodada não informada"),
+          texto(startup?["name"] ?? startup?["name"], "Rodada não informada"),
           style: const TextStyle(
             color: Color(0xFF0D2CC8),
             fontSize: 16,
@@ -383,7 +383,7 @@ class _InvestPageState extends State<InvestPage> {
       children: [
         _MetricCard(
           title: "Capital aportado",
-          value: texto(startup?["amountRaised"] ?? startup?["value"], "-"),
+          value: texto(startup?["totalTokensIssued"] ?? startup?["totalTokensIssued"], "-"),
         ),
         _MetricCard(
           title: "Tokens totais",
@@ -516,7 +516,7 @@ class _InvestPageState extends State<InvestPage> {
   }
 
   Widget _teamCard() {
-    final team = startup?["team"];
+    final team = startup?["founders"];
 
     if (team is! List || team.isEmpty) {
       return Container(
@@ -548,7 +548,7 @@ class _InvestPageState extends State<InvestPage> {
             final item = Map<String, dynamic>.from(person);
             final name = texto(item["name"], "Integrante");
             final role = texto(item["role"], "Cargo não informado");
-            final percent = item["equity"] ?? 0;
+            final percent = item["equityPercent"] ?? 0;
 
             return _progress(
               "$name ($role)",

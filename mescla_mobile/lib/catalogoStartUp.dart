@@ -301,8 +301,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final tags = startup["tags"];
 
     final valorAportado =
-        startup["amountRaised"] ?? startup["value"] ?? startup["valuation"];
-    final tokens = startup["tokens"] ?? startup["totalTokens"];
+        startup["capitalRaisedCents"] ?? startup["value"] ?? startup["valuation"];
+    final tokens = startup["totalTokensIssued"] ?? startup["totalTokens"];
     final crescimento = startup["growth"] ?? startup["profitability"];
 
     return Container(
