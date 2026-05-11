@@ -3,6 +3,10 @@
 
 import 'package:flutter/material.dart';
 import 'services/resgate_service.dart';
+import 'balcao.dart';
+import 'catalogoStartUp.dart';
+
+const kPrimary = Color(0xFF0035B9);
 
 void main() {
   runApp(const MesclaInvestApp());
@@ -16,10 +20,6 @@ class MesclaInvestApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'MesclaInvest',
-      theme: ThemeData(
-        fontFamily: 'Roboto',
-        scaffoldBackgroundColor: const Color(0xFFEDEEFF),
-      ),
       home: const ConfirmacaoPage(),
     );
   }
@@ -39,6 +39,7 @@ class _ConfirmacaoPageState extends State<ConfirmacaoPage> {
   double saldoTotal = 15420.00;
   double saldoDisponivel = 1240.00;
   int totalTokens = 850;
+  int _navIndex = 1;
 
   @override
   void dispose() {
@@ -67,10 +68,7 @@ class _ConfirmacaoPageState extends State<ConfirmacaoPage> {
 
     if (erro != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(erro),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(erro), backgroundColor: Colors.red),
       );
       return;
     }
@@ -97,591 +95,133 @@ class _ConfirmacaoPageState extends State<ConfirmacaoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEDEEFF),
-
+      backgroundColor: const Color(0xFFEDEFF5),
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 430),
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(22),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            image: const DecorationImage(
-                              image: NetworkImage(
-                                'https://i.imgur.com/BoN9kdC.png',
-                              ),
-                              fit: BoxFit.cover,
-                            ),
-                            border: Border.all(
-                              color: Colors.white,
-                              width: 2,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(width: 14),
-
-                        const Expanded(
-                          child: Text(
-                            'MesclaInvest',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF3045D3),
-                            ),
-                          ),
-                        ),
-
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 28,
-                            vertical: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(18),
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFF3055E8),
-                                Color(0xFF8D35E6),
-                              ],
-                            ),
-                          ),
-                          child: const Text(
-                            'Resgatar',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    _card(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'SALDO TOTAL',
-                            style: TextStyle(
-                              letterSpacing: 2,
-                              color: Color(0xFF6E7080),
-                              fontSize: 15,
-                            ),
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: '${formatCurrency(saldoTotal)} ',
-                                  style: const TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: '$totalTokens tokens',
-                                  style: const TextStyle(
-                                    color: Color(0xFF0D2CC8),
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 26),
-
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _actionButton(
-                                  title: 'Carregar\nSaldo',
-                                  background: const Color(0xFFDDE3F1),
-                                  textColor: const Color(0xFF0B2DD6),
-                                  icon: Icons.add_circle_outline,
-                                ),
-                              ),
-
-                              const SizedBox(width: 16),
-
-                              Expanded(
-                                child: _gradientButton(
-                                  title: 'Resgatar\nLucros',
-                                  icon: Icons.account_balance_wallet_outlined,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 22),
-
-                    _card(
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 68,
-                            height: 68,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(18),
-                              color: const Color(0xFFDDE3F1),
-                            ),
-                            child: const Icon(
-                              Icons.account_balance_wallet_outlined,
-                              color: Color(0xFF0D2CC8),
-                              size: 34,
-                            ),
-                          ),
-
-                          const SizedBox(width: 18),
-
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Disponível para resgate',
-                                style: TextStyle(
-                                  color: Color(0xFF717484),
-                                  fontSize: 15,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                formatCurrency(saldoDisponivel),
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 22),
-
-                    _card(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Conta de Destino',
-                            style: TextStyle(
-                              color: Color(0xFF6E7080),
-                              fontSize: 16,
-                            ),
-                          ),
-
-                          const SizedBox(height: 22),
-
-                          Row(
-                            children: [
-                              Container(
-                                width: 52,
-                                height: 52,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  color: const Color(0xFFDDE3F1),
-                                ),
-                                child: const Icon(
-                                  Icons.account_balance,
-                                  color: Color(0xFF3055E8),
-                                ),
-                              ),
-
-                              const SizedBox(width: 16),
-
-                              const Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Itaú Unibanco',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      'Ag 0432 • CC 29384-1',
-                                      style: TextStyle(
-                                        color: Color(0xFF6E7080),
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              const Icon(
-                                Icons.chevron_right,
-                                size: 34,
-                                color: Color(0xFF6E7080),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 26),
-
-                    const Text(
-                      'Valor do resgate',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE6EAF4),
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _valorController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                hintText: 'R\$ 0,00',
-                                hintStyle: TextStyle(
-                                  fontSize: 18,
-                                  color: Color(0xFF7D8192),
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          GestureDetector(
-                            onTap: _resgatarTudo,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 14,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFD9E1F3),
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: const Text(
-                                'Resgatar tudo',
-                                style: TextStyle(
-                                  color: Color(0xFF0D2CC8),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 34),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text(
-                          'Histórico de Rendimentos',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          'Ver todos',
-                          style: TextStyle(
-                            color: Color(0xFF0D2CC8),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    _historyTile(
-                      icon: Icons.ev_station,
-                      iconColor: Colors.green,
-                      iconBg: const Color(0xFFDDF4E4),
-                      title: 'EcoCharge',
-                      subtitle: 'Dividendo\nMensal',
-                      value: '+ R\$ 420,00',
-                      date: '12 Out',
-                    ),
-
-                    _historyTile(
-                      icon: Icons.local_shipping_outlined,
-                      iconColor: Colors.blue,
-                      iconBg: const Color(0xFFDDE7FA),
-                      title: 'UrbanLog',
-                      subtitle: 'Rendimentos\nSemestrais',
-                      value: '+ R\$ 680,00',
-                      date: '05 Out',
-                    ),
-
-                    _historyTile(
-                      icon: Icons.account_balance_outlined,
-                      iconColor: Colors.purple,
-                      iconBg: const Color(0xFFF0DFFD),
-                      title: 'FinFlow',
-                      subtitle: 'Bonificação\nToken',
-                      value: '+ R\$ 140,00',
-                      date: '01 Out',
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    GestureDetector(
-                      onTap: _confirmarResgate,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 22),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(22),
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFF0A2CCF),
-                              Color(0xFF7B39D8),
-                            ],
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Text(
-                              'Confirmar Resgate',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(width: 14),
-                            Icon(
-                              Icons.arrow_forward,
-                              color: Colors.white,
-                              size: 30,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-
-      bottomNavigationBar: Container(
-        height: 95,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(28),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _navItem(Icons.menu_book_outlined, 'Catálogo'),
-            _navActive(),
-            _navItem(Icons.account_balance_wallet_outlined, 'Carteira'),
-            _navItem(Icons.grid_view_rounded, 'Dashboard'),
-            _navItem(Icons.person_outline, 'Perfil'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static Widget _card({required Widget child}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(26),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F7FB),
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: child,
-    );
-  }
-
-  static Widget _actionButton({
-    required String title,
-    required Color background,
-    required Color textColor,
-    required IconData icon,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 18),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: textColor),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 16,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static Widget _gradientButton({
-    required String title,
-    required IconData icon,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0D2CC8),
-            Color(0xFF7B39D8),
-          ],
-        ),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: Colors.white),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static Widget _historyTile({
-    required IconData icon,
-    required Color iconColor,
-    required Color iconBg,
-    required String title,
-    required String subtitle,
-    required String value,
-    required String date,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 18),
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F7FB),
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 66,
-            height: 66,
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: 34,
-            ),
-          ),
-
-          const SizedBox(width: 18),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Color(0xFF6E7080),
-                    fontSize: 16,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  color: Colors.green,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
+              _topBar(),
+              const SizedBox(height: 16),
+              const Text(
+                "Resgatar Lucros",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
+              const Text(
+                "Gerencie seus rendimentos e solicite resgates.",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 20),
+              _saldoCard(),
+              const SizedBox(height: 18),
+              _disponivelCard(),
+              const SizedBox(height: 18),
+              _contaCard(),
+              const SizedBox(height: 18),
+              _resgateCard(),
+              const SizedBox(height: 18),
+              _historicoCard(),
+              const SizedBox(height: 80),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: _buildNavBar(),
+    );
+  }
+
+  Widget _topBar() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: const [
+        Text(
+          "MesclaInvest",
+          style: TextStyle(
+            color: Color(0xFF3D5AFE),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _saldoCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF3D5AFE),
+            Color(0xFF7B1FA2),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "SALDO TOTAL",
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            formatCurrency(saldoTotal),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "$totalTokens tokens disponíveis na carteira",
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _disponivelCard() {
+    return _card(
+      child: Row(
+        children: [
+          _iconBox(Icons.account_balance_wallet_outlined),
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Disponível para resgate",
+                style: TextStyle(
+                  color: Colors.black54,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 6),
               Text(
-                date,
+                formatCurrency(saldoDisponivel),
                 style: const TextStyle(
-                  color: Color(0xFF6E7080),
-                  fontSize: 16,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF111827),
                 ),
               ),
             ],
@@ -691,57 +231,307 @@ class _ConfirmacaoPageState extends State<ConfirmacaoPage> {
     );
   }
 
-  static Widget _navItem(IconData icon, String label) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          color: const Color(0xFF67748E),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFF67748E),
-            fontSize: 13,
+  Widget _contaCard() {
+    return _card(
+      child: Row(
+        children: [
+          _iconBox(Icons.account_balance),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Conta de Destino",
+                  style: TextStyle(
+                    color: Colors.black54,
+                    fontSize: 13,
+                  ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  "Itaú Unibanco",
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  "Ag 0432 • CC 29384-1",
+                  style: TextStyle(
+                    color: Colors.black45,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          const Icon(Icons.chevron_right, color: Colors.blueGrey),
+        ],
+      ),
     );
   }
 
-  static Widget _navActive() {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 22,
-        vertical: 12,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0D2CC8),
-            Color(0xFF8D35E6),
-          ],
-        ),
-      ),
+  Widget _resgateCard() {
+    return _card(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(
-            Icons.currency_exchange,
-            color: Colors.white,
-          ),
-          SizedBox(height: 4),
-          Text(
-            'Negociar',
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Valor do resgate",
             style: TextStyle(
-              color: Colors.white,
+              fontSize: 15,
+              color: Color(0xFF1F2937),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F4FB),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _valorController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintText: "R\$ 0,00",
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: _resgatarTudo,
+                  child: const Text(
+                    "Tudo",
+                    style: TextStyle(
+                      color: Color(0xFF3D5AFE),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          GestureDetector(
+            onTap: _confirmarResgate,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF3D5AFE),
+                    Color(0xFF7B1FA2),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: const Center(
+                child: Text(
+                  "Confirmar Resgate",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _historicoCard() {
+    return _card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Histórico de Rendimentos",
+            style: TextStyle(
+              fontSize: 15,
+              color: Color(0xFF1F2937),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _historyTile("EcoCharge", "Dividendo mensal", "+ R\$ 420,00"),
+          _historyTile("UrbanLog", "Rendimento semestral", "+ R\$ 680,00"),
+          _historyTile("FinFlow", "Bonificação token", "+ R\$ 140,00"),
+        ],
+      ),
+    );
+  }
+
+  Widget _historyTile(String title, String subtitle, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        children: [
+          _iconBox(Icons.trending_up),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Colors.black45,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.green,
+              fontWeight: FontWeight.bold,
               fontSize: 13,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _card({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _iconBox(IconData icon) {
+    return Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF3D5AFE),
+            Color(0xFF7B1FA2),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Icon(icon, color: Colors.white),
+    );
+  }
+
+  Widget _buildNavBar() {
+    final items = [
+      {'icon': Icons.grid_view_rounded, 'label': 'Catálogo'},
+      {'icon': Icons.swap_horiz_rounded, 'label': 'Negociar'},
+      {
+        'icon': Icons.account_balance_wallet_rounded,
+        'label': 'Carteira'
+      },
+      {'icon': Icons.dashboard_rounded, 'label': 'Dashboard'},
+      {'icon': Icons.person_rounded, 'label': 'Perfil'},
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.85),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(items.length, (i) {
+              final selected = i == _navIndex;
+
+              return GestureDetector(
+                onTap: () {
+                  setState(() => _navIndex = i);
+
+                  if (i == 0) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CatalogoStartUp(),
+                      ),
+                    );
+                  }
+
+                  if (i == 1) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TradingPage(),
+                      ),
+                    );
+                  }
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? const Color(0xFFEFF6FF)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        items[i]['icon'] as IconData,
+                        size: 24,
+                        color: selected ? kPrimary : Colors.blueGrey,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        items[i]['label'] as String,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: selected ? kPrimary : Colors.blueGrey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
       ),
     );
   }
