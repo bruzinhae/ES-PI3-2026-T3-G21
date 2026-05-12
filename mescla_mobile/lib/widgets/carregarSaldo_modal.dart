@@ -60,13 +60,12 @@ class _CarregarSaldoModalState extends State<CarregarSaldoModal> {
     if (_totalSelecionado == 0) return;
     setState(() => _carregando = true);
 
-    // ── Integre aqui com o Firebase ──────────────
+    // a fazer pra integração
     // final uid = FirebaseAuth.instance.currentUser!.uid;
     // await FirebaseFirestore.instance
     //     .collection('users')
     //     .doc(uid)
     //     .update({'saldo': FieldValue.increment(_totalSelecionado)});
-    // ─────────────────────────────────────────────
 
     await Future.delayed(const Duration(seconds: 1));
 
@@ -75,7 +74,7 @@ class _CarregarSaldoModalState extends State<CarregarSaldoModal> {
     if (mounted) {
       final total = _totalSelecionado;
 
-      // Avisa a tela pai pra atualizar o saldo
+      // avisa a tela pai pra atualizar o saldo
       widget.onConfirmar(total);
 
       Navigator.pop(context);
