@@ -2,9 +2,9 @@
 // RA: 23007950
 
 import 'package:flutter/material.dart';
-import 'services/resgate_service.dart';
+import '../../services/resgate_service.dart';
 import 'balcao.dart';
-import 'catalogoStartUp.dart';
+import '../startups/catalogoStartUp.dart';
 
 const kPrimary = Color(0xFF0035B9);
 

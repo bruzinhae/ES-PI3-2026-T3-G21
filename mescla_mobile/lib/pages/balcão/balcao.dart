@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'confirmacao.dart';
 import 'trading_service.dart';
-import 'catalogoStartUp.dart';
+import '../startups/catalogoStartUp.dart';
 import 'confirmacao.dart';
 
 void main() {
