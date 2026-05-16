@@ -1,58 +1,84 @@
-class TradingService {
-  static const double taxaCorretagem = 0.02;
+// Autor: Bruna Barbour Fernandes
+// RA: 23007950
 
-  double calcularTotal({
-    required int quantidadeTokens,
-    required double precoPorToken,
-  }) {
-    return quantidadeTokens * precoPorToken;
-  }
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
-  double calcularTaxaCorretagem(double total) {
-    return total * taxaCorretagem;
-  }
+// Modelo local da startup (espelha StartupListItem do back)
+class StartupItem {
+  final String id;
+  final String name;
+  final int currentTokenPriceCents;
+  final String? coverImageUrl;
 
-  double calcularValorFinal(double total) {
-    return total + calcularTaxaCorretagem(total);
-  }
+  StartupItem({
+    required this.id,
+    required this.name,
+    required this.currentTokenPriceCents,
+    this.coverImageUrl,
+  });
 
-  String? validarTransacao({
-    required String startup,
-    required int quantidadeTokens,
-  }) {
-    if (startup.isEmpty) {
-      return 'Selecione uma startup.';
-    }
-
-    if (quantidadeTokens <= 0) {
-      return 'Informe uma quantidade válida de tokens.';
-    }
-
-    return null;
-  }
-
-  Map<String, dynamic> criarTransacao({
-    required String startup,
-    required int quantidadeTokens,
-    required double precoPorToken,
-  }) {
-    final total = calcularTotal(
-      quantidadeTokens: quantidadeTokens,
-      precoPorToken: precoPorToken,
+  factory StartupItem.fromMap(String id, Map<String, dynamic> data) {
+    return StartupItem(
+      id: id,
+      name: data['name'] as String? ?? '—',
+      currentTokenPriceCents: (data['currentTokenPriceCents'] as num?)?.toInt() ?? 0,
+      coverImageUrl: data['coverImageUrl'] as String?,
     );
-
-    final taxa = calcularTaxaCorretagem(total);
-    final valorFinal = calcularValorFinal(total);
-
-    return {
-      'startup': startup,
-      'quantidadeTokens': quantidadeTokens,
-      'precoPorToken': precoPorToken,
-      'valorTotal': total,
-      'taxaCorretagem': taxa,
-      'valorFinal': valorFinal,
-      'status': 'Pendente',
-      'dataCriacao': DateTime.now().toIso8601String(),
-    };
   }
+}
+
+class TradingService {
+  static final _functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+
+  // ── Busca lista de startups do Firestore ────────
+  static Future<List<StartupItem>> listarStartups() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('startups')
+        .get();
+
+    return snapshot.docs
+        .map((doc) => StartupItem.fromMap(doc.id, doc.data()))
+        .toList();
+  }
+
+  // ── Compra tokens — chama buyTokens no back ─────
+  // Retorna o novo saldo em centavos
+  static Future<int> comprarTokens({
+    required String startupId,
+    required int quantity,
+  }) async {
+    final result = await _functions
+        .httpsCallable('buyTokens')
+        .call({
+          'startupId': startupId,
+          'quantity': quantity,
+        });
+
+    return (result.data['data']['balanceCents'] as num).toInt();
+  }
+
+  // ── Vende tokens — chama sellTokens no back ─────
+  static Future<int> venderTokens({
+    required String startupId,
+    required int quantity,
+  }) async {
+    final result = await _functions
+        .httpsCallable('sellTokens')
+        .call({
+          'startupId': startupId,
+          'quantity': quantity,
+        });
+
+    return (result.data['data']['balanceCents'] as num).toInt();
+  }
+
+  // ── Helpers de cálculo ──────────────────────────
+
+  // Converte centavos para reais: 2950 → 29.50
+  static double centavosParaReais(int centavos) => centavos / 100;
+
+  // Calcula total da operação em centavos
+  static int calcularTotalCents(int quantity, int priceCents) =>
+      quantity * priceCents;
 }

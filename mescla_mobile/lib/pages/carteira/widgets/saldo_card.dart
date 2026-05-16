@@ -12,6 +12,7 @@ class SaldoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         gradient: kGradient,
         borderRadius: BorderRadius.circular(24),
