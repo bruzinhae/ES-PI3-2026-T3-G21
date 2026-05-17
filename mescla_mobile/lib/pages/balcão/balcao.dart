@@ -42,7 +42,7 @@ class _TradingPageState extends State<TradingPage>
   late AnimationController _fadeController;
   late Animation<double>   _fadeAnimation;
 
-  // ── Preço atual em centavos da startup selecionada
+  // Preço atual em centavos da startup selecionada
   int get _priceCents => _selectedStartup?.currentTokenPriceCents ?? 0;
 
   // total da operação em centavos
@@ -359,13 +359,7 @@ class _TradingPageState extends State<TradingPage>
           _buildConfirmButton(),
 
           const SizedBox(height: 10),
-          Center(
-            child: Text(
-              'Taxa de corretagem de 2% aplicada sobre o valor total da operação',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 10, color: Colors.grey[500], height: 1.4),
-            ),
-          ),
+
         ],
       ),
     );

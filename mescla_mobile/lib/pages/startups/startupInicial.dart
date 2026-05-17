@@ -6,6 +6,8 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'catalogoStartUp.dart';
 import '../pages/../startups/services/startup_service.dart';
 import '../../widgets/bottom_navBar.dart';
+import 'modal_investimento.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class StartupInicial extends StatelessWidget {
   final String startupId;
@@ -62,6 +64,11 @@ class _InvestPageState extends State<InvestPage> {
 
     try {
       final dados = await StartupService.getStartupDetails(widget.startupId);
+      debugPrint('=== DOCUMENTS ===');
+      debugPrint(dados.documents.toString());
+      debugPrint('executiveSummary: ${dados.executiveSummary}');
+      debugPrint('pitchDeckUrl: ${dados.pitchDeckUrl}');
+      debugPrint('demoVideos: ${dados.demoVideos}');
 
       setState(() {
         startup = dados;
@@ -506,34 +513,61 @@ class _InvestPageState extends State<InvestPage> {
       spacing: 14,
       runSpacing: 14,
       children: s.documents.map((doc) {
-        return _doc(
-          doc['title']?.toString() ?? doc['name']?.toString() ?? 'Documento',
-          Icons.description_outlined,
-        );
+        final title = doc['title']?.toString() ?? 'Documento';
+        final type = doc['type']?.toString() ?? 'pdf';
+        final url = doc['url']?.toString() ?? '';
+
+        final icon = type == 'video'
+            ? Icons.play_circle_outline
+            : Icons.description_outlined;
+
+        return _doc(title, icon, url);
       }).toList(),
     );
   }
 
-  Widget _doc(String text, IconData icon) {
-    return Container(
-      width: 160,
-      height: 95,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFCBD5E1)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: const Color(0xFF0D2CC8), size: 28),
-          const SizedBox(height: 12),
-          Text(
-            text,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-          ),
-        ],
+  Widget _doc(String text, IconData icon, String url) {
+    return GestureDetector(
+      onTap: () async {
+        if (url.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('URL do documento não disponível.')),
+          );
+          return;
+        }
+
+        final uri = Uri.parse(url);
+
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Não foi possível abrir o documento.')),
+            );
+          }
+        }
+      },
+      child: Container(
+        width: 160,
+        height: 95,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFCBD5E1)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: const Color(0xFF0D2CC8), size: 28),
+            const SizedBox(height: 12),
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -655,26 +689,31 @@ class _InvestPageState extends State<InvestPage> {
   }
 
   Widget _investButton() {
-    return GestureDetector(
-      onTap: () => debugPrint('Investir na startup: ${widget.startupId}'),
-      child: Container(
-        width: double.infinity,
-        height: 58,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          gradient: const LinearGradient(
-            colors: [Color(0xFF0D2CC8), Color(0xFF8D35E6)],
-          ),
-        ),
-        child: const Center(
-          child: Text(
-            'Quero Investir  →',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-          ),
+  return GestureDetector(
+    onTap: () => abrirModalInvestimento(
+      context,
+      startup: startup!,
+      startupId: widget.startupId,
+      onSucesso: carregarDadosDaTela, 
+    ),
+    child: Container(
+      width: double.infinity,
+      height: 58,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0D2CC8), Color(0xFF8D35E6)],
         ),
       ),
-    );
-  }
+      child: const Center(
+        child: Text(
+          'Quero Investir  →',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
+      ),
+    ),
+  );
+}
 
 
   BoxDecoration _cardDecoration() {
@@ -683,6 +722,9 @@ class _InvestPageState extends State<InvestPage> {
       borderRadius: BorderRadius.circular(26),
     );
   }
+
+  
+
 }
 
 // metricCard

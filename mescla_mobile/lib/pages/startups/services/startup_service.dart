@@ -285,4 +285,22 @@ class StartupService {
         .map((q) => StartupQuestion.fromMap(Map<String, dynamic>.from(q)))
         .toList();
   }
+
+  /// compra tokens de uma startup.
+  static Future<Map<String, dynamic>> buyTokens({
+    required String startupId,
+    required int quantity,
+  }) async {
+    debugPrint('[StartupService] buyTokens: $startupId | quantity: $quantity');
+
+    final result = await _functions
+        .httpsCallable('buyTokens')
+        .call({
+          'startupId': startupId,
+          'quantity': quantity,
+        });
+
+    return Map<String, dynamic>.from(result.data['data']);
+  }
+
 }
