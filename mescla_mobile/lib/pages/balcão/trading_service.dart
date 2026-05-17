@@ -3,8 +3,9 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-// Modelo local da startup (espelha StartupListItem do back)
+//modelo local da startup 
 class StartupItem {
   final String id;
   final String name;
@@ -28,10 +29,29 @@ class StartupItem {
   }
 }
 
+// modelo de oferta do livro de ofertas
+class StartupOffer {
+  final int quantity;
+  final int priceCents;
+  final int totalCents;
+
+  StartupOffer({
+    required this.quantity,
+    required this.priceCents,
+    required this.totalCents,
+  });
+
+  factory StartupOffer.fromMap(Map<String, dynamic> m) => StartupOffer(
+        quantity:   (m['quantity']   as num).toInt(),
+        priceCents: (m['priceCents'] as num).toInt(),
+        totalCents: (m['totalCents'] as num).toInt(),
+      );
+}
+
 class TradingService {
   static final _functions = FirebaseFunctions.instanceFor(region: 'us-central1');
 
-  // ── Busca lista de startups do Firestore ────────
+  // busca lista de startups do Firestore
   static Future<List<StartupItem>> listarStartups() async {
     final snapshot = await FirebaseFirestore.instance
         .collection('startups')
@@ -42,8 +62,8 @@ class TradingService {
         .toList();
   }
 
-  // ── Compra tokens — chama buyTokens no back ─────
-  // Retorna o novo saldo em centavos
+  // compra tokens
+  // retorna o novo saldo em centavos
   static Future<int> comprarTokens({
     required String startupId,
     required int quantity,
@@ -58,7 +78,7 @@ class TradingService {
     return (result.data['data']['balanceCents'] as num).toInt();
   }
 
-  // ── Vende tokens — chama sellTokens no back ─────
+  // vende tokens — chama sellTokens no back
   static Future<int> venderTokens({
     required String startupId,
     required int quantity,
@@ -73,9 +93,24 @@ class TradingService {
     return (result.data['data']['balanceCents'] as num).toInt();
   }
 
-  // ── Helpers de cálculo ──────────────────────────
+  // lista ofertas da startup
+  static Future<List<StartupOffer>> listarOfertas(String startupId) async {
+    await FirebaseAuth.instance.currentUser?.getIdToken(true);
+    final result = await _functions
+        .httpsCallable('listStartupOffers')
+        .call({'startupId': startupId});
 
-  // Converte centavos para reais: 2950 → 29.50
+    final data   = Map<String, dynamic>.from(result.data['data'] as Map);
+    final offers = (data['offers'] as List<dynamic>);
+
+    return offers
+      .map((e) => StartupOffer.fromMap(Map<String, dynamic>.from(e as Map)))
+      .toList();
+  }
+
+  // helpers de calculo
+
+  // converte centavos para reais: 2950 → 29.50
   static double centavosParaReais(int centavos) => centavos / 100;
 
   // Calcula total da operação em centavos

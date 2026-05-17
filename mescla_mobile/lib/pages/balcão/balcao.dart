@@ -18,7 +18,7 @@ class TradingPage extends StatefulWidget {
 class _TradingPageState extends State<TradingPage>
     with TickerProviderStateMixin {
 
-  // ── Estado ──────────────────────────────────────
+  // estado 
   StartupItem? _selectedStartup;
   List<StartupItem> _startups = [];
   bool _carregandoStartups = true;
@@ -27,7 +27,11 @@ class _TradingPageState extends State<TradingPage>
   bool _showAllOffers   = false;
   bool _processando     = false;
 
-  // ── Firestore refs pro card de saldo ────────────
+  // Ofertas do livro
+  List<StartupOffer> _ofertas       = [];
+  bool              _carregandoOfertas = false;
+
+  // Firestore refs pro card de saldo 
   String get _uid => FirebaseAuth.instance.currentUser!.uid;
   DocumentReference get _userDoc =>
       FirebaseFirestore.instance.collection('users').doc(_uid);
@@ -41,7 +45,7 @@ class _TradingPageState extends State<TradingPage>
   // ── Preço atual em centavos da startup selecionada
   int get _priceCents => _selectedStartup?.currentTokenPriceCents ?? 0;
 
-  // ── Total da operação em centavos
+  // total da operação em centavos
   int get _totalCents {
     final qty = int.tryParse(_quantityController.text) ?? 0;
     return TradingService.calcularTotalCents(qty, _priceCents);
@@ -68,18 +72,34 @@ class _TradingPageState extends State<TradingPage>
 
   Future<void> _carregarStartups() async {
     try {
+      await FirebaseAuth.instance.authStateChanges().first;
       final lista = await TradingService.listarStartups();
       if (!mounted) return;
       setState(() {
-        _startups          = lista;
-        _selectedStartup   = lista.isNotEmpty ? lista.first : null;
+        _startups           = lista;
+        _selectedStartup    = lista.isNotEmpty ? lista.first : null;
         _carregandoStartups = false;
       });
+      if (lista.isNotEmpty) await _carregarOfertas(lista.first.id);
     } catch (e) {
       print('ERRO startups: $e');
       if (!mounted) return;
       setState(() => _carregandoStartups = false);
       _mostrarErro('Erro ao carregar startups.');
+    }
+  }
+
+  Future<void> _carregarOfertas(String startupId) async {
+    setState(() => _carregandoOfertas = true);
+    try {
+      final ofertas = await TradingService.listarOfertas(startupId);
+      print('ofertas recebidas: ${ofertas.length}');
+      if (!mounted) return;
+      setState(() => _ofertas = ofertas);
+    } catch (e) {
+      print('ERRO ofertas: $e');
+    } finally {
+      if (mounted) setState(() => _carregandoOfertas = false);
     }
   }
 
@@ -90,7 +110,7 @@ class _TradingPageState extends State<TradingPage>
     super.dispose();
   }
 
-  // ── Helpers ─────────────────────────────────────
+  // helpers
 
   String _formatCurrency(int centavos) {
     final reais   = centavos / 100;
@@ -120,7 +140,7 @@ class _TradingPageState extends State<TradingPage>
     ));
   }
 
-  // ── Confirmar transação ─────────────────────────
+  // Confirmar transação 
   Future<void> _confirmarTransacao() async {
     final quantidade = int.tryParse(_quantityController.text) ?? 0;
 
@@ -152,7 +172,6 @@ class _TradingPageState extends State<TradingPage>
       }
       _quantityController.clear();
     } catch (e) {
-      print('ERRO transacao: $e');
       final msg = e.toString().contains('Saldo insuficiente')
           ? 'Saldo insuficiente para comprar tokens.'
           : e.toString().contains('Tokens insuficientes')
@@ -164,7 +183,7 @@ class _TradingPageState extends State<TradingPage>
     }
   }
 
-  // ── Build ────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -272,7 +291,7 @@ class _TradingPageState extends State<TradingPage>
     );
   }
 
-  // ── AppBar ───────────────────────────────────────
+  // app bar
   Widget _buildAppBar() {
     return Container(
       color: Colors.white,
@@ -288,7 +307,7 @@ class _TradingPageState extends State<TradingPage>
     );
   }
 
-  // ── Seção Negociar ───────────────────────────────
+  // seção negociar
   Widget _buildTradeSection() {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -397,6 +416,7 @@ class _TradingPageState extends State<TradingPage>
               _selectedStartup = val;
               _quantityController.clear();
             });
+            _carregarOfertas(val.id);
           },
         ),
       ),
@@ -490,8 +510,6 @@ class _TradingPageState extends State<TradingPage>
     );
   }
 
-  // ── Livro de Ofertas ─────────────────────────────
-  // Por enquanto placeholder — quando o back tiver endpoint de ofertas, integrar aqui
   Widget _buildOrderBook() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -504,6 +522,7 @@ class _TradingPageState extends State<TradingPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Cabeçalho
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -523,16 +542,74 @@ class _TradingPageState extends State<TradingPage>
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          Center(
-            child: Column(
-              children: [
-                Icon(Icons.list_alt_rounded, size: 40, color: Colors.grey[300]),
-                const SizedBox(height: 12),
-                Text('Ofertas disponíveis aparecerão aqui', style: TextStyle(fontSize: 13, color: Colors.grey[500])),
-              ],
+          const SizedBox(height: 14),
+
+          // loading
+          if (_carregandoOfertas)
+            const Center(child: CircularProgressIndicator())
+
+          // vazio
+          else if (_ofertas.isEmpty)
+            Center(
+              child: Column(
+                children: [
+                  Icon(Icons.list_alt_rounded, size: 40, color: Colors.grey[300]),
+                  const SizedBox(height: 12),
+                  Text('Nenhuma oferta disponível', style: TextStyle(fontSize: 13, color: Colors.grey[500])),
+                ],
+              ),
+            )
+
+          // Lista de ofertas
+          else ...[
+            // header da tabela
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              decoration: BoxDecoration(color: const Color(0xFFF9FAFB), borderRadius: BorderRadius.circular(8)),
+              child: const Row(
+                children: [
+                  Expanded(flex: 2, child: Text('Quantidade', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF6B7280)))),
+                  Expanded(flex: 2, child: Text('Preço/Token', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF6B7280)))),
+                  Expanded(flex: 2, child: Text('Total', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF6B7280)))),
+                  SizedBox(width: 72),
+                ],
+              ),
             ),
-          ),
+            const SizedBox(height: 4),
+
+            // linhas de oferta
+            for (final oferta in _ofertas)
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey[100]!, width: 1))),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Text('${oferta.quantity} tokens', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(_formatCurrency(oferta.priceCents), textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(_formatCurrency(oferta.totalCents), textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        _quantityController.text = oferta.quantity.toString();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(color: const Color(0xFF1A56DB), borderRadius: BorderRadius.circular(8)),
+                        child: const Text('Usar', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
           const SizedBox(height: 8),
         ],
       ),
