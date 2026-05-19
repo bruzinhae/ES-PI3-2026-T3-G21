@@ -7,3 +7,6 @@ export {buyTokens} from "./handlers/buyTokens";
 export {listUserTransactions} from "./handlers/listUserTransactions";
 export {getUserDashboard} from "./handlers/getUserDashboard";
 export { listStartupOffers } from "./handlers/listStartupOffers";
+export {
+  getStartupTokenPerformance,
+} from "./handlers/getStartupTokenPerformance";
