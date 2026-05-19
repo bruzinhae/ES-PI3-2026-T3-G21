@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'register_screen.dart';
 import 'recuperar_senha.dart';
 import '../../services/auth_service.dart';
-import '../../catalogoStartUp.dart';
+import '../startups/catalogoStartUp.dart';
 
 
 class LoginScreen extends StatefulWidget {

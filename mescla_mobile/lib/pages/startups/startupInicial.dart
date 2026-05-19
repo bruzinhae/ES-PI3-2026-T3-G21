@@ -4,6 +4,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'catalogoStartUp.dart';
+import '../pages/../startups/services/startup_service.dart';
+import '../../widgets/bottom_navBar.dart';
+import 'modal_investimento.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class StartupInicial extends StatelessWidget {
   final String startupId;
@@ -38,8 +42,7 @@ class _InvestPageState extends State<InvestPage> {
   bool enviandoPergunta = false;
   String? erro;
 
-  Map<String, dynamic>? startup;
-  List<Map<String, dynamic>> messages = [];
+  StartupDetails? startup;
 
   @override
   void initState() {
@@ -60,143 +63,77 @@ class _InvestPageState extends State<InvestPage> {
     });
 
     try {
-      await carregarDetalhesStartup();
-      //await carregarPerguntas();
+      final dados = await StartupService.getStartupDetails(widget.startupId);
+      debugPrint('=== DOCUMENTS ===');
+      debugPrint(dados.documents.toString());
+      debugPrint('executiveSummary: ${dados.executiveSummary}');
+      debugPrint('pitchDeckUrl: ${dados.pitchDeckUrl}');
+      debugPrint('demoVideos: ${dados.demoVideos}');
 
       setState(() {
+        startup = dados;
         carregando = false;
       });
     } on FirebaseFunctionsException catch (e) {
       setState(() {
         carregando = false;
-        erro = "Erro: ${e.message}";
+        erro = 'Erro: ${e.message}';
       });
 
-      debugPrint("Código: ${e.code}");
-      debugPrint("Mensagem: ${e.message}");
-      debugPrint("Detalhes: ${e.details}");
+      debugPrint('Código: ${e.code}');
+      debugPrint('Mensagem: ${e.message}');
+      debugPrint('Detalhes: ${e.details}');
     } catch (e) {
       setState(() {
         carregando = false;
-        erro = "Erro inesperado ao carregar dados.";
+        erro = 'Erro inesperado ao carregar dados.';
       });
 
-      debugPrint("Erro inesperado: $e");
+      debugPrint('Erro inesperado: $e');
     }
   }
-
-  Future<void> carregarDetalhesStartup() async {
-    debugPrint("Chamando getStartupDetails com id: ${widget.startupId}");
-
-    final result = await FirebaseFunctions.instanceFor(
-      region: "us-central1",
-    ).httpsCallable("getStartupDetails").call({
-      "startupId": widget.startupId,
-    });
-
-    debugPrint("Resposta recebida: ${result.data}");
-    startup = Map<String, dynamic>.from(result.data["data"]);
-    final List perguntas = startup?["publicQuestions"] ?? [];
-    messages = perguntas.map((item) => Map<String, dynamic>.from(item)).toList();
-  }
-
-  /* Future<void> carregarPerguntas() async {
-    final result = await FirebaseFunctions.instanceFor(
-      region: "us-central1",
-    ).httpsCallable("listStartupQuestions").call({
-      "startupId": widget.startupId,
-    });
-
-    debugPrint("Resposta perguntas: ${result.data}");
-
-    final List data = result.data["data"] ?? [];
-
-    messages = data.map((item) {
-      return Map<String, dynamic>.from(item);
-    }).toList();
-  }
-  */
 
   Future<void> enviarPergunta() async {
     final texto = _controller.text.trim();
-
     if (texto.isEmpty) return;
 
-    setState(() {
-      enviandoPergunta = true;
-    });
+    setState(() => enviandoPergunta = true);
 
     try {
-      await FirebaseFunctions.instanceFor(
-        region: "us-central1",
-      ).httpsCallable("createStartupQuestion").call({
-        "startupId": widget.startupId,
-        "message": texto,
-      });
+      await StartupService.createStartupQuestion(
+        startupId: widget.startupId,
+        message: texto,
+      );
 
       _controller.clear();
-
-      //await carregarPerguntas();
-
-      setState(() {
-        enviandoPergunta = false;
-      });
     } on FirebaseFunctionsException catch (e) {
-      setState(() {
-        enviandoPergunta = false;
-        erro = "Erro: ${e.message}";
-      });
-
-      debugPrint("Código: ${e.code}");
-      debugPrint("Mensagem: ${e.message}");
+      setState(() => erro = 'Erro: ${e.message}');
+      debugPrint('Código: ${e.code}');
+      debugPrint('Mensagem: ${e.message}');
     } catch (e) {
-      setState(() {
-        enviandoPergunta = false;
-        erro = "Erro inesperado ao enviar pergunta.";
-      });
-
-      debugPrint("Erro inesperado: $e");
+      setState(() => erro = 'Erro inesperado ao enviar pergunta.');
+      debugPrint('Erro inesperado: $e');
+    } finally {
+      setState(() => enviandoPergunta = false);
     }
-  }
-
-  String texto(dynamic valor, String padrao) {
-    if (valor == null) return padrao;
-    return valor.toString();
-  }
-
-  String formatarStage(dynamic stage) {
-    if (stage == "nova") return "Nova";
-    if (stage == "em_operacao") return "Em operação";
-    if (stage == "em_expansao") return "Em expansão";
-    return texto(stage, "Sem estágio");
-  }
-
-  String formatarTags(dynamic tags) {
-    if (tags is List && tags.isNotEmpty) {
-      return tags.join(" • ").toUpperCase();
-    }
-
-    return "STARTUP";
   }
 
   String iniciais(String nome) {
-    final partes = nome.trim().split(" ");
-
-    if (partes.isEmpty) return "?";
+    final partes = nome.trim().split(' ');
+    if (partes.isEmpty) return '?';
     if (partes.length == 1) return partes.first[0].toUpperCase();
-
-    return "${partes.first[0]}${partes.last[0]}".toUpperCase();
+    return '${partes.first[0]}${partes.last[0]}'.toUpperCase();
   }
+
+  // ─── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     if (carregando) {
-      return Scaffold(
-        backgroundColor: const Color(0xFFEFF4FF),
+      return const Scaffold(
+        backgroundColor: Color(0xFFEFF4FF),
         body: SafeArea(
-          child: Center(
-            child: CircularProgressIndicator(),
-          ),
+          child: Center(child: CircularProgressIndicator()),
         ),
       );
     }
@@ -219,9 +156,14 @@ class _InvestPageState extends State<InvestPage> {
       );
     }
 
+    final s = startup!;
+
     return Scaffold(
+      bottomNavigationBar: const BottomNavBar(
+        selectedIndex: 0,
+      ),
       backgroundColor: const Color(0xFFEFF4FF),
-      bottomNavigationBar: _bottomNav(),
+
       body: SafeArea(
         child: Column(
           children: [
@@ -233,23 +175,24 @@ class _InvestPageState extends State<InvestPage> {
                   children: [
                     _topBar(),
                     const SizedBox(height: 24),
-                    _chips(),
+                    _chips(s),
                     const SizedBox(height: 16),
                     Text(
-                      texto(startup?["name"], "Startup"),
+                      s.name,
                       style: const TextStyle(
                         fontSize: 16,
                         color: Color(0xFF1F2937),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _series(),
+                    _series(s),
                     const SizedBox(height: 18),
                     Text(
-                      texto(
-                        startup?["description"] ?? startup?["shortDescription"],
-                        "Sem descrição.",
-                      ),
+                      s.description.isNotEmpty
+                          ? s.description
+                          : s.shortDescription.isNotEmpty
+                              ? s.shortDescription
+                              : 'Sem descrição.',
                       style: const TextStyle(
                         fontSize: 14,
                         height: 1.6,
@@ -257,23 +200,23 @@ class _InvestPageState extends State<InvestPage> {
                       ),
                     ),
                     const SizedBox(height: 28),
-                    _metrics(),
+                    _metrics(s),
                     const SizedBox(height: 24),
                     _chartCard(),
                     const SizedBox(height: 24),
-                    _teamCard(),
+                    _teamCard(s),
                     const SizedBox(height: 24),
                     const Text(
-                      "Documentação Pública",
+                      'Documentação Pública',
                       style: TextStyle(
                         fontSize: 15,
                         color: Color(0xFF1F2937),
                       ),
                     ),
                     const SizedBox(height: 14),
-                    _docs(),
+                    _docs(s),
                     const SizedBox(height: 24),
-                    _questionsCard(),
+                    _questionsCard(s),
                     const SizedBox(height: 18),
                     _investButton(),
                     const SizedBox(height: 12),
@@ -287,28 +230,22 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
+  // ─── Widgets ───────────────────────────────────────────────────────────────
+
   Widget _topBar() {
     return Row(
       children: [
         GestureDetector(
-          onTap: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const CatalogoStartUp(),
-              ),
-            );
-          },
-          child: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFF0D2CC8),
-            size: 22,
+          onTap: () => Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const CatalogoStartUp()),
           ),
+          child: const Icon(Icons.arrow_back, color: Color(0xFF0D2CC8), size: 22),
         ),
         const SizedBox(width: 18),
         const Expanded(
           child: Text(
-            "MesclaInvest",
+            'MesclaInvest',
             style: TextStyle(
               color: Color(0xFF0D2CC8),
               fontWeight: FontWeight.w700,
@@ -316,22 +253,18 @@ class _InvestPageState extends State<InvestPage> {
             ),
           ),
         ),
-        const Icon(
-          Icons.favorite_border,
-          color: Color(0xFF0D2CC8),
-          size: 24,
-        ),
+        const Icon(Icons.favorite_border, color: Color(0xFF0D2CC8), size: 24),
       ],
     );
   }
 
-  Widget _chips() {
+  Widget _chips(StartupDetails s) {
     return Wrap(
       spacing: 10,
       runSpacing: 10,
       children: [
-        _chip(formatarTags(startup?["tags"])),
-        _chip(formatarStage(startup?["stage"])),
+        _chip(s.tagsFormatadas),
+        _chip(s.stageFormatado),
       ],
     );
   }
@@ -355,13 +288,13 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
-  Widget _series() {
+  Widget _series(StartupDetails s) {
     return Row(
       children: [
         const Icon(Icons.eco_outlined, color: Color(0xFF0D2CC8), size: 26),
         const SizedBox(width: 12),
         Text(
-          texto(startup?["name"] ?? startup?["name"], "Rodada não informada"),
+          s.name,
           style: const TextStyle(
             color: Color(0xFF0D2CC8),
             fontSize: 16,
@@ -372,7 +305,7 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
-  Widget _metrics() {
+  Widget _metrics(StartupDetails s) {
     return GridView.count(
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
@@ -382,20 +315,20 @@ class _InvestPageState extends State<InvestPage> {
       mainAxisSpacing: 14,
       children: [
         _MetricCard(
-          title: "Capital aportado",
-          value: texto(startup?["totalTokensIssued"] ?? startup?["totalTokensIssued"], "-"),
+          title: 'Capital aportado',
+          value: s.capitalFormatado,
         ),
         _MetricCard(
-          title: "Tokens totais",
-          value: texto(startup?["tokens"] ?? startup?["totalTokens"], "-"),
+          title: 'Tokens totais',
+          value: s.tokensFormatados,
         ),
         _MetricCard(
-          title: "Valor do Token",
-          value: texto(startup?["tokenValue"], "-"),
+          title: 'Valor do Token',
+          value: s.tokenPriceFormatado,
         ),
         _MetricCard(
-          title: "Valorização",
-          value: texto(startup?["growth"] ?? startup?["profitability"], "-"),
+          title: 'Valorização',
+          value: s.valorizacaoFormatada,
           green: true,
         ),
       ],
@@ -404,7 +337,7 @@ class _InvestPageState extends State<InvestPage> {
 
   Widget _chartCard() {
     final values = [72.0, 105.0, 82.0, 135.0, 165.0, 210.0];
-    final months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"];
+    final months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
 
     return Container(
       width: double.infinity,
@@ -413,22 +346,19 @@ class _InvestPageState extends State<InvestPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Text('Histórico de Valorização', style: TextStyle(fontSize: 16)),
           const Text(
-            "Histórico de Valorização",
-            style: TextStyle(fontSize: 16),
-          ),
-          const Text(
-            "Desempenho acumulado do token no período",
+            'Desempenho acumulado do token no período',
             style: TextStyle(fontSize: 11, color: Color(0xFF4B5563)),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
-              _period("1D"),
-              _period("7D"),
-              _period("1M"),
-              _period("6M", active: true),
-              _period("YTD"),
+              _period('1D'),
+              _period('7D'),
+              _period('1M'),
+              _period('6M', active: true),
+              _period('YTD'),
             ],
           ),
           const SizedBox(height: 26),
@@ -440,10 +370,10 @@ class _InvestPageState extends State<InvestPage> {
                 const Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("R\$ 30", style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    Text("R\$ 20", style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    Text("R\$ 10", style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    Text("R\$ 0", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text('R\$ 30', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text('R\$ 20', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text('R\$ 10', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text('R\$ 0', style: TextStyle(fontSize: 10, color: Colors.grey)),
                   ],
                 ),
                 const SizedBox(width: 14),
@@ -453,7 +383,6 @@ class _InvestPageState extends State<InvestPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: List.generate(values.length, (index) {
                       final active = index == values.length - 1;
-
                       return Column(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
@@ -463,13 +392,10 @@ class _InvestPageState extends State<InvestPage> {
                             decoration: BoxDecoration(
                               gradient: active
                                   ? const LinearGradient(
-                                colors: [
-                                  Color(0xFF0D2CC8),
-                                  Color(0xFF8D35E6),
-                                ],
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                              )
+                                      colors: [Color(0xFF0D2CC8), Color(0xFF8D35E6)],
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                    )
                                   : null,
                               color: active ? null : const Color(0xFF9DB7EA),
                               borderRadius: BorderRadius.circular(8),
@@ -478,10 +404,7 @@ class _InvestPageState extends State<InvestPage> {
                           const SizedBox(height: 12),
                           Text(
                             months[index],
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Colors.grey,
-                            ),
+                            style: const TextStyle(fontSize: 10, color: Colors.grey),
                           ),
                         ],
                       );
@@ -515,16 +438,14 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
-  Widget _teamCard() {
-    final team = startup?["founders"];
-
-    if (team is! List || team.isEmpty) {
+  Widget _teamCard(StartupDetails s) {
+    if (s.founders.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(24),
         decoration: _cardDecoration(),
         child: const Text(
-          "Equipe e Governança não informada.",
+          'Equipe e Governança não informada.',
           style: TextStyle(fontSize: 14),
         ),
       );
@@ -537,25 +458,18 @@ class _InvestPageState extends State<InvestPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Equipe e Governança", style: TextStyle(fontSize: 16)),
+          const Text('Equipe e Governança', style: TextStyle(fontSize: 16)),
           const SizedBox(height: 22),
           const Text(
-            "PARTICIPAÇÃO SOCIETÁRIA",
+            'PARTICIPAÇÃO SOCIETÁRIA',
             style: TextStyle(fontSize: 10, letterSpacing: 2, color: Colors.grey),
           ),
           const SizedBox(height: 16),
-          ...team.map((person) {
-            final item = Map<String, dynamic>.from(person);
-            final name = texto(item["name"], "Integrante");
-            final role = texto(item["role"], "Cargo não informado");
-            final percent = item["equityPercent"] ?? 0;
-
-            return _progress(
-              "$name ($role)",
-              percent is num ? percent / 100 : 0,
-              "${texto(percent, "0")}%",
-            );
-          }),
+          ...s.founders.map((founder) => _progress(
+                '${founder.name} (${founder.role})',
+                founder.equityPercent / 100,
+                '${founder.equityPercent.toStringAsFixed(0)}%',
+              )),
         ],
       ),
     );
@@ -587,12 +501,10 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
-  Widget _docs() {
-    final docs = startup?["documents"];
-
-    if (docs is! List || docs.isEmpty) {
+  Widget _docs(StartupDetails s) {
+    if (s.documents.isEmpty) {
       return const Text(
-        "Nenhum documento público disponível.",
+        'Nenhum documento público disponível.',
         style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
       );
     }
@@ -600,42 +512,67 @@ class _InvestPageState extends State<InvestPage> {
     return Wrap(
       spacing: 14,
       runSpacing: 14,
-      children: docs.map((doc) {
-        final item = Map<String, dynamic>.from(doc);
+      children: s.documents.map((doc) {
+        final title = doc['title']?.toString() ?? 'Documento';
+        final type = doc['type']?.toString() ?? 'pdf';
+        final url = doc['url']?.toString() ?? '';
 
-        return _doc(
-          texto(item["title"], "Documento"),
-          Icons.description_outlined,
-        );
+        final icon = type == 'video'
+            ? Icons.play_circle_outline
+            : Icons.description_outlined;
+
+        return _doc(title, icon, url);
       }).toList(),
     );
   }
 
-  Widget _doc(String text, IconData icon) {
-    return Container(
-      width: 160,
-      height: 95,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFCBD5E1)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: const Color(0xFF0D2CC8), size: 28),
-          const SizedBox(height: 12),
-          Text(
-            text,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-          ),
-        ],
+  Widget _doc(String text, IconData icon, String url) {
+    return GestureDetector(
+      onTap: () async {
+        if (url.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('URL do documento não disponível.')),
+          );
+          return;
+        }
+
+        final uri = Uri.parse(url);
+
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Não foi possível abrir o documento.')),
+            );
+          }
+        }
+      },
+      child: Container(
+        width: 160,
+        height: 95,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFCBD5E1)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: const Color(0xFF0D2CC8), size: 28),
+            const SizedBox(height: 12),
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _questionsCard() {
+  Widget _questionsCard(StartupDetails s) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
@@ -644,33 +581,27 @@ class _InvestPageState extends State<InvestPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Perguntas da\nComunidade",
+            'Perguntas da\nComunidade',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 18),
           _inputField(),
           const SizedBox(height: 18),
-          if (messages.isEmpty)
+          if (s.publicQuestions.isEmpty)
             const Text(
-              "Nenhuma pergunta enviada ainda.",
+              'Nenhuma pergunta enviada ainda.',
               style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
             )
           else
-            ...messages.map((msg) {
-              final name = texto(msg["name"] ?? msg["authorName"], "Usuário");
-              final message = texto(msg["message"], "");
-              final isAnswer = msg["isAnswer"] == true || msg["isUser"] == false;
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _questionBubble(
-                  initials: isAnswer ? "◎" : iniciais(name),
-                  name: name,
-                  text: message,
-                  isAnswer: isAnswer,
-                ),
-              );
-            }),
+            ...s.publicQuestions.map((q) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _questionBubble(
+                    initials: q.isAnswer ? '◎' : iniciais(q.authorName),
+                    name: q.authorName,
+                    text: q.message,
+                    isAnswer: q.isAnswer,
+                  ),
+                )),
         ],
       ),
     );
@@ -687,9 +618,8 @@ class _InvestPageState extends State<InvestPage> {
       children: [
         CircleAvatar(
           radius: 18,
-          backgroundColor: isAnswer
-              ? const Color(0xFF0D2CC8)
-              : const Color(0xFFEBD5FF),
+          backgroundColor:
+              isAnswer ? const Color(0xFF0D2CC8) : const Color(0xFFEBD5FF),
           child: Text(
             initials,
             style: TextStyle(
@@ -706,22 +636,17 @@ class _InvestPageState extends State<InvestPage> {
             decoration: BoxDecoration(
               color: isAnswer ? Colors.white : const Color(0xFFEFF4FF),
               borderRadius: BorderRadius.circular(16),
-              border: isAnswer
-                  ? Border.all(color: const Color(0xFFCBD5E1))
-                  : null,
+              border: isAnswer ? Border.all(color: const Color(0xFFCBD5E1)) : null,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                ),
+                Text(name,
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
-                Text(
-                  text,
-                  style: const TextStyle(fontSize: 13, height: 1.55),
-                ),
+                Text(text,
+                    style: const TextStyle(fontSize: 13, height: 1.55)),
               ],
             ),
           ),
@@ -743,7 +668,7 @@ class _InvestPageState extends State<InvestPage> {
             child: TextField(
               controller: _controller,
               decoration: const InputDecoration(
-                hintText: "Escreva sua pergunta...",
+                hintText: 'Escreva sua pergunta...',
                 border: InputBorder.none,
               ),
             ),
@@ -751,10 +676,10 @@ class _InvestPageState extends State<InvestPage> {
           IconButton(
             icon: enviandoPergunta
                 ? const SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Icon(Icons.send, color: Color(0xFF0D2CC8)),
             onPressed: enviandoPergunta ? null : enviarPergunta,
           ),
@@ -764,45 +689,32 @@ class _InvestPageState extends State<InvestPage> {
   }
 
   Widget _investButton() {
-    return GestureDetector(
-      onTap: () {
-        debugPrint("Investir na startup: ${widget.startupId}");
-      },
-      child: Container(
-        width: double.infinity,
-        height: 58,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          gradient: const LinearGradient(
-            colors: [Color(0xFF0D2CC8), Color(0xFF8D35E6)],
-          ),
-        ),
-        child: const Center(
-          child: Text(
-            "Quero Investir  →",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-          ),
+  return GestureDetector(
+    onTap: () => abrirModalInvestimento(
+      context,
+      startup: startup!,
+      startupId: widget.startupId,
+      onSucesso: carregarDadosDaTela, 
+    ),
+    child: Container(
+      width: double.infinity,
+      height: 58,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0D2CC8), Color(0xFF8D35E6)],
         ),
       ),
-    );
-  }
+      child: const Center(
+        child: Text(
+          'Quero Investir  →',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
+      ),
+    ),
+  );
+}
 
-  Widget _bottomNav() {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: const Color(0xFF0D2CC8),
-      unselectedItemColor: const Color(0xFF64748B),
-      selectedFontSize: 11,
-      unselectedFontSize: 11,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: "Catálogo"),
-        BottomNavigationBarItem(icon: Icon(Icons.swap_vert), label: "Negociar"),
-        BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: "Carteira"),
-        BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: "Dashboard"),
-        BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: "Perfil"),
-      ],
-    );
-  }
 
   BoxDecoration _cardDecoration() {
     return BoxDecoration(
@@ -810,7 +722,12 @@ class _InvestPageState extends State<InvestPage> {
       borderRadius: BorderRadius.circular(26),
     );
   }
+
+  
+
 }
+
+// metricCard
 
 class _MetricCard extends StatelessWidget {
   final String title;
