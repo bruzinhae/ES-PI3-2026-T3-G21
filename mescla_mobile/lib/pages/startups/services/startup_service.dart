@@ -50,12 +50,16 @@ class ExternalMember {
 }
 
 class StartupQuestion {
+  final String id;
+  final String authorUid;
   final String authorName;
   final String message;
   final bool isAnswer;
   final String? answer;
 
   StartupQuestion({
+    required this.id,
+    required this.authorUid,
     required this.authorName,
     required this.message,
     required this.isAnswer,
@@ -64,6 +68,8 @@ class StartupQuestion {
 
   factory StartupQuestion.fromMap(Map<String, dynamic> map) {
     return StartupQuestion(
+      id: map['id'] ?? '', 
+      authorUid: map['authorUid'] ?? '',
       authorName: map['authorName'] ?? map['name'] ?? 'Usuário',
       message: map['message'] ?? map['text'] ?? '',
       isAnswer: map['isAnswer'] == true || map['isUser'] == false,
@@ -262,14 +268,27 @@ class StartupService {
   static Future<void> createStartupQuestion({
     required String startupId,
     required String message,
+    String visibility = 'publica',
   }) async {
     debugPrint('[StartupService] createStartupQuestion: $startupId');
 
     await _functions.httpsCallable('createStartupQuestion').call({
       'startupId': startupId,
-      'message': message,
+      'text': message,
+      'visibility': visibility,
     });
   }
+
+  // deleta pergunta
+  static Future<void> deleteStartupQuestion({
+    required String startupId,
+    required String questionId,
+  }) async {
+  await _functions.httpsCallable('deleteStartupQuestion').call({
+    'startupId': startupId,
+    'questionId': questionId,
+  });
+}
 
   /// lista as perguntas públicas de uma startup.
   static Future<List<StartupQuestion>> listPublicQuestions(
@@ -285,6 +304,8 @@ class StartupService {
         .map((q) => StartupQuestion.fromMap(Map<String, dynamic>.from(q)))
         .toList();
   }
+
+
 
   /// compra tokens de uma startup.
   static Future<Map<String, dynamic>> buyTokens({
