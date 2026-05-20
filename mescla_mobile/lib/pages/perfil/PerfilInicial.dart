@@ -8,8 +8,24 @@ import 'package:mescla_mobile/pages/perfil/alterar_email.dart';
 import 'package:mescla_mobile/pages/perfil/alterar_senha.dart';
 import '../../widgets/bottom_navBar.dart';
 
-class PerfilPage extends StatelessWidget {
+class PerfilPage extends StatefulWidget {
   const PerfilPage({super.key});
+
+  @override
+  State<PerfilPage> createState() => _PerfilPageState();
+}
+
+class _PerfilPageState extends State<PerfilPage> {
+  bool editando = false;
+
+  final TextEditingController telefoneController =
+  TextEditingController(text: '(11) 98765-4321');
+
+  @override
+  void dispose() {
+    telefoneController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,56 +45,14 @@ class PerfilPage extends StatelessWidget {
               Center(
                 child: Column(
                   children: [
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 108,
-                          height: 108,
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.16),
-                                blurRadius: 6,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: const CircleAvatar(
-                            backgroundColor: Color(0xFFE5E7EB),
-                            child: Icon(
-                              Icons.person,
-                              size: 54,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
-
-                        Positioned(
-                          right: -2,
-                          bottom: 8,
-                          child: Container(
-                            width: 42,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: kSecondary,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 3,
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.edit,
-                              color: Colors.white,
-                              size: 21,
-                            ),
-                          ),
-                        ),
-                      ],
+                    const CircleAvatar(
+                      radius: 54,
+                      backgroundColor: Color(0xFFE5E7EB),
+                      child: Icon(
+                        Icons.person,
+                        size: 54,
+                        color: Colors.grey,
+                      ),
                     ),
 
                     const SizedBox(height: 22),
@@ -103,28 +77,6 @@ class PerfilPage extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 14),
-
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE1E7FF),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: const Text(
-                        'INVESTIDOR',
-                        style: TextStyle(
-                          color: kPrimary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                          letterSpacing: 2,
-                        ),
-                      ),
-                    ),
-
                     const SizedBox(height: 18),
 
                     Padding(
@@ -133,7 +85,11 @@ class PerfilPage extends StatelessWidget {
                         width: double.infinity,
                         height: 52,
                         child: OutlinedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            setState(() {
+                              editando = !editando;
+                            });
+                          },
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(
                               color: Color(0xFFB9C9F6),
@@ -143,9 +99,11 @@ class PerfilPage extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: const Text(
-                            'Editar perfil',
-                            style: TextStyle(
+                          child: Text(
+                            editando
+                                ? 'Cancelar edição'
+                                : 'Editar perfil',
+                            style: const TextStyle(
                               color: kPrimary,
                               fontSize: 17,
                               letterSpacing: 0.4,
@@ -160,7 +118,15 @@ class PerfilPage extends StatelessWidget {
 
               const SizedBox(height: 36),
 
-              const _InfoCard(),
+              _InfoCard(
+                editando: editando,
+                telefoneController: telefoneController,
+                onSalvar: () {
+                  setState(() {
+                    editando = false;
+                  });
+                },
+              ),
 
               const SizedBox(height: 36),
 
@@ -221,48 +187,16 @@ class PerfilPage extends StatelessWidget {
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFE5E7EB),
-            width: 1,
-          ),
-        ),
-      ),
-      child: const Row(
-        children: [
-          SizedBox(width: 8),
-          Text(
-            'MesclaInvest',
-            style: TextStyle(
-              color: kPrimary,
-              fontSize: 27,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          Spacer(),
-          Icon(
-            Icons.notifications_none,
-            color: Color(0xFF6B7280),
-            size: 26,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _InfoCard extends StatelessWidget {
-  const _InfoCard();
+  final bool editando;
+  final TextEditingController telefoneController;
+  final VoidCallback onSalvar;
+
+  const _InfoCard({
+    required this.editando,
+    required this.telefoneController,
+    required this.onSalvar,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -273,9 +207,9 @@ class _InfoCard extends StatelessWidget {
         color: Colors.white.withOpacity(0.82),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Column(
+      child: Column(
         children: [
-          Align(
+          const Align(
             alignment: Alignment.centerLeft,
             child: Text(
               'INFORMAÇÕES DA CONTA',
@@ -288,32 +222,96 @@ class _InfoCard extends StatelessWidget {
             ),
           ),
 
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
 
-          _InfoRow(
+          const _InfoRow(
             label: 'CPF',
             value: '***.456.***-00',
           ),
 
-          _InfoRow(
+          editando
+              ? _EditableInfoRow(
             label: 'Telefone',
-            value: '(11) 98765-4321',
+            controller: telefoneController,
+          )
+              : _InfoRow(
+            label: 'Telefone',
+            value: telefoneController.text,
           ),
 
-          _InfoRow(
+          const _InfoRow(
             label: 'Tipo de conta',
             value: 'Investidor',
           ),
 
-          _InfoRow(
+          const _InfoRow(
             label: 'Status',
             value: 'Verificada',
             icon: Icons.verified_outlined,
             valueColor: kPrimary,
             showDivider: false,
           ),
+
+          if (editando) ...[
+            const SizedBox(height: 22),
+
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: onSalvar,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  'Salvar alterações',
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+class _EditableInfoRow extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+
+  const _EditableInfoRow({
+    required this.label,
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            labelText: label,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 15),
+          child: Divider(
+            height: 1,
+            color: Color(0xFFE5E7EB),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -344,7 +342,6 @@ class _InfoRow extends StatelessWidget {
               style: const TextStyle(
                 color: kOutline,
                 fontSize: 16,
-                letterSpacing: 0.5,
               ),
             ),
 
@@ -356,6 +353,7 @@ class _InfoRow extends StatelessWidget {
                 color: kPrimary,
                 size: 19,
               ),
+
               const SizedBox(width: 5),
             ],
 
@@ -379,6 +377,49 @@ class _InfoRow extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 70,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: Color(0xFFE5E7EB),
+            width: 1,
+          ),
+        ),
+      ),
+      child: const Row(
+        children: [
+          SizedBox(width: 8),
+
+          Text(
+            'MesclaInvest',
+            style: TextStyle(
+              color: kPrimary,
+              fontSize: 27,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+
+          Spacer(),
+
+          Icon(
+            Icons.notifications_none,
+            color: Color(0xFF6B7280),
+            size: 26,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -446,16 +487,12 @@ class _SecurityCard extends StatelessWidget {
 class _SecurityItem extends StatelessWidget {
   final IconData icon;
   final String title;
-  final String? subtitle;
-  final bool checked;
   final bool showDivider;
   final VoidCallback? onTap;
 
   const _SecurityItem({
     required this.icon,
     required this.title,
-    this.subtitle,
-    this.checked = false,
     this.showDivider = true,
     this.onTap,
   });
@@ -477,9 +514,7 @@ class _SecurityItem extends StatelessWidget {
                 ),
                 child: Icon(
                   icon,
-                  color: checked
-                      ? kPrimary
-                      : const Color(0xFF6B7280),
+                  color: const Color(0xFF6B7280),
                   size: 24,
                 ),
               ),
@@ -487,43 +522,21 @@ class _SecurityItem extends StatelessWidget {
               const SizedBox(width: 18),
 
               Expanded(
-                child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Color(0xFF111827),
-                        fontSize: 17,
-                        fontWeight: FontWeight.w400,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 4),
-
-                      Text(
-                        subtitle!,
-                        style: const TextStyle(
-                          color: kPrimary,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ],
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF111827),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: 0.3,
+                  ),
                 ),
               ),
 
-              Icon(
-                checked
-                    ? Icons.check_circle_outline
-                    : Icons.chevron_right,
-                color: checked
-                    ? kPrimary
-                    : const Color(0xFF6B7280),
-                size: checked ? 27 : 30,
+              const Icon(
+                Icons.chevron_right,
+                color: Color(0xFF6B7280),
+                size: 30,
               ),
             ],
           ),
