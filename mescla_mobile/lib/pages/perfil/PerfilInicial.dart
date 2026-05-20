@@ -45,14 +45,47 @@ class _PerfilPageState extends State<PerfilPage> {
               Center(
                 child: Column(
                   children: [
-                    const CircleAvatar(
-                      radius: 54,
-                      backgroundColor: Color(0xFFE5E7EB),
-                      child: Icon(
-                        Icons.person,
-                        size: 54,
-                        color: Colors.grey,
-                      ),
+                    Stack(
+                      children: [
+                        const CircleAvatar(
+                          radius: 54,
+                          backgroundColor: Color(0xFFE5E7EB),
+                          child: Icon(
+                            Icons.person,
+                            size: 54,
+                            color: Colors.grey,
+                          ),
+                        ),
+
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Funciona!'),
+                                ),
+                              );
+
+                              // futuramente:
+                              // abrir câmera ou galeria
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(7),
+                              decoration: const BoxDecoration(
+                                color: kPrimary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.edit,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
 
                     const SizedBox(height: 22),
@@ -169,16 +202,6 @@ class _PerfilPageState extends State<PerfilPage> {
 
               const SizedBox(height: 42),
 
-              const Center(
-                child: Text(
-                  'Versão 2.4.0 • MesclaInvest LTDA',
-                  style: TextStyle(
-                    color: kOutline,
-                    fontSize: 13,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-              ),
             ],
           ),
         ),
@@ -242,14 +265,6 @@ class _InfoCard extends StatelessWidget {
           const _InfoRow(
             label: 'Tipo de conta',
             value: 'Investidor',
-          ),
-
-          const _InfoRow(
-            label: 'Status',
-            value: 'Verificada',
-            icon: Icons.verified_outlined,
-            valueColor: kPrimary,
-            showDivider: false,
           ),
 
           if (editando) ...[
@@ -413,11 +428,6 @@ class _Header extends StatelessWidget {
 
           Spacer(),
 
-          Icon(
-            Icons.notifications_none,
-            color: Color(0xFF6B7280),
-            size: 26,
-          ),
         ],
       ),
     );
@@ -460,20 +470,6 @@ class _SecurityCard extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (_) => const Seguranca2FAPage(),
-                ),
-              );
-            },
-          ),
-
-          _SecurityItem(
-            icon: Icons.email_outlined,
-            title: 'E-mail verificado',
-            showDivider: false,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const AlterarEmailPage(),
                 ),
               );
             },
