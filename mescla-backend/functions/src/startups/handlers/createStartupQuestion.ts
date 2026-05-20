@@ -1,7 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/https";
 import * as logger from "firebase-functions/logger";
-
+import { db } from "../../shared/firebase";
 import { allowedVisibilities } from "../shared/constants";
 
 import { requireAuthenticatedUser } from "../../shared/auth";
@@ -30,6 +30,12 @@ export const createStartupQuestion = onCall(async (request) => {
     throw new HttpsError("invalid-argument", "Informe startupId e text.");
   }
 
+  const userDoc = await db.collection("users").doc(user.uid).get();
+  const authorName = userDoc.exists
+    ? (userDoc.data()?.name ?? "Usuário")
+    : "Usuário";
+
+
   if (!allowedVisibilities.includes(visibility as QuestionVisibility)) {
     throw new HttpsError(
       "invalid-argument",
@@ -56,6 +62,7 @@ export const createStartupQuestion = onCall(async (request) => {
 
   const question: StartupQuestionDocument = {
     authorUid: user.uid,
+    authorName,
     authorEmail: user.email,
     text,
     visibility: visibility as QuestionVisibility,

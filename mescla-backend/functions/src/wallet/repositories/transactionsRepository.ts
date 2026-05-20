@@ -1,7 +1,7 @@
 // Autor: Gabriel Padreca Nicoletti
 // RA: 20013009
 
-import {Transaction} from "firebase-admin/firestore";
+import {Timestamp, Transaction} from "firebase-admin/firestore";
 
 import {db} from "../../shared/firebase";
 import {
@@ -58,6 +58,24 @@ export const fetchUserTokenTransactions = async (
     .doc(uid)
     .collection("transactions")
     .orderBy("createdAt", "desc")
+    .limit(limit)
+    .get();
+
+  return snapshot.docs.map((doc) =>
+    toTokenTransactionView(doc.id, doc.data() as TokenTransactionDocument),
+  );
+};
+
+export const fetchUserTokenTransactionsSince = async (
+  uid: string,
+  startAt: Timestamp,
+  limit = 200,
+): Promise<TokenTransactionView[]> => {
+  const snapshot = await usersCollection
+    .doc(uid)
+    .collection("transactions")
+    .where("createdAt", ">=", startAt)
+    .orderBy("createdAt", "asc")
     .limit(limit)
     .get();
 

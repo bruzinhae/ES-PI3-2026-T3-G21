@@ -13,7 +13,7 @@ Widget getTelaByIndex(int index) {
     case 2:
       return const CarteiraScreen();
     case 3:
-      return const CatalogoStartUp();
+      return const SizedBox();
     case 4:
       return const PerfilPage();
     default:
