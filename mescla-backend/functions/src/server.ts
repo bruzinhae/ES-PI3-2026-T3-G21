@@ -5,3 +5,4 @@ setGlobalOptions({ maxInstances: 10 });
 export * from "./startups";
 export * from "./users";
 export * from "./wallet";
+export * from "./tokens";
