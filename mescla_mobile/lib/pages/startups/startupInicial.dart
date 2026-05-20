@@ -7,6 +7,7 @@ import 'catalogoStartUp.dart';
 import '../pages/../startups/services/startup_service.dart';
 import '../../widgets/bottom_navBar.dart';
 import 'modal_investimento.dart';
+import 'modal_perguntaPrivada.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -213,6 +214,10 @@ class _InvestPageState extends State<InvestPage> {
                     const SizedBox(height: 28),
                     _metrics(s),
                     const SizedBox(height: 24),
+                    if (s.access.isInvestor) ...[
+                      _investorAreaCard(s),
+                      const SizedBox(height: 24),
+                    ],
                     _chartCard(),
                     const SizedBox(height: 24),
                     _teamCard(s),
@@ -345,6 +350,138 @@ class _InvestPageState extends State<InvestPage> {
       ],
     );
   }
+
+  Widget _investorAreaCard(StartupDetails s) {
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.fromLTRB(28, 28, 28, 28),
+    decoration: BoxDecoration(
+      color: const Color(0xFF0B1328),
+      borderRadius: BorderRadius.circular(30),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1F2937),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: const Color(0xFF374151)),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.lock_outline, color: Color(0xFFFFD233), size: 20),
+              SizedBox(width: 12),
+              Text(
+                'ÁREA DO INVESTIDOR',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 2.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 28),
+
+        // Compra e venda de tokens
+        Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => abrirModalInvestimento(
+                  context,
+                  startup: s,
+                  startupId: widget.startupId,
+                  onSucesso: carregarDadosDaTela,
+                ),
+                child: Container(
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF0D2CC8), Color(0xFF8D35E6)],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Comprar tokens',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF4B5563), width: 1.4),
+                ),
+                child: const Center(
+                  child: Text(
+                    'Vender tokens',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // Pergunta privada
+        GestureDetector(
+          onTap: () => abrirModalPerguntaPrivada(
+            context,
+            startupId: widget.startupId,
+            startupName: s.name,
+          ),
+
+          child: Container(
+            width: double.infinity,
+            height: 52,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFF4B5563), width: 1.4),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.chat_bubble_outline, color: Color(0xFF94A3B8), size: 18),
+                SizedBox(width: 10),
+                Text(
+                  'Enviar pergunta privada',
+                  style: TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 
   Widget _chartCard() {
     final values = [72.0, 105.0, 82.0, 135.0, 165.0, 210.0];
@@ -806,6 +943,8 @@ class _MetricCard extends StatelessWidget {
     this.green = false,
   });
 
+  
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -843,6 +982,59 @@ class _MetricCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+class _InvestorMetric extends StatelessWidget {
+  final String title;
+  final String value;
+  final String? suffix;
+  final bool green;
+
+  const _InvestorMetric({
+    required this.title,
+    required this.value,
+    this.suffix,
+    this.green = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF94A3B8),
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.4,
+          ),
+        ),
+        const SizedBox(height: 8),
+        RichText(
+          text: TextSpan(
+            text: value,
+            style: TextStyle(
+              color: green ? const Color(0xFF34D399) : Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+            children: [
+              if (suffix != null)
+                TextSpan(
+                  text: suffix,
+                  style: const TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

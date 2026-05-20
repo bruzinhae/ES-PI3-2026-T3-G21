@@ -268,12 +268,14 @@ class StartupService {
   static Future<void> createStartupQuestion({
     required String startupId,
     required String message,
+    String visibility = 'publica',
   }) async {
     debugPrint('[StartupService] createStartupQuestion: $startupId');
 
     await _functions.httpsCallable('createStartupQuestion').call({
       'startupId': startupId,
       'text': message,
+      'visibility': visibility,
     });
   }
 
