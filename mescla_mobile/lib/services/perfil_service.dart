@@ -1,0 +1,48 @@
+import 'package:cloud_functions/cloud_functions.dart';
+
+class UserDetails {
+  final String uid;
+  final String name;
+  final String email;
+  final String cpf;
+  final String telefone;
+  final bool mfaEnabled;
+  final bool isAdmin;
+
+  UserDetails({
+    required this.uid,
+    required this.name,
+    required this.email,
+    required this.cpf,
+    required this.telefone,
+    required this.mfaEnabled,
+    required this.isAdmin,
+  });
+
+  factory UserDetails.fromMap(Map<String, dynamic> map) {
+    return UserDetails(
+      uid: map['uid'] ?? '',
+      name: map['name'] ?? '',
+      email: map['email'] ?? '',
+      cpf: map['cpf'] ?? '',
+      telefone: map['telefone'] ?? '',
+      mfaEnabled: map['mfaEnabled'] ?? false,
+      isAdmin: map['isAdmin'] ?? false,
+    );
+  }
+}
+
+class UserService {
+  final FirebaseFunctions _functions =
+  FirebaseFunctions.instanceFor(region: 'us-central1');
+
+  Future<UserDetails> getUserDetails() async {
+    final callable = _functions.httpsCallable('getUserDetails');
+
+    final result = await callable.call();
+
+    final data = Map<String, dynamic>.from(result.data);
+
+    return UserDetails.fromMap(data);
+  }
+}
