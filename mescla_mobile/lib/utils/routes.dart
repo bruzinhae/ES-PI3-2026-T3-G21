@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mescla_mobile/pages/carteira/carteira.dart';
 import 'package:mescla_mobile/pages/startups/catalogoStartUp.dart';
 import 'package:mescla_mobile/pages/balcão/balcao.dart';
-import 'package:mescla_mobile/pages/perfil/PerfilInicial.dart';
+//import 'package:mescla_mobile/pages/perfil/PerfilInicial.dart';
 
 Widget getTelaByIndex(int index) {
   switch (index) {
@@ -14,8 +14,8 @@ Widget getTelaByIndex(int index) {
       return const CarteiraScreen();
     case 3:
       return const SizedBox();
-    case 4:
-      return const PerfilPage();
+    /*case 4:
+      return const PerfilPage();*/
     default:
       return const CatalogoStartUp();
   }

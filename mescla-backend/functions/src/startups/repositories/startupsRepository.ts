@@ -70,6 +70,8 @@ export async function listPublicQuestions(startupId: string) {
   return questionsSnapshot.docs
     .map((doc : any) => ({
       id: doc.id,
+      authorUid: doc.get("authorUid") ?? null,
+      authorName: doc.get("authorName") ?? "Usuário",
       text: doc.get("text"),
       answer: doc.get("answer") ?? null,
       answeredAt: doc.get("answeredAt")?.toDate?.()?.toISOString?.() ?? null,

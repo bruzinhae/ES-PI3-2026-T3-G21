@@ -8,6 +8,7 @@ import '../pages/../startups/services/startup_service.dart';
 import '../../widgets/bottom_navBar.dart';
 import 'modal_investimento.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class StartupInicial extends StatelessWidget {
   final String startupId;
@@ -97,7 +98,17 @@ class _InvestPageState extends State<InvestPage> {
     final texto = _controller.text.trim();
     if (texto.isEmpty) return;
 
+    final user = FirebaseAuth.instance.currentUser;
+    debugPrint('=== ANTES DE ENVIAR ===');
+    debugPrint('uid: ${user?.uid}');
+    debugPrint('email: ${user?.email}');
+    if (user != null) {
+      final token = await user.getIdToken(false);
+      debugPrint('token (primeiros 30): ${token?.substring(0, 30)}');
+  }
+
     setState(() => enviandoPergunta = true);
+    
 
     try {
       await StartupService.createStartupQuestion(
@@ -573,87 +584,142 @@ class _InvestPageState extends State<InvestPage> {
   }
 
   Widget _questionsCard(StartupDetails s) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: _cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Perguntas da\nComunidade',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 18),
-          _inputField(),
-          const SizedBox(height: 18),
-          if (s.publicQuestions.isEmpty)
-            const Text(
-              'Nenhuma pergunta enviada ainda.',
-              style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
-            )
-          else
-            ...s.publicQuestions.map((q) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _questionBubble(
-                    initials: q.isAnswer ? '◎' : iniciais(q.authorName),
-                    name: q.authorName,
-                    text: q.message,
-                    isAnswer: q.isAnswer,
-                  ),
-                )),
-        ],
-      ),
-    );
-  }
+  final currentUid = FirebaseAuth.instance.currentUser?.uid;
 
-  Widget _questionBubble({
-    required String initials,
-    required String name,
-    required String text,
-    required bool isAnswer,
-  }) {
-    return Row(
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(22),
+    decoration: _cardDecoration(),
+    child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CircleAvatar(
-          radius: 18,
-          backgroundColor:
-              isAnswer ? const Color(0xFF0D2CC8) : const Color(0xFFEBD5FF),
-          child: Text(
-            initials,
-            style: TextStyle(
-              color: isAnswer ? Colors.white : const Color(0xFF8D35E6),
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
+        const Text(
+          'Perguntas da\nComunidade',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 18),
+        _inputField(),
+        const SizedBox(height: 18),
+        if (s.publicQuestions.isEmpty)
+          const Text(
+            'Nenhuma pergunta enviada ainda.',
+            style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
+          )
+        else
+          ...s.publicQuestions.map((q) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _questionBubble(
+                  question: q,
+                  currentUid: currentUid,
+                ),
+              )),
+      ],
+    ),
+  );
+}
+
+  Widget _questionBubble({
+  required StartupQuestion question,
+  required String? currentUid,
+}) {
+  final isAnswer = question.isAnswer;
+  final canDelete = currentUid != null && question.authorUid == currentUid;
+
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      CircleAvatar(
+        radius: 18,
+        backgroundColor:
+            isAnswer ? const Color(0xFF0D2CC8) : const Color(0xFFEBD5FF),
+        child: Text(
+          isAnswer ? '◎' : iniciais(question.authorName),
+          style: TextStyle(
+            color: isAnswer ? Colors.white : const Color(0xFF8D35E6),
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: isAnswer ? Colors.white : const Color(0xFFEFF4FF),
-              borderRadius: BorderRadius.circular(16),
-              border: isAnswer ? Border.all(color: const Color(0xFFCBD5E1)) : null,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name,
-                    style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
-                Text(text,
-                    style: const TextStyle(fontSize: 13, height: 1.55)),
-              ],
-            ),
+      ),
+      const SizedBox(width: 14),
+      Expanded(
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: isAnswer ? Colors.white : const Color(0xFFEFF4FF),
+            borderRadius: BorderRadius.circular(16),
+            border: isAnswer ? Border.all(color: const Color(0xFFCBD5E1)) : null,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      question.authorName,
+                      style: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  if (canDelete)
+                    GestureDetector(
+                      onTap: () => _confirmarExclusao(question),
+                      child: const Icon(
+                        Icons.delete_outline,
+                        size: 18,
+                        color: Color(0xFFEF4444),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(question.message,
+                  style: const TextStyle(fontSize: 13, height: 1.55)),
+            ],
+          ),
+        ),
+      ),
+    ],
+  );
+}
+Future<void> _confirmarExclusao(StartupQuestion question) async {
+  final confirmar = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Excluir pergunta'),
+      content: const Text('Tem certeza que deseja excluir esta pergunta?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancelar'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text(
+            'Excluir',
+            style: TextStyle(color: Color(0xFFEF4444)),
           ),
         ),
       ],
+    ),
+  );
+
+  if (confirmar != true) return;
+
+  try {
+    await StartupService.deleteStartupQuestion(
+      startupId: widget.startupId,
+      questionId: question.id,
     );
+    await carregarDadosDaTela();
+  } on FirebaseFunctionsException catch (e) {
+    setState(() => erro = 'Erro: ${e.message}');
+  } catch (e) {
+    setState(() => erro = 'Erro ao excluir pergunta.');
   }
+}
+
 
   Widget _inputField() {
     return Container(

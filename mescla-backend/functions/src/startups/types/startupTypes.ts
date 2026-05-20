@@ -44,6 +44,7 @@ export type StartupDocument = {
 
 export type StartupQuestionDocument = {
   authorUid: string;
+  authorName: string;
   authorEmail?: string;
   text: string;
   visibility: QuestionVisibility;
