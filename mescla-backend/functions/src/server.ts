@@ -1,7 +1,15 @@
-import { setGlobalOptions } from "firebase-functions/v2";
+import express from 'express';
+import { onRequest } from 'firebase-functions/v2/https';
 
-setGlobalOptions({ maxInstances: 10 });
 
-export * from "./startups";
-export * from "./users";
-export * from "./wallet";
+const app = express();
+
+app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.send('API MesclaInvest online');
+});
+
+
+
+export const api = onRequest(app);
