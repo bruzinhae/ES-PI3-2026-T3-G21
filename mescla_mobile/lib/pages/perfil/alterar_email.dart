@@ -1,3 +1,6 @@
+// Autor: Bruna Barbour Fernandes
+// RA: 23007950
+
 import 'package:flutter/material.dart';
 import 'package:mescla_mobile/utils/app_colors.dart';
 import '../../widgets/bottom_navBar.dart';
