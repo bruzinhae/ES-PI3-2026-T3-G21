@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mescla_mobile/utils/app_colors.dart';
+import 'package:mescla_mobile/pages/perfil/aut_2fa.dart';
+import 'package:mescla_mobile/pages/perfil/alterar_email.dart';
+import 'package:mescla_mobile/pages/perfil/alterar_senha.dart';
 import '../../widgets/bottom_navBar.dart';
 
 class PerfilPage extends StatelessWidget {
@@ -50,6 +53,7 @@ class PerfilPage extends StatelessWidget {
                             ),
                           ),
                         ),
+
                         Positioned(
                           right: -2,
                           bottom: 8,
@@ -59,7 +63,10 @@ class PerfilPage extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: kSecondary,
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 3),
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 3,
+                              ),
                             ),
                             child: const Icon(
                               Icons.edit,
@@ -168,14 +175,18 @@ class PerfilPage extends StatelessWidget {
 
               const SizedBox(height: 18),
 
-              const _SecurityCard(),
+              _SecurityCard(),
 
               const SizedBox(height: 42),
 
               Center(
                 child: TextButton.icon(
                   onPressed: () {},
-                  icon: const Icon(Icons.logout, color: Colors.red, size: 22),
+                  icon: const Icon(
+                    Icons.logout,
+                    color: Colors.red,
+                    size: 22,
+                  ),
                   label: const Text(
                     'Sair da conta',
                     style: TextStyle(
@@ -218,12 +229,14 @@ class _Header extends StatelessWidget {
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
-          bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1),
+          bottom: BorderSide(
+            color: Color(0xFFE5E7EB),
+            width: 1,
+          ),
         ),
       ),
       child: const Row(
         children: [
-          Icon(Icons.account_circle_outlined, color: kPrimary, size: 25),
           SizedBox(width: 8),
           Text(
             'MesclaInvest',
@@ -234,7 +247,11 @@ class _Header extends StatelessWidget {
             ),
           ),
           Spacer(),
-          Icon(Icons.notifications_none, color: Color(0xFF6B7280), size: 26),
+          Icon(
+            Icons.notifications_none,
+            color: Color(0xFF6B7280),
+            size: 26,
+          ),
         ],
       ),
     );
@@ -267,10 +284,24 @@ class _InfoCard extends StatelessWidget {
               ),
             ),
           ),
+
           SizedBox(height: 24),
-          _InfoRow(label: 'CPF', value: '***.456.***-00'),
-          _InfoRow(label: 'Telefone', value: '(11) 98765-4321'),
-          _InfoRow(label: 'Tipo de conta', value: 'Investidor'),
+
+          _InfoRow(
+            label: 'CPF',
+            value: '***.456.***-00',
+          ),
+
+          _InfoRow(
+            label: 'Telefone',
+            value: '(11) 98765-4321',
+          ),
+
+          _InfoRow(
+            label: 'Tipo de conta',
+            value: 'Investidor',
+          ),
+
           _InfoRow(
             label: 'Status',
             value: 'Verificada',
@@ -313,11 +344,18 @@ class _InfoRow extends StatelessWidget {
                 letterSpacing: 0.5,
               ),
             ),
+
             const Spacer(),
+
             if (icon != null) ...[
-              Icon(icon, color: kPrimary, size: 19),
+              Icon(
+                icon,
+                color: kPrimary,
+                size: 19,
+              ),
               const SizedBox(width: 5),
             ],
+
             Text(
               value,
               style: TextStyle(
@@ -328,10 +366,14 @@ class _InfoRow extends StatelessWidget {
             ),
           ],
         ),
+
         if (showDivider)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 15),
-            child: Divider(height: 1, color: Color(0xFFE5E7EB)),
+            child: Divider(
+              height: 1,
+              color: Color(0xFFE5E7EB),
+            ),
           ),
       ],
     );
@@ -339,41 +381,58 @@ class _InfoRow extends StatelessWidget {
 }
 
 class _SecurityCard extends StatelessWidget {
-  const _SecurityCard();
-
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 18),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 18,
+        vertical: 16,
+      ),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.82),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Column(
+      child: Column(
         children: [
           _SecurityItem(
             icon: Icons.lock_outline,
             title: 'Alterar senha',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AlterarSenhaPage(),
+                ),
+              );
+            },
           ),
-          _SecurityItem(
-            icon: Icons.vpn_key_outlined,
-            title: 'Recuperação de senha',
-          ),
+
           _SecurityItem(
             icon: Icons.shield_outlined,
             title: 'Autenticação em dois fatores',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const Seguranca2FAPage(),
+                ),
+              );
+            },
           ),
+
           _SecurityItem(
             icon: Icons.email_outlined,
             title: 'E-mail verificado',
-            subtitle: 'Segurança máxima ativada',
-            checked: true,
-          ),
-          _SecurityItem(
-            icon: Icons.security_outlined,
-            title: 'Privacidade da conta',
             showDivider: false,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AlterarEmailPage(),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -387,6 +446,7 @@ class _SecurityItem extends StatelessWidget {
   final String? subtitle;
   final bool checked;
   final bool showDivider;
+  final VoidCallback? onTap;
 
   const _SecurityItem({
     required this.icon,
@@ -394,68 +454,91 @@ class _SecurityItem extends StatelessWidget {
     this.subtitle,
     this.checked = false,
     this.showDivider = true,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE7EEFF),
-                borderRadius: BorderRadius.circular(8),
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE7EEFF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  icon,
+                  color: checked
+                      ? kPrimary
+                      : const Color(0xFF6B7280),
+                  size: 24,
+                ),
               ),
-              child: Icon(
-                icon,
-                color: checked ? kPrimary : const Color(0xFF6B7280),
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 18),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Color(0xFF111827),
-                      fontSize: 17,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 4),
+
+              const SizedBox(width: 18),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      subtitle!,
+                      title,
                       style: const TextStyle(
-                        color: kPrimary,
-                        fontSize: 13,
+                        color: Color(0xFF111827),
+                        fontSize: 17,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 0.3,
                       ),
                     ),
+
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 4),
+
+                      Text(
+                        subtitle!,
+                        style: const TextStyle(
+                          color: kPrimary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
+              ),
+
+              Icon(
+                checked
+                    ? Icons.check_circle_outline
+                    : Icons.chevron_right,
+                color: checked
+                    ? kPrimary
+                    : const Color(0xFF6B7280),
+                size: checked ? 27 : 30,
+              ),
+            ],
+          ),
+
+          if (showDivider)
+            const Padding(
+              padding: EdgeInsets.only(
+                left: 62,
+                top: 16,
+                bottom: 16,
+              ),
+              child: Divider(
+                height: 1,
+                color: Color(0xFFE5E7EB),
               ),
             ),
-            Icon(
-              checked ? Icons.check_circle_outline : Icons.chevron_right,
-              color: checked ? kPrimary : const Color(0xFF6B7280),
-              size: checked ? 27 : 30,
-            ),
-          ],
-        ),
-        if (showDivider)
-          const Padding(
-            padding: EdgeInsets.only(left: 62, top: 16, bottom: 16),
-            child: Divider(height: 1, color: Color(0xFFE5E7EB)),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
-
