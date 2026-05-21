@@ -29,6 +29,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? erro;
   DashboardData? dashboard;
   TokenPriceHistory? tokenHistory;
+  DashboardAsset? selectedAsset;
 
   @override
   void initState() {
@@ -47,6 +48,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       setState(() {
         dashboard = dados;
         carregando = false;
+        // reseta o asset selecionado ao recarregar
+        selectedAsset = null;
       });
       await carregarGrafico();
     } on FirebaseFunctionsException catch (e) {
@@ -68,12 +71,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() => carregandoGrafico = true);
 
     try {
-      final topAsset = dashboard!.assets.reduce(
+      // usa o selecionado ou o de maior valor se nenhum selecionado
+      selectedAsset ??= dashboard!.assets.reduce(
         (a, b) => a.currentValueCents > b.currentValueCents ? a : b,
       );
 
       final history = await DashboardService.getTokenPriceHistory(
-        startupId: topAsset.startupId,
+        startupId: selectedAsset!.startupId,
         period: selectedPeriod,
       );
 
@@ -144,32 +148,79 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             color: kOnSurface,
                           ),
                         ),
-                        if (dashboard!.assets.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              dashboard!.assets
-                                  .reduce((a, b) => a.currentValueCents > b.currentValueCents ? a : b)
-                                  .startupName,
-                              style: TextStyle(fontSize: 12, color: kOutline),
+                        const SizedBox(height: 8),
+
+                        // seletor de startup
+                        if (dashboard!.assets.length == 1)
+                          Text(
+                            dashboard!.assets.first.startupName,
+                            style: TextStyle(fontSize: 12, color: kOutline),
+                          )
+                        else if (dashboard!.assets.length > 1)
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: dashboard!.assets.map((asset) {
+                                final isSelected =
+                                    selectedAsset?.startupId == asset.startupId;
+                                return GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      selectedAsset = asset;
+                                      tokenHistory = null;
+                                    });
+                                    carregarGrafico();
+                                  },
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 180),
+                                    margin: const EdgeInsets.only(right: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 7,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? kPrimary
+                                          : const Color(0xFFE7EEFF),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      asset.startupName,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: isSelected ? Colors.white : kOutline,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
                             ),
                           ),
+
                         const SizedBox(height: 20),
+
+                        // gráfico**
                         SizedBox(
                           height: 230,
                           width: double.infinity,
                           child: carregandoGrafico
                               ? const Center(child: CircularProgressIndicator())
-                              : tokenHistory == null || tokenHistory!.history.isEmpty
+                              : tokenHistory == null ||
+                                      tokenHistory!.history.isEmpty
                                   ? Center(
                                       child: Text(
                                         'Sem dados para o período.',
-                                        style: TextStyle(color: kOutline, fontSize: 13),
+                                        style: TextStyle(
+                                            color: kOutline, fontSize: 13),
                                       ),
                                     )
                                   : PortfolioChart(points: tokenHistory!.history),
                         ),
+
                         const SizedBox(height: 28),
+
+                        // seletor de período
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: periods.map((period) {
@@ -186,10 +237,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? kPrimary : Colors.transparent,
+                                  color: isSelected
+                                      ? kPrimary
+                                      : Colors.transparent,
                                   borderRadius: BorderRadius.circular(999),
                                   boxShadow: isSelected
-                                      ? [BoxShadow(color: kPrimary.withOpacity(0.25), blurRadius: 14, offset: const Offset(0, 6))]
+                                      ? [
+                                          BoxShadow(
+                                            color: kPrimary.withOpacity(0.25),
+                                            blurRadius: 14,
+                                            offset: const Offset(0, 6),
+                                          ),
+                                        ]
                                       : [],
                                 ),
                                 child: Text(
@@ -197,7 +256,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: isSelected ? Colors.white : kOutline,
+                                    color:
+                                        isSelected ? Colors.white : kOutline,
                                   ),
                                 ),
                               ),
