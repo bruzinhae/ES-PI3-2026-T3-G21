@@ -34,26 +34,62 @@ class UserDetails {
 
 class UserService {
   final FirebaseFunctions _functions =
-  FirebaseFunctions.instanceFor(region: 'us-central1');
+  FirebaseFunctions.instanceFor(
+    region: 'us-central1',
+  );
 
+  // ───────────────── GET USER DETAILS ─────────────────
 
   Future<UserDetails> getUserDetails() async {
-    final callable = _functions.httpsCallable('getUserDetails');
+    final callable =
+    _functions.httpsCallable('getUserDetails');
 
     final result = await callable.call();
 
-    final data = Map<String, dynamic>.from(result.data);
+    final data =
+    Map<String, dynamic>.from(result.data);
 
     return UserDetails.fromMap(data);
   }
 
+  // ───────────────── UPDATE EMAIL ─────────────────
+
   Future<Map<String, dynamic>> updateUserEmail({
     required String newEmail,
   }) async {
-    final callable = _functions.httpsCallable('updateUserEmail');
+    final callable =
+    _functions.httpsCallable('updateUserEmail');
 
     final result = await callable.call({
       'newEmail': newEmail,
+    });
+
+    return Map<String, dynamic>.from(result.data);
+  }
+
+  // ───────────────── SEND MFA CODE ─────────────────
+
+  Future<Map<String, dynamic>>
+  sendMfaCodeByEmail() async {
+    final callable =
+    _functions.httpsCallable(
+      'sendMfaCodeByEmail',
+    );
+
+    final result = await callable.call();
+
+    return Map<String, dynamic>.from(result.data);
+  }
+
+
+  Future<Map<String, dynamic>> enableMfa({
+    required String code,
+  }) async {
+    final callable =
+    _functions.httpsCallable('enableMfa');
+
+    final result = await callable.call({
+      'code': code,
     });
 
     return Map<String, dynamic>.from(result.data);
