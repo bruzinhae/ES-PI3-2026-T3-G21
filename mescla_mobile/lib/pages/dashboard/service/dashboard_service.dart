@@ -4,6 +4,8 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 
+// ─── Models ────────────────────────────────────────────────────────────────
+
 class DashboardAsset {
   final String startupId;
   final String startupName;
@@ -45,10 +47,12 @@ class DashboardAsset {
   }
 
   String get valorFormatado => _formatarReais(currentValueCents);
+
   String get variacaoFormatada {
     final sinal = resultPercent >= 0 ? '+' : '';
     return '$sinal${resultPercent.toStringAsFixed(1)}%';
   }
+
   bool get positivo => resultPercent >= 0;
 }
 
@@ -92,12 +96,46 @@ class DashboardData {
   }
 
   String get totalFormatado => _formatarReais(totalPatrimonyCents);
+
   String get variacaoFormatada {
     final sinal = resultPercent >= 0 ? '+' : '';
     return '$sinal${resultPercent.toStringAsFixed(1)}%';
   }
+
   bool get positivo => resultPercent >= 0;
 }
+
+class TokenPricePoint {
+  final int priceCents;
+  final DateTime criadoEm;
+
+  TokenPricePoint({required this.priceCents, required this.criadoEm});
+
+  factory TokenPricePoint.fromMap(Map<String, dynamic> map) {
+    return TokenPricePoint(
+      priceCents: (map['priceCents'] as num?)?.toInt() ?? 0,
+      criadoEm: DateTime.parse(map['criadoEm']),
+    );
+  }
+}
+
+class TokenPriceHistory {
+  final String startupId;
+  final List<TokenPricePoint> history;
+
+  TokenPriceHistory({required this.startupId, required this.history});
+
+  factory TokenPriceHistory.fromMap(Map<String, dynamic> map) {
+    return TokenPriceHistory(
+      startupId: map['startupId'] ?? '',
+      history: (map['history'] as List? ?? [])
+          .map((p) => TokenPricePoint.fromMap(Map<String, dynamic>.from(p)))
+          .toList(),
+    );
+  }
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
 
 String _formatarReais(int cents) {
   final reais = cents / 100;
@@ -109,10 +147,20 @@ String _formatarReais(int cents) {
   return 'R\$ $inteiro,${partes[1]}';
 }
 
+// ─── Service ───────────────────────────────────────────────────────────────
+
 class DashboardService {
   static final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(
     region: 'us-central1',
   );
+
+  static final _periodoMap = {
+    '1D': 'diario',
+    '7D': 'semanal',
+    '1M': 'mensal',
+    '6M': 'semestral',
+    'YTD': 'ytd',
+  };
 
   static Future<DashboardData> getUserDashboard({String period = '6M'}) async {
     debugPrint('[DashboardService] getUserDashboard: period=$period');
@@ -123,5 +171,21 @@ class DashboardService {
 
     final data = Map<String, dynamic>.from(result.data['data']);
     return DashboardData.fromMap(data);
+  }
+
+  static Future<TokenPriceHistory> getTokenPriceHistory({
+    required String startupId,
+    required String period,
+  }) async {
+    debugPrint('[DashboardService] getTokenPriceHistory: $startupId | $period');
+
+    final result = await _functions
+        .httpsCallable('getTokenPriceHistoryHandler')
+        .call({
+          'startupId': startupId,
+          'periodo': _periodoMap[period] ?? 'semestral',
+        });
+
+    return TokenPriceHistory.fromMap(Map<String, dynamic>.from(result.data));
   }
 }

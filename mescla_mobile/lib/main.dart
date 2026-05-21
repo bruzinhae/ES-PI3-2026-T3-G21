@@ -4,8 +4,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-
-import 'pages/balcão/balcao.dart';
 import 'pages/auth/welcome_screen.dart';
 
 void main() async {
