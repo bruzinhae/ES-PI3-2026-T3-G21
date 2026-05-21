@@ -36,6 +36,7 @@ class UserService {
   final FirebaseFunctions _functions =
   FirebaseFunctions.instanceFor(region: 'us-central1');
 
+
   Future<UserDetails> getUserDetails() async {
     final callable = _functions.httpsCallable('getUserDetails');
 
@@ -44,5 +45,17 @@ class UserService {
     final data = Map<String, dynamic>.from(result.data);
 
     return UserDetails.fromMap(data);
+  }
+
+  Future<Map<String, dynamic>> updateUserEmail({
+    required String newEmail,
+  }) async {
+    final callable = _functions.httpsCallable('updateUserEmail');
+
+    final result = await callable.call({
+      'newEmail': newEmail,
+    });
+
+    return Map<String, dynamic>.from(result.data);
   }
 }

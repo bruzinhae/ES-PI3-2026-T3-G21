@@ -1,7 +1,9 @@
 // Autor: Bruna Barbour Fernandes
 // RA: 23007950
 
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:mescla_mobile/services/perfil_service.dart';
 import 'package:mescla_mobile/utils/app_colors.dart';
 import '../../widgets/bottom_navBar.dart';
 
@@ -13,8 +15,15 @@ class AlterarEmailPage extends StatefulWidget {
 }
 
 class _AlterarEmailPageState extends State<AlterarEmailPage> {
-  final TextEditingController novoEmailController = TextEditingController();
-  final TextEditingController confirmarEmailController = TextEditingController();
+  final TextEditingController novoEmailController =
+  TextEditingController();
+
+  final TextEditingController confirmarEmailController =
+  TextEditingController();
+
+  final UserService _userService = UserService();
+
+  bool carregando = false;
 
   @override
   void dispose() {
@@ -23,16 +32,93 @@ class _AlterarEmailPageState extends State<AlterarEmailPage> {
     super.dispose();
   }
 
+  Future<void> atualizarEmail() async {
+    final novoEmail = novoEmailController.text.trim();
+    final confirmarEmail =
+    confirmarEmailController.text.trim();
+
+    if (novoEmail.isEmpty || confirmarEmail.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Preencha todos os campos.'),
+        ),
+      );
+      return;
+    }
+
+    if (novoEmail != confirmarEmail) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Os e-mails não coincidem.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      carregando = true;
+    });
+
+    try {
+      final result = await _userService.updateUserEmail(
+        newEmail: novoEmail,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result['message'] ??
+                'E-mail alterado com sucesso.',
+          ),
+        ),
+      );
+
+      Navigator.pop(context);
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.message ?? 'Erro ao alterar e-mail.',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Erro inesperado.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          carregando = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kSurface,
-      bottomNavigationBar: const BottomNavBar(selectedIndex: 4),
+      bottomNavigationBar:
+      const BottomNavBar(selectedIndex: 4),
+
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(22, 18, 22, 30),
+          padding:
+          const EdgeInsets.fromLTRB(22, 18, 22, 30),
+
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+
             children: [
               _topBar(context),
 
@@ -51,13 +137,25 @@ class _AlterarEmailPageState extends State<AlterarEmailPage> {
 
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(26, 28, 26, 28),
+
+                padding:
+                const EdgeInsets.fromLTRB(
+                  26,
+                  28,
+                  26,
+                  28,
+                ),
+
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(22),
+                  borderRadius:
+                  BorderRadius.circular(22),
                 ),
+
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+
                   children: [
                     const Text(
                       'E-mail atual',
@@ -67,9 +165,12 @@ class _AlterarEmailPageState extends State<AlterarEmailPage> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+
                     const SizedBox(height: 10),
+
                     _inputField(
                       text: 'usuario@exemplo.com.br',
+
                     ),
 
                     const SizedBox(height: 24),
@@ -82,10 +183,14 @@ class _AlterarEmailPageState extends State<AlterarEmailPage> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+
                     const SizedBox(height: 10),
+
                     _inputField(
-                      controller: novoEmailController,
-                      hint: 'Digite o novo e-mail',
+                      controller:
+                      novoEmailController,
+                      hint:
+                      'Digite o novo e-mail',
                     ),
 
                     const SizedBox(height: 24),
@@ -98,10 +203,14 @@ class _AlterarEmailPageState extends State<AlterarEmailPage> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+
                     const SizedBox(height: 10),
+
                     _inputField(
-                      controller: confirmarEmailController,
-                      hint: 'Repita o novo e-mail',
+                      controller:
+                      confirmarEmailController,
+                      hint:
+                      'Repita o novo e-mail',
                     ),
                   ],
                 ),
@@ -112,13 +221,18 @@ class _AlterarEmailPageState extends State<AlterarEmailPage> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
+
                 decoration: BoxDecoration(
                   color: const Color(0xFFE8F0FF),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius:
+                  BorderRadius.circular(14),
+
                   border: Border.all(
-                    color: const Color(0xFFDCE7FF),
+                    color:
+                    const Color(0xFFDCE7FF),
                   ),
                 ),
+
                 child: const Row(
                   children: [
                     Icon(
@@ -126,7 +240,9 @@ class _AlterarEmailPageState extends State<AlterarEmailPage> {
                       color: kPrimary,
                       size: 30,
                     ),
+
                     SizedBox(width: 16),
+
                     Expanded(
                       child: Text(
                         'Nunca compartilhe seus dados de acesso com terceiros.',
@@ -134,7 +250,8 @@ class _AlterarEmailPageState extends State<AlterarEmailPage> {
                           color: kOnSurface,
                           fontSize: 16,
                           height: 1.4,
-                          fontWeight: FontWeight.w700,
+                          fontWeight:
+                          FontWeight.w700,
                         ),
                       ),
                     ),
@@ -145,28 +262,52 @@ class _AlterarEmailPageState extends State<AlterarEmailPage> {
               const SizedBox(height: 34),
 
               GestureDetector(
-                onTap: () {},
+                onTap:
+                carregando
+                    ? null
+                    : atualizarEmail,
+
                 child: Container(
                   width: double.infinity,
                   height: 62,
+
                   decoration: BoxDecoration(
                     gradient: kGradient,
-                    borderRadius: BorderRadius.circular(32),
+
+                    borderRadius:
+                    BorderRadius.circular(
+                      32,
+                    ),
+
                     boxShadow: [
                       BoxShadow(
-                        color: kPrimary.withOpacity(0.18),
+                        color: kPrimary
+                            .withOpacity(0.18),
+
                         blurRadius: 18,
-                        offset: const Offset(0, 8),
+
+                        offset:
+                        const Offset(0, 8),
                       ),
                     ],
                   ),
-                  child: const Center(
-                    child: Text(
+
+                  child: Center(
+                    child:
+                    carregando
+                        ? const CircularProgressIndicator(
+                      color:
+                      Colors.white,
+                    )
+                        : const Text(
                       'Atualizar e-mail',
                       style: TextStyle(
-                        color: Colors.white,
+                        color:
+                        Colors.white,
                         fontSize: 24,
-                        fontWeight: FontWeight.w800,
+                        fontWeight:
+                        FontWeight
+                            .w800,
                       ),
                     ),
                   ),
@@ -184,12 +325,14 @@ class _AlterarEmailPageState extends State<AlterarEmailPage> {
       children: [
         GestureDetector(
           onTap: () => Navigator.pop(context),
+
           child: const Icon(
             Icons.arrow_back,
             color: kPrimary,
             size: 30,
           ),
         ),
+
         const Expanded(
           child: Center(
             child: Text(
@@ -202,6 +345,7 @@ class _AlterarEmailPageState extends State<AlterarEmailPage> {
             ),
           ),
         ),
+
         const SizedBox(width: 30),
       ],
     );
@@ -211,45 +355,71 @@ class _AlterarEmailPageState extends State<AlterarEmailPage> {
     TextEditingController? controller,
     String? hint,
     String? text,
-    bool enabled = true,
+    bool readOnly = false,
   }) {
     return TextField(
-      controller: controller ?? TextEditingController(text: text),
-      enabled: enabled,
-      keyboardType: TextInputType.emailAddress,
+      controller:
+      controller ??
+          TextEditingController(text: text),
+
+      readOnly: readOnly,
+
+      keyboardType:
+      TextInputType.emailAddress,
+
       style: const TextStyle(
         color: kOnSurface,
         fontSize: 18,
         fontWeight: FontWeight.w500,
       ),
+
       decoration: InputDecoration(
         hintText: hint,
+
         hintStyle: TextStyle(
-          color: kOnSurface.withOpacity(0.85),
+          color:
+          kOnSurface.withOpacity(0.65),
           fontSize: 18,
           fontWeight: FontWeight.w500,
         ),
-        contentPadding: const EdgeInsets.symmetric(
+
+        contentPadding:
+        const EdgeInsets.symmetric(
           horizontal: 26,
           vertical: 18,
         ),
+
         filled: true,
         fillColor: Colors.white,
-        disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30),
+
+        border: OutlineInputBorder(
+          borderRadius:
+          BorderRadius.circular(30),
+
           borderSide: BorderSide(
-            color: kOutline.withOpacity(0.35),
+            color:
+            kOutline.withOpacity(0.35),
           ),
         ),
+
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30),
+          borderRadius:
+          BorderRadius.circular(30),
+
           borderSide: BorderSide(
-            color: kOutline.withOpacity(0.35),
+            color:
+            kOutline.withOpacity(0.35),
           ),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30),
-          borderSide: const BorderSide(
+
+        focusedBorder:
+        const OutlineInputBorder(
+          borderRadius:
+          BorderRadius.all(
+            Radius.circular(30),
+          ),
+
+          borderSide: BorderSide(
             color: kPrimary,
             width: 1.5,
           ),

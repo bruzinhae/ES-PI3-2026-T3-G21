@@ -4,9 +4,10 @@
 import 'package:flutter/material.dart';
 import 'package:mescla_mobile/utils/app_colors.dart';
 import 'package:mescla_mobile/pages/perfil/aut_2fa.dart';
-import 'package:mescla_mobile/pages/perfil/alterar_email.dart';
 import 'package:mescla_mobile/pages/perfil/alterar_senha.dart';
+import 'package:mescla_mobile/pages/perfil/alterar_email.dart';
 import '../../widgets/bottom_navBar.dart';
+import 'package:mescla_mobile/services/perfil_service.dart';
 
 class PerfilPage extends StatefulWidget {
   const PerfilPage({super.key});
@@ -17,9 +18,40 @@ class PerfilPage extends StatefulWidget {
 
 class _PerfilPageState extends State<PerfilPage> {
   bool editando = false;
+  bool carregando = true;
 
-  final TextEditingController telefoneController =
-  TextEditingController(text: '(11) 98765-4321');
+  UserDetails? user;
+
+  final UserService userService = UserService();
+  final TextEditingController telefoneController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    carregarUsuario();
+  }
+
+  Future<void> carregarUsuario() async {
+    try {
+      final usuario = await userService.getUserDetails();
+
+      setState(() {
+        user = usuario;
+        telefoneController.text = usuario.telefone;
+        carregando = false;
+      });
+    } catch (e) {
+      setState(() {
+        carregando = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Erro ao carregar dados do usuário.'),
+        ),
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -29,6 +61,15 @@ class _PerfilPageState extends State<PerfilPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (carregando) {
+      return const Scaffold(
+        backgroundColor: kSurface,
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: kSurface,
       bottomNavigationBar: const BottomNavBar(selectedIndex: 4),
@@ -67,9 +108,6 @@ class _PerfilPageState extends State<PerfilPage> {
                                   content: Text('Funciona!'),
                                 ),
                               );
-
-                              // futuramente:
-                              // abrir câmera ou galeria
                             },
                             child: Container(
                               padding: const EdgeInsets.all(7),
@@ -90,9 +128,9 @@ class _PerfilPageState extends State<PerfilPage> {
 
                     const SizedBox(height: 22),
 
-                    const Text(
-                      'João Silva',
-                      style: TextStyle(
+                    Text(
+                      user?.name ?? 'Usuário',
+                      style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w500,
                         color: Color(0xFF111827),
@@ -101,9 +139,9 @@ class _PerfilPageState extends State<PerfilPage> {
 
                     const SizedBox(height: 4),
 
-                    const Text(
-                      'joao.silva@email.com',
-                      style: TextStyle(
+                    Text(
+                      user?.email ?? 'email não informado',
+                      style: const TextStyle(
                         fontSize: 17,
                         color: kOutline,
                         letterSpacing: 0.3,
@@ -133,9 +171,7 @@ class _PerfilPageState extends State<PerfilPage> {
                             ),
                           ),
                           child: Text(
-                            editando
-                                ? 'Cancelar edição'
-                                : 'Editar perfil',
+                            editando ? 'Cancelar edição' : 'Editar perfil',
                             style: const TextStyle(
                               color: kPrimary,
                               fontSize: 17,
@@ -154,6 +190,9 @@ class _PerfilPageState extends State<PerfilPage> {
               _InfoCard(
                 editando: editando,
                 telefoneController: telefoneController,
+                cpf: user?.cpf ?? 'CPF não informado',
+                tipoConta:
+                user?.isAdmin == true ? 'Administrador' : 'Investidor',
                 onSalvar: () {
                   setState(() {
                     editando = false;
@@ -201,7 +240,6 @@ class _PerfilPageState extends State<PerfilPage> {
               ),
 
               const SizedBox(height: 42),
-
             ],
           ),
         ),
@@ -213,11 +251,15 @@ class _PerfilPageState extends State<PerfilPage> {
 class _InfoCard extends StatelessWidget {
   final bool editando;
   final TextEditingController telefoneController;
+  final String cpf;
+  final String tipoConta;
   final VoidCallback onSalvar;
 
   const _InfoCard({
     required this.editando,
     required this.telefoneController,
+    required this.cpf,
+    required this.tipoConta,
     required this.onSalvar,
   });
 
@@ -247,9 +289,9 @@ class _InfoCard extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          const _InfoRow(
+          _InfoRow(
             label: 'CPF',
-            value: '***.456.***-00',
+            value: cpf,
           ),
 
           editando
@@ -259,12 +301,14 @@ class _InfoCard extends StatelessWidget {
           )
               : _InfoRow(
             label: 'Telefone',
-            value: telefoneController.text,
+            value: telefoneController.text.isEmpty
+                ? 'Telefone não informado'
+                : telefoneController.text,
           ),
 
-          const _InfoRow(
+          _InfoRow(
             label: 'Tipo de conta',
-            value: 'Investidor',
+            value: tipoConta,
           ),
 
           if (editando) ...[
@@ -372,12 +416,16 @@ class _InfoRow extends StatelessWidget {
               const SizedBox(width: 5),
             ],
 
-            Text(
-              value,
-              style: TextStyle(
-                color: valueColor ?? Colors.black,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+            Flexible(
+              child: Text(
+                value,
+                textAlign: TextAlign.right,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: valueColor ?? Colors.black,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
@@ -427,7 +475,6 @@ class _Header extends StatelessWidget {
           ),
 
           Spacer(),
-
         ],
       ),
     );
@@ -463,8 +510,22 @@ class _SecurityCard extends StatelessWidget {
           ),
 
           _SecurityItem(
+            icon: Icons.email_outlined,
+            title: 'Alterar email',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AlterarEmailPage(),
+                ),
+              );
+            },
+          ),
+
+          _SecurityItem(
             icon: Icons.shield_outlined,
             title: 'Autenticação em dois fatores',
+            showDivider: false,
             onTap: () {
               Navigator.push(
                 context,
