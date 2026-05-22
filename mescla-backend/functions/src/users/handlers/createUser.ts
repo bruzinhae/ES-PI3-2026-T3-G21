@@ -53,7 +53,7 @@ export const createUser = onCall(async (request) => {
       email: email,
       emailLowerCase: email.toLowerCase(),
       cpf: cpf,
-      phone: telefone,
+      telefone: telefone,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
       mfaEnabled: false,
