@@ -32,3 +32,6 @@ export type AuthenticatedUser = {
     uid: string;
     email?: string;
 };
+
+
+export type UpdatableField = "name" | "telefone" | "CPF";
