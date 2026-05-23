@@ -7,3 +7,6 @@ export { verifyMfaLoginCode } from "./handlers/verifyMfaLoginCode";
 export {listUsers} from "./handlers/listUsers";
 export { getUserDetails } from "./handlers/getUserDetails";
 export {updateUserEmail} from "./handlers/updateUserEmail"
+export {updateUserPhone} from "./handlers/updateUserPhone"
+export {updateUserName} from "./handlers/updateUserName"
+export {updateUserCPF} from "./handlers/updateUserCPF"
