@@ -7,3 +7,12 @@ export function validatePhone(phone: string): boolean {
     const phoneRegex = /^\d{10,11}$/; 
     return phoneRegex.test(phone);
 }
+
+export function validateCPF(cpf: string): boolean {
+    const cpfRegex = /^\d{11}$/; 
+    return cpfRegex.test(cpf);
+}
+
+export function validateName(name: string): boolean {
+    return name.trim().length > 0;
+}
