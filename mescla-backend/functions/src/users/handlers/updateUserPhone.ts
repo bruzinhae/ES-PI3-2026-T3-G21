@@ -26,7 +26,7 @@ export const updateUserPhone = onCall(async (request) => {
             throw new HttpsError("invalid-argument", "Telefone inválido! Deve conter apenas números e ter 10 ou 11 dígitos.");
         }
 
-        await updateField(user.uid, "telefone", newPhone);
+        await updateField(user.uid, "phone", newPhone);
 
         return {
             message: "Número de telefone atualizado com sucesso!",

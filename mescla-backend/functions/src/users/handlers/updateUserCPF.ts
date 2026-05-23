@@ -27,7 +27,7 @@ export const updateUserCPF = onCall(async (request) => {
             throw new HttpsError("invalid-argument", "CPF inválido! Deve conter apenas números e ter 11 dígitos.");
         }
 
-        await updateField(user.uid, "CPF", newCPF);
+        await updateField(user.uid, "cpf", newCPF);
 
         return {
             message: "Número do CPF atualizado com sucesso!",

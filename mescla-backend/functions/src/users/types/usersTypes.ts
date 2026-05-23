@@ -34,4 +34,4 @@ export type AuthenticatedUser = {
 };
 
 
-export type UpdatableField = "name" | "telefone" | "CPF";
+export type UpdatableField = "name" | "phone" | "cpf";
