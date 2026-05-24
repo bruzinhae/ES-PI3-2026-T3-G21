@@ -13,17 +13,25 @@ import { Timestamp } from "firebase-admin/firestore";
 
 import { sendVerificationEmail } from "../shared/sendVerificationEmail";
 
-import { validateEmail, validatePhone } from "../shared/validation";
+import { 
+    validateCPF,
+    validateEmail,
+    validateName,
+    validatePhone 
+} from "../shared/validation";
 
 export const createUser = onCall(async (request) => {
   try {
-    const { name, email, password, cpf, telefone } = request.data;
+    const { name, email, cpf, telefone } = request.data;
 
-    if (!name || !email || !password || !cpf || !telefone) {
+    if (!name || !email || !cpf || !telefone) {
       throw new HttpsError(
         "invalid-argument",
         "Campos obrigatórios: name, email, password, cpf, telefone."
       );
+    }
+    if(!validateName(name)){
+      throw new HttpsError("invalid-argument", "Nome inválido! Deve conter pelo menos 2 caracteres.");
     }
 
     if(!validateEmail(email)) {
@@ -33,13 +41,18 @@ export const createUser = onCall(async (request) => {
       throw new HttpsError("invalid-argument", "Telefone inválido! Deve conter apenas números e ter 10 ou 11 dígitos.");
     } 
 
+    if(!validateCPF(cpf)) {
+      throw new HttpsError("invalid-argument", "CPF inválido! Deve conter apenas números e ter 11 dígitos.");
+    }
+
     let userRecord;
+    
     try {
       userRecord = await auth.createUser({
         email,
-        password,
         displayName: name,
       });
+
     } catch (emailAlreadyExists: any) {
       if (emailAlreadyExists?.code === "auth/email-already-exists") {
         throw new HttpsError("already-exists", "Email já cadastrado.");

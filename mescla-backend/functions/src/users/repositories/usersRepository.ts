@@ -13,9 +13,11 @@ import {validateEmail} from "../shared/validation";
 import { HttpsError } from 'firebase-functions/https';
 import { sendVerificationEmail } from '../shared/sendVerificationEmail';
 
+import{
+  UpdatableField
+} from "../types/usersTypes";
 
 export const usersCollection = db.collection("users");
-
 
 export async function getUserByUid(uid: string): Promise<UserDocument> {
   try{
@@ -36,7 +38,6 @@ export async function getUserByUid(uid: string): Promise<UserDocument> {
 
 }
 
-
 function tolistUsers(id: string, startup: Partial<UserDocument>): UserListItem {
   return {
     uid: id,
@@ -56,13 +57,37 @@ export async function listUsersItens() : Promise<UserListItem[]> {
 
 } 
 
+//! FUNÇÃO QUE VAI ATUALIZAR QUALQUER CAMPO DO USUARIO(EXCETO O BALANCE), recebe o id do usuario e o nome do campo que quer mudar e a informação nova
 
-export async function updateField(uid :string, data:Partial<UserDocument>){
-  
-  //! FUNÇÃO QUE VAI ATUALIZAR QUALQUER CAMPO DO USUARIO(EXCETO O BALANCE)
-  //! 1 - SE FOR EMAIL, VERIFICAR EMAIL NOVAMENTE, E SO AUTORIZAR A ATUALIZAÇÃO SE O USUARIO A VERIFICAÇÃO
-  //! 2 - CRIAR UM DOMINIO PARA CADA CAMPO QUE FOR ATUALIZAR PARA UTILIZAR ESSA FUNÇÃO 
-} 
+export async function updateField(
+  uid: string,
+  field: UpdatableField,
+  data: unknown
+): Promise<void> {
+
+  const ALLOWED_FIELDS: readonly UpdatableField[] = ["name", "phone", "cpf"];
+
+  if (!ALLOWED_FIELDS.includes(field)) {
+    throw new HttpsError("invalid-argument", `Campo '${field}' não pode ser atualizado.`);
+  }
+
+  try {
+    const user = usersCollection.doc(uid);
+    const userSnap = await user.get();
+    if (!userSnap.exists) {
+      throw new HttpsError("invalid-argument", "Usuario não encontrado");
+    }
+    await user.update({
+      [field]: data,
+      updatedAt: new Date()
+    });
+  }
+  catch (error) {
+    if (error instanceof HttpsError) throw error;
+    console.error("Error updating user field: ", error);
+    throw new HttpsError("internal", "Erro ao atualizar campo do usuário.", error);
+  }
+}
 
 export async function updateEmail(uid : string, newEmail: string){
   
@@ -93,6 +118,4 @@ export async function updateEmail(uid : string, newEmail: string){
     message : "Email alterado com sucesso"
   }
 }
-
-
 //criar autenticação de admin ou aqui ou n front 
