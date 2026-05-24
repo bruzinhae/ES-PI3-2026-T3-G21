@@ -1,10 +1,11 @@
 // Autor: Alinne Monteiro de Melo 
 // RA: 24801649
 
-
 import 'package:flutter/material.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'register_screen.dart';
 import 'recuperar_senha.dart';
+import '../auth/mfa_codeScreen.dart';
 import '../../services/auth_service.dart';
 import '../startups/catalogoStartUp.dart';
 
@@ -20,7 +21,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController senhaController = TextEditingController();
   bool obscurePassword = true;
-
   bool carregando = false;
 
   void mostrarErro(String mensagem) {
@@ -49,8 +49,15 @@ class _LoginScreenState extends State<LoginScreen> {
     return true;
   }
 
-  void mostrarPopup2FA() {
-    showDialog(
+  void _irParaHome() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const CatalogoStartUp()),
+    );
+  }
+
+  Future<void> mostrarPopup2FA() async {
+    await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) {
@@ -66,14 +73,20 @@ class _LoginScreenState extends State<LoginScreen> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                // depois vai para tela principal
+                _irParaHome(); // "Agora não" vai direto para home
               },
               child: const Text("Agora não"),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                // depois chama o back e vai para tela de código
+                // "Ativar agora" vai para tela de código MFA (fluxo de ativação)
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const MfaCodeScreen(isLogin: false),
+                  ),
+                );
               },
               child: const Text("Ativar agora"),
             ),
@@ -86,43 +99,46 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> fazerLogin() async {
     if (!validarLogin()) return;
 
-    setState(() {
-      carregando = true;
-    });
+    setState(() => carregando = true);
 
     try {
-      await AuthService.login(
+      final userData = await AuthService.login(
         email: emailController.text.trim(),
         password: senhaController.text.trim(),
       );
-      mostrarPopup2FA();
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const CatalogoStartUp(),
-      ),
-    );
+      if (userData['mfaEnabled'] == true) {
+        // Usuário já tem MFA ativo → envia código e vai para tela de verificação
+        await FirebaseFunctions.instance
+            .httpsCallable('sendMfaCodeByEmail')
+            .call();
 
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const MfaCodeScreen(isLogin: true),
+          ),
+        );
+      } else {
+        // Usuário sem MFA → pergunta se quer ativar
+        await mostrarPopup2FA();
+      }
     } catch (e) {
       mostrarErro("Erro ao entrar. Verifique seus dados.");
     } finally {
-      if (mounted) {
-        setState(() {
-          carregando = false;
-        });
-      }
+      if (mounted) setState(() => carregando = false);
     }
   }
 
-    @override
-    void dispose() {
-      emailController.dispose();
-      senhaController.dispose();
-      super.dispose();
-    }
+  @override
+  void dispose() {
+    emailController.dispose();
+    senhaController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +179,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-
                       Image.asset(
                         'assets/images/logoMescla.png',
                         height: 110,
@@ -171,9 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 10),
-
                   const Text(
                     'MesclaInvest',
                     style: TextStyle(
@@ -247,9 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1F3FA),
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: const Color(0xFFD8DCEB),
-                          ),
+                          border: Border.all(color: const Color(0xFFD8DCEB)),
                         ),
                         child: TextField(
                           controller: emailController,
@@ -282,9 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1F3FA),
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: const Color(0xFFD8DCEB),
-                          ),
+                          border: Border.all(color: const Color(0xFFD8DCEB)),
                         ),
                         child: TextField(
                           controller: senhaController,
@@ -355,7 +364,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF5A4CCB).withValues(alpha: 0.35),
+                                color: const Color(0xFF5A4CCB)
+                                    .withValues(alpha: 0.35),
                                 blurRadius: 16,
                                 offset: const Offset(0, 8),
                               ),
@@ -371,26 +381,27 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             child: carregando
-                              ? const CircularProgressIndicator(color: Colors.white)
-                              : const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      'Entrar',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w500,
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white)
+                                : const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Entrar',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
-                                    ),
-                                    SizedBox(width: 12),
-                                    Icon(
-                                      Icons.arrow_forward_rounded,
-                                      color: Colors.white,
-                                      size: 30,
-                                    ),
-                                  ],
-                                ),
+                                      SizedBox(width: 12),
+                                      Icon(
+                                        Icons.arrow_forward_rounded,
+                                        color: Colors.white,
+                                        size: 30,
+                                      ),
+                                    ],
+                                  ),
                           ),
                         ),
                       ),
@@ -405,38 +416,37 @@ class _LoginScreenState extends State<LoginScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 28),
                 child: Column(
                   children: [
-                  
                     const SizedBox(height: 0),
                     Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Não tem uma conta ainda? ',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF2F354A),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const CadastroScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          'Cadastre-se',
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Não tem uma conta ainda? ',
                           style: TextStyle(
-                            color: Color(0xFF133BCE),
-                            fontWeight: FontWeight.w700,
                             fontSize: 16,
+                            color: Color(0xFF2F354A),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CadastroScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            'Cadastre-se',
+                            style: TextStyle(
+                              color: Color(0xFF133BCE),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -444,7 +454,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
       ),
-      
     );
   }
 }

@@ -350,9 +350,9 @@ Widget campo(
           const Padding(
             padding: EdgeInsets.only(top: 8, left: 10),
             child: Text(
-              "* Obrigatório no mínimo 6 caracteres",
+              "Obrigatório no mínimo 6 caracteres",
               style: TextStyle(
-                color: Colors.red,
+                color: Colors.deepPurple,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
