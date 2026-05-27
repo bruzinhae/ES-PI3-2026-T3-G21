@@ -4,6 +4,7 @@ export {getUserWallet} from "./handlers/getUserWallet";
 export {depositToUserWallet} from "./handlers/depositToUserWallet";
 export {sellTokens} from "./handlers/sellTokens";
 export {buyTokens} from "./handlers/buyTokens";
+export {cancelOffer} from "./handlers/cancelOffer";
 export {acceptOffer} from "./handlers/acceptOffer";
 export {createOffer} from "./handlers/createOffer";
 export {listUserTransactions} from "./handlers/listUserTransactions";
