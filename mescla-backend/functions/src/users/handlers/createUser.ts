@@ -22,7 +22,7 @@ import {
 
 export const createUser = onCall(async (request) => {
   try {
-    const { name, email, cpf, telefone } = request.data;
+    const { name, email, cpf, telefone, password } = request.data;
 
     if (!name || !email || !cpf || !telefone) {
       throw new HttpsError(
@@ -30,6 +30,11 @@ export const createUser = onCall(async (request) => {
         "Campos obrigatórios: name, email, password, cpf, telefone."
       );
     }
+
+    if (!password || password.length < 6) {
+      throw new HttpsError("invalid-argument", "Senha deve ter pelo menos 6 caracteres.");
+    }
+
     if(!validateName(name)){
       throw new HttpsError("invalid-argument", "Nome inválido! Deve conter pelo menos 2 caracteres.");
     }
@@ -50,6 +55,7 @@ export const createUser = onCall(async (request) => {
     try {
       userRecord = await auth.createUser({
         email,
+        password,
         displayName: name,
       });
 
