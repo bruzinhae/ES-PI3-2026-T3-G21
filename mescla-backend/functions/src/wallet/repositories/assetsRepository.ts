@@ -71,7 +71,7 @@ export const deleteUserAssetInTransaction = (
 export const buildUserAsset = (params: {
   startupId: string;
   startupName: string;
-  coverImageUrl?: string;
+  coverImageUrl?: string | null;
   quantity: number;
   averagePriceCents: number;
   now: Timestamp;

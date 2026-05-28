@@ -224,7 +224,7 @@ export const acceptOffer = onCall(async (request) => {
         const creatorAssetData = buildUserAsset({
           startupId: offer.startupId,
           startupName: offer.startupName,
-          coverImageUrl: offer.coverImageUrl ?? undefined,
+          coverImageUrl: offer.coverImageUrl ?? null,
           quantity: nextCreatorQty,
           averagePriceCents: newCreatorAvg,
           now,

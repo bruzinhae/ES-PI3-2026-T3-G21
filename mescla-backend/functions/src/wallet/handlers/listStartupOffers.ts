@@ -1,51 +1,63 @@
 // Autor: Alinne Monteiro de Melo
 // RA: 24801649
 
-import { HttpsError, onCall } from "firebase-functions/v2/https";
-import { requireAuthenticatedUser } from "../../shared/auth";
-import { fetchUserAsset } from "../repositories/assetsRepository";
-import { TRADING_COUNTERPARTY_UID } from "../shared/tradingValidation";
+import {HttpsError, onCall} from "firebase-functions/v2/https";
+import {requireAuthenticatedUser} from "../../shared/auth";
+import {db} from "../../shared/firebase";
+
 
 export const listStartupOffers = onCall(async (request) => {
   try {
-    requireAuthenticatedUser(request);
-
-    const { startupId } = request.data;
+    const user = requireAuthenticatedUser(request);
+    const {startupId, type} = request.data ?? {};
 
     if (!startupId || typeof startupId !== "string") {
-      throw new HttpsError(
-        "invalid-argument",
-        "Campo startupId é obrigatório."
-      );
+      throw new HttpsError("invalid-argument", "Campo startupId é obrigatório.");
     }
 
-    // busca os tokens disponíveis do market maker pra essa startup
-    const asset = await fetchUserAsset(TRADING_COUNTERPARTY_UID, startupId);
+    // busca todas as ofertas abertas da startup
+    let query = db
+      .collection("offers")
+      .where("startupId", "==", startupId)
+      .where("status", "==", "open");
 
-    if (!asset) {
+    // filtro opcional por tipo
+    if (type === "buy" || type === "sell") {
+      query = query.where("type", "==", type);
+    }
+
+    const snapshot = await query.get();
+
+    const allOffers = snapshot.docs.map((doc) => {
+      const d = doc.data();
       return {
-        data: {
-          startupId,
-          availableQuantity: 0,
-          priceCents: 0,
-          offers: [],
-        },
+        offerId: doc.id,
+        type: d.type as "buy" | "sell",
+        creatorUid: d.creatorUid as string,
+        isOwn: d.creatorUid === user.uid,
+        quantity: d.quantity as number,
+        priceCents: d.priceCents as number,
+        totalCents: d.totalCents as number,
+        createdAt: (d.createdAt?.toDate?.() ?? new Date()).toISOString(),
       };
-    }
+    });
+
+    // separa e ordena: vendas pelo menor preço primeiro (melhor pra quem quer comprar)
+    //                  compras pelo maior preço primeiro (melhor pra quem quer vender)
+    const sellOffers = allOffers
+      .filter((o) => o.type === "sell")
+      .sort((a, b) => a.priceCents - b.priceCents);
+
+    const buyOffers = allOffers
+      .filter((o) => o.type === "buy")
+      .sort((a, b) => b.priceCents - a.priceCents);
 
     return {
       data: {
         startupId,
-        availableQuantity: asset.quantity,
-        priceCents: asset.averagePriceCents,
-        // formatação como lista de ofertas
-        offers: [
-          {
-            quantity: asset.quantity,
-            priceCents: asset.averagePriceCents,
-            totalCents: asset.quantity * asset.averagePriceCents,
-          },
-        ],
+        sellOffers,
+        buyOffers,
+        offers: [...sellOffers, ...buyOffers],
       },
     };
   } catch (error) {
