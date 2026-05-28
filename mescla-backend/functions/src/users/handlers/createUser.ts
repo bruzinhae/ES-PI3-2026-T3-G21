@@ -24,7 +24,7 @@ export const createUser = onCall(async (request) => {
   try {
     const { name, email, cpf, telefone, password } = request.data;
 
-    if (!name || !email || !cpf || !telefone) {
+    if (!name || !email|| !password || !cpf || !telefone) {
       throw new HttpsError(
         "invalid-argument",
         "Campos obrigatórios: name, email, password, cpf, telefone."
