@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:mescla_mobile/utils/app_colors.dart';
 import '../../widgets/bottom_navBar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AlterarSenhaPage extends StatefulWidget {
   const AlterarSenhaPage({super.key});
@@ -20,6 +21,7 @@ class _AlterarSenhaPageState extends State<AlterarSenhaPage> {
   bool mostrarSenhaAtual = false;
   bool mostrarNovaSenha = false;
   bool mostrarConfirmarSenha = false;
+  bool carregando = false;
 
   @override
   void dispose() {
@@ -27,6 +29,98 @@ class _AlterarSenhaPageState extends State<AlterarSenhaPage> {
     novaSenhaController.dispose();
     confirmarSenhaController.dispose();
     super.dispose();
+  }
+
+  Future<void> alterarSenha() async {
+    final senhaAtual = senhaAtualController.text.trim();
+    final novaSenha = novaSenhaController.text.trim();
+    final confirmarSenha = confirmarSenhaController.text.trim();
+
+    if (senhaAtual.isEmpty || novaSenha.isEmpty || confirmarSenha.isEmpty) {
+      mostrarMensagem('Preencha todos os campos.');
+      return;
+    }
+
+    if (novaSenha.length < 6) {
+      mostrarMensagem('A nova senha precisa ter pelo menos 6 caracteres.');
+      return;
+    }
+
+    if (novaSenha != confirmarSenha) {
+      mostrarMensagem('As senhas não são iguais.');
+      return;
+    }
+
+    if (senhaAtual == novaSenha) {
+      mostrarMensagem('A nova senha precisa ser diferente da senha atual.');
+      return;
+    }
+
+    setState(() {
+      carregando = true;
+    });
+
+    try {
+      final usuario = FirebaseAuth.instance.currentUser;
+
+      if (usuario == null || usuario.email == null) {
+        mostrarMensagem('Usuário não encontrado.');
+        return;
+      }
+
+      final credencial = EmailAuthProvider.credential(
+        email: usuario.email!,
+        password: senhaAtual,
+      );
+
+      await usuario.reauthenticateWithCredential(credencial);
+
+      await usuario.updatePassword(novaSenha);
+
+      senhaAtualController.clear();
+      novaSenhaController.clear();
+      confirmarSenhaController.clear();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Senha alterada com sucesso!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        mostrarMensagem('Senha atual incorreta.');
+      } else if (e.code == 'weak-password') {
+        mostrarMensagem('A nova senha é muito fraca.');
+      } else if (e.code == 'requires-recent-login') {
+        mostrarMensagem('Faça login novamente para alterar a senha.');
+      } else {
+        mostrarMensagem('Erro ao alterar senha: ${e.message}');
+      }
+    } catch (e) {
+      mostrarMensagem('Erro inesperado ao alterar senha.');
+    } finally {
+      if (mounted) {
+        setState(() {
+          carregando = false;
+        });
+      }
+    }
+  }
+
+  void mostrarMensagem(String mensagem) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensagem),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   @override
@@ -125,7 +219,7 @@ class _AlterarSenhaPageState extends State<AlterarSenhaPage> {
                     const SizedBox(height: 34),
 
                     GestureDetector(
-                      onTap: () {},
+                      onTap: carregando ? null : alterarSenha,
                       child: Container(
                         width: double.infinity,
                         height: 62,
@@ -140,8 +234,12 @@ class _AlterarSenhaPageState extends State<AlterarSenhaPage> {
                             ),
                           ],
                         ),
-                        child: const Center(
-                          child: Text(
+                        child: Center(
+                          child: carregando
+                              ? const CircularProgressIndicator(
+                            color: Colors.white,
+                          )
+                              : const Text(
                             'Salvar nova senha',
                             style: TextStyle(
                               color: Colors.white,

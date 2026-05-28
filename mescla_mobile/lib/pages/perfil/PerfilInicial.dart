@@ -1,13 +1,18 @@
 // Autor: Bruna Barbour Fernandes
 // RA: 23007950
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:mescla_mobile/utils/app_colors.dart';
 import 'package:mescla_mobile/pages/perfil/aut_2fa.dart';
 import 'package:mescla_mobile/pages/perfil/alterar_senha.dart';
 import 'package:mescla_mobile/pages/perfil/alterar_email.dart';
+import 'package:mescla_mobile/pages/auth/welcome_screen.dart';
 import '../../widgets/bottom_navBar.dart';
 import 'package:mescla_mobile/services/perfil_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
 
 class PerfilPage extends StatefulWidget {
   const PerfilPage({super.key});
@@ -24,6 +29,9 @@ class _PerfilPageState extends State<PerfilPage> {
 
   final UserService userService = UserService();
   final TextEditingController telefoneController = TextEditingController();
+
+  File? imagemPerfil;
+  final ImagePicker picker = ImagePicker();
 
   @override
   void initState() {
@@ -48,6 +56,33 @@ class _PerfilPageState extends State<PerfilPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Erro ao carregar dados do usuário.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> selecionarImagem() async {
+    try {
+      final XFile? imagem = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+
+      if (imagem == null) return;
+
+      setState(() {
+        imagemPerfil = File(imagem.path);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Foto alterada com sucesso!'),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Erro ao selecionar imagem.'),
         ),
       );
     }
@@ -88,27 +123,26 @@ class _PerfilPageState extends State<PerfilPage> {
                   children: [
                     Stack(
                       children: [
-                        const CircleAvatar(
+                        CircleAvatar(
                           radius: 54,
-                          backgroundColor: Color(0xFFE5E7EB),
-                          child: Icon(
+                          backgroundColor: const Color(0xFFE5E7EB),
+                          backgroundImage: imagemPerfil != null
+                              ? FileImage(imagemPerfil!)
+                              : null,
+                          child: imagemPerfil == null
+                              ? const Icon(
                             Icons.person,
                             size: 54,
                             color: Colors.grey,
-                          ),
+                          )
+                              : null,
                         ),
 
                         Positioned(
                           bottom: 0,
                           right: 0,
                           child: GestureDetector(
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Funciona!'),
-                                ),
-                              );
-                            },
+                            onTap: selecionarImagem,
                             child: Container(
                               padding: const EdgeInsets.all(7),
                               decoration: const BoxDecoration(
@@ -191,8 +225,7 @@ class _PerfilPageState extends State<PerfilPage> {
                 editando: editando,
                 telefoneController: telefoneController,
                 cpf: user?.cpf ?? 'CPF não informado',
-                tipoConta:
-                user?.isAdmin == true ? 'Administrador' : 'Investidor',
+                tipoConta: user?.isAdmin == true ? 'Administrador' : 'Investidor',
                 onSalvar: () {
                   setState(() {
                     editando = false;
@@ -222,7 +255,18 @@ class _PerfilPageState extends State<PerfilPage> {
 
               Center(
                 child: TextButton.icon(
-                  onPressed: () {},
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
+
+                    if (!context.mounted) return;
+
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (_) => const WelcomeScreen(),
+                      ),
+                          (route) => false,
+                    );
+                  },
                   icon: const Icon(
                     Icons.logout,
                     color: Colors.red,
@@ -263,6 +307,19 @@ class _InfoCard extends StatelessWidget {
     required this.onSalvar,
   });
 
+  String formatarCpf(String cpf) {
+    final numeros = cpf.replaceAll(RegExp(r'[^0-9]'), '');
+
+    if (numeros.length != 11) {
+      return cpf;
+    }
+
+    return '${numeros.substring(0, 3)}.'
+        '${numeros.substring(3, 6)}.'
+        '${numeros.substring(6, 9)}-'
+        '${numeros.substring(9, 11)}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -291,7 +348,7 @@ class _InfoCard extends StatelessWidget {
 
           _InfoRow(
             label: 'CPF',
-            value: cpf,
+            value: formatarCpf(cpf),
           ),
 
           editando
