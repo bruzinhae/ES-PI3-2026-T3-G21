@@ -23,6 +23,7 @@ import {
 } from "../../users/repositories/usersRepository";
 
 import { Timestamp } from "firebase-admin/firestore";
+import { saveTokenSnapshot } from '../../tokens/repositories/tokensRepository';
 
 export const addStartup  = onCall(async(request)=> {
     try{
@@ -44,7 +45,12 @@ export const addStartup  = onCall(async(request)=> {
             updatedAt: Timestamp.now(),
         };
 
-        await startupsCollection.add(newStartup); //? talvez mudar para set depois para adcionar um ID especifico.
+        const docRef = await startupsCollection.add(newStartup); 
+
+        // salva o snapshot inicial para o histórico de preços não começar vazio
+        const precoInicial = startupData.currentTokenPriceCents ?? 100;
+        await saveTokenSnapshot(docRef.id, precoInicial);
+
         return {message: "Startup adicionada com sucesso!"};
     }
     catch(e){

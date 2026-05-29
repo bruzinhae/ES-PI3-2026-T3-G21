@@ -39,8 +39,17 @@ export const getTokenPriceHistoryHandler = onCall(async (request) => {
 
     const history = await getTokenPriceHistory(startupId, desde);
 
+    // calculo da variação
+    let variacaoPercent = 0;
+    if (history.length >= 2) {
+      const precoInicial = history[0].priceCents;
+      const precoFinal = history[history.length - 1].priceCents;
+      variacaoPercent = ((precoFinal - precoInicial) / precoInicial) * 100;
+}
+
     const response: TokenPriceHistoryResponse = {
       startupId,
+      variacaoPercent: parseFloat(variacaoPercent.toFixed(2)), // ex: +3.47 ou -1.20
       history: history.map((snapshot) => ({
         priceCents: snapshot.priceCents,
         criadoEm: snapshot.criadoEm instanceof Date
