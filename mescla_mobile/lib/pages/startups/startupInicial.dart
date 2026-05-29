@@ -46,6 +46,32 @@ class _InvestPageState extends State<InvestPage> {
 
   StartupDetails? startup;
 
+  String periodoSelecionado = '6M';
+
+  final Map<String, List<double>> valoresGrafico = {
+    '1D': [20.0, 40.0, 35.0, 55.0, 70.0, 90.0],
+    '7D': [35.0, 55.0, 48.0, 80.0, 95.0, 120.0],
+    '1M': [50.0, 70.0, 65.0, 105.0, 130.0, 155.0],
+    '6M': [72.0, 105.0, 82.0, 135.0, 165.0, 210.0],
+    'YTD': [60.0, 95.0, 125.0, 160.0, 200.0, 190.0],
+  };
+
+  final Map<String, List<String>> labelsGrafico = {
+    '1D': ['09h', '11h', '13h', '15h', '17h', '19h'],
+    '7D': ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+    '1M': ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'],
+    '6M': ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+    'YTD': ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+  };
+
+  final Map<String, List<String>> escalaGrafico = {
+    '1D': ['R\$ 6', 'R\$ 4', 'R\$ 2', 'R\$ 0'],
+    '7D': ['R\$ 12', 'R\$ 8', 'R\$ 4', 'R\$ 0'],
+    '1M': ['R\$ 20', 'R\$ 15', 'R\$ 10', 'R\$ 0'],
+    '6M': ['R\$ 30', 'R\$ 20', 'R\$ 10', 'R\$ 0'],
+    'YTD': ['R\$ 40', 'R\$ 30', 'R\$ 20', 'R\$ 0'],
+  };
+
   @override
   void initState() {
     super.initState();
@@ -352,140 +378,104 @@ class _InvestPageState extends State<InvestPage> {
   }
 
   Widget _investorAreaCard(StartupDetails s) {
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.fromLTRB(28, 28, 28, 28),
-    decoration: BoxDecoration(
-      color: const Color(0xFF0B1328),
-      borderRadius: BorderRadius.circular(30),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1F2937),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: const Color(0xFF374151)),
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.lock_outline, color: Color(0xFFFFD233), size: 20),
-              SizedBox(width: 12),
-              Text(
-                'ÁREA DO INVESTIDOR',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 2.2,
-                ),
-              ),
-            ],
-          ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(28, 28, 28, 28),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF0D2CC8),
+            Color(0xFF8D35E6),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        const SizedBox(height: 28),
-
-        // Compra e venda de tokens
-        Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () => abrirModalInvestimento(
-                  context,
-                  startup: s,
-                  startupId: widget.startupId,
-                  onSucesso: carregarDadosDaTela,
-                ),
-                child: Container(
-                  height: 52,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF0D2CC8), Color(0xFF8D35E6)],
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Comprar tokens',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.16),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.28),
               ),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Container(
-                height: 52,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF4B5563), width: 1.4),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.lock_outline,
+                  color: Colors.white,
+                  size: 20,
                 ),
-                child: const Center(
-                  child: Text(
-                    'Vender tokens',
+                SizedBox(width: 12),
+                Text(
+                  'ÁREA DO INVESTIDOR',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 2.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 22),
+
+          GestureDetector(
+            onTap: () => abrirModalPerguntaPrivada(
+              context,
+              startupId: widget.startupId,
+              startupName: s.name,
+            ),
+            child: Container(
+              width: double.infinity,
+              height: 54,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.14),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.32),
+                  width: 1.4,
+                ),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.chat_bubble_outline,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                  SizedBox(width: 10),
+                  Text(
+                    'Enviar pergunta privada',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                ),
+                ],
               ),
             ),
-          ],
-        ),
-
-        const SizedBox(height: 16),
-
-        // Pergunta privada
-        GestureDetector(
-          onTap: () => abrirModalPerguntaPrivada(
-            context,
-            startupId: widget.startupId,
-            startupName: s.name,
           ),
-
-          child: Container(
-            width: double.infinity,
-            height: 52,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF4B5563), width: 1.4),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.chat_bubble_outline, color: Color(0xFF94A3B8), size: 18),
-                SizedBox(width: 10),
-                Text(
-                  'Enviar pergunta privada',
-                  style: TextStyle(
-                    color: Color(0xFF94A3B8),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
 
   Widget _chartCard() {
-    final values = [72.0, 105.0, 82.0, 135.0, 165.0, 210.0];
-    final months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+    final values = valoresGrafico[periodoSelecionado]!;
+    final labels = labelsGrafico[periodoSelecionado]!;
+    final escala = escalaGrafico[periodoSelecionado]!;
 
     return Container(
       width: double.infinity,
@@ -494,67 +484,95 @@ class _InvestPageState extends State<InvestPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Histórico de Valorização', style: TextStyle(fontSize: 16)),
+          const Text(
+            'Histórico de Valorização',
+            style: TextStyle(fontSize: 16),
+          ),
           const Text(
             'Desempenho acumulado do token no período',
-            style: TextStyle(fontSize: 11, color: Color(0xFF4B5563)),
+            style: TextStyle(
+              fontSize: 11,
+              color: Color(0xFF4B5563),
+            ),
           ),
           const SizedBox(height: 16),
+
           Row(
             children: [
-              _period('1D'),
-              _period('7D'),
-              _period('1M'),
-              _period('6M', active: true),
-              _period('YTD'),
+              _period('1D', active: periodoSelecionado == '1D'),
+              _period('7D', active: periodoSelecionado == '7D'),
+              _period('1M', active: periodoSelecionado == '1M'),
+              _period('6M', active: periodoSelecionado == '6M'),
+              _period('YTD', active: periodoSelecionado == 'YTD'),
             ],
           ),
+
           const SizedBox(height: 26),
+
           SizedBox(
             height: 240,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                const Column(
+                Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('R\$ 30', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    Text('R\$ 20', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    Text('R\$ 10', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    Text('R\$ 0', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                  ],
+                  children: escala.map((item) {
+                    return Text(
+                      item,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey,
+                      ),
+                    );
+                  }).toList(),
                 ),
+
                 const SizedBox(width: 14),
+
                 Expanded(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: List.generate(values.length, (index) {
                       final active = index == values.length - 1;
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Container(
-                            width: 34,
-                            height: values[index],
-                            decoration: BoxDecoration(
-                              gradient: active
-                                  ? const LinearGradient(
-                                      colors: [Color(0xFF0D2CC8), Color(0xFF8D35E6)],
-                                      begin: Alignment.bottomCenter,
-                                      end: Alignment.topCenter,
-                                    )
-                                  : null,
-                              color: active ? null : const Color(0xFF9DB7EA),
-                              borderRadius: BorderRadius.circular(8),
+
+                      return SizedBox(
+                        width: 38,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              width: 34,
+                              height: values[index],
+                              decoration: BoxDecoration(
+                                gradient: active
+                                    ? const LinearGradient(
+                                  colors: [
+                                    Color(0xFF0D2CC8),
+                                    Color(0xFF8D35E6),
+                                  ],
+                                  begin: Alignment.bottomCenter,
+                                  end: Alignment.topCenter,
+                                )
+                                    : null,
+                                color: active ? null : const Color(0xFF9DB7EA),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            months[index],
-                            style: const TextStyle(fontSize: 10, color: Colors.grey),
-                          ),
-                        ],
+                            const SizedBox(height: 12),
+                            Text(
+                              labels[index],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
                       );
                     }),
                   ),
@@ -568,19 +586,26 @@ class _InvestPageState extends State<InvestPage> {
   }
 
   Widget _period(String text, {bool active = false}) {
-    return Container(
-      margin: const EdgeInsets.only(right: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-      decoration: BoxDecoration(
-        color: active ? Colors.white : const Color(0xFFE7EEFF),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: active ? const Color(0xFF0D2CC8) : const Color(0xFF64748B),
-          fontSize: 10,
-          fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          periodoSelecionado = text;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFF0D2CC8) : const Color(0xFFE7EEFF),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: active ? Colors.white : const Color(0xFF64748B),
+            fontSize: 10,
+            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+          ),
         ),
       ),
     );
