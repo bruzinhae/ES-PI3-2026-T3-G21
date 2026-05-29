@@ -44,13 +44,31 @@ class AuthService {
     required String password,
   }) async {
     try {
-      // faz login no Firebase Auth
+       String emailParaLogin = email;
+
+      // se for CPF (só números), busca o e-mail no firestore
+      final apenasNumeros = email.replaceAll(RegExp(r'\D'), '');
+      if (apenasNumeros.length == 11) {
+        final query = await FirebaseFirestore.instance
+            .collection('users')
+            .where('cpf', isEqualTo: apenasNumeros)
+            .limit(1)
+            .get();
+
+        if (query.docs.isEmpty) {
+          throw Exception('CPF não encontrado.');
+        }
+
+        emailParaLogin = query.docs.first.data()['email'] as String;
+      }
+
+      // faz login normal com email no Firebase Auth
       final credential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
 
       final uid = credential.user!.uid;
 
-      // 2. Busca os dados do usuário no Firestore
+      // busca os dados do usuário no firestore
       final doc = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)

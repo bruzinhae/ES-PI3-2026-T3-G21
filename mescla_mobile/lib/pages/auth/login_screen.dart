@@ -8,6 +8,7 @@ import 'recuperar_senha.dart';
 import '../auth/mfa_codeScreen.dart';
 import '../../services/auth_service.dart';
 import '../startups/catalogoStartUp.dart';
+import 'package:mescla_mobile/utils/formatters.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -22,6 +23,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController senhaController = TextEditingController();
   bool obscurePassword = true;
   bool carregando = false;
+  final _cpfFormatter = CpfInputFormatter();
+  bool _usandoCpf = false;
 
   void mostrarErro(String mensagem) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -102,15 +105,19 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => carregando = true);
 
     try {
+      final emailOuCpf = emailController.text.trim();
+      final cpfLimpo = emailOuCpf.replaceAll(RegExp(r'\D'), '');
+      final loginIdentifier = _usandoCpf ? cpfLimpo : emailOuCpf;
+
       final userData = await AuthService.login(
-        email: emailController.text.trim(),
+        email: loginIdentifier,
         password: senhaController.text.trim(),
       );
 
       if (!mounted) return;
 
       if (userData['mfaEnabled'] == true) {
-        // Usuário já tem MFA ativo → envia código e vai para tela de verificação
+        // usuário já tem MFA ativo -> envia código e vai para tela de verificação
         await FirebaseFunctions.instance
             .httpsCallable('sendMfaCodeByEmail')
             .call();
@@ -123,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
       } else {
-        // Usuário sem MFA → pergunta se quer ativar
+        // usuário sem MFA -> pergunta se quer ativar
         await mostrarPopup2FA();
       }
     } catch (e) {
@@ -264,6 +271,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         child: TextField(
                           controller: emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          inputFormatters: _usandoCpf ? [_cpfFormatter] : [],
+                          onChanged: (value) {
+                            final apenasNumeros = value.replaceAll(RegExp(r'\D'), '');
+                            final eNumerico = value.trim().isNotEmpty &&
+                                value.trim().replaceAll(RegExp(r'[\d.\-]'), '').isEmpty;
+                            setState(() {
+                              _usandoCpf = eNumerico;
+                            });
+                          },
                           decoration: const InputDecoration(
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(vertical: 22),

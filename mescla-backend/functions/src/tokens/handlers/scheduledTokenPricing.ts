@@ -21,7 +21,9 @@ export const scheduledTokenPricing = onSchedule('every 1 hours', async () => {
       .get();
 
     if (transactions.empty) {
-      await saveTokenSnapshot(startupId, currentPrice);
+      const oscilacao = 1 + (Math.random() * 0.01 - 0.005); // ±0.5%
+      const newPrice = Math.round(currentPrice * oscilacao);
+      await saveTokenSnapshot(startupId, newPrice);
       continue;
     }
 

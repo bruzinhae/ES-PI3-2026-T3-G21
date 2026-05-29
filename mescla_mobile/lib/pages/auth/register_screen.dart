@@ -1,11 +1,13 @@
 // Autor: Alinne Monteiro de Melo 
 // RA: 24801649
 
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import '../../services/auth_service.dart';
 import 'package:mescla_mobile/utils/validators.dart';
 import '../../widgets/app_button.dart';
+import 'package:mescla_mobile/utils/formatters.dart';
 
 class CadastroScreen extends StatefulWidget {
   const CadastroScreen({super.key});
@@ -216,9 +218,17 @@ class _CadastroScreenState extends State<CadastroScreen> {
                   child: Column(
                     children: [
                       campo("Nome completo", Icons.person, "Como quer ser chamado?", nomeController),
-                      campo("CPF", Icons.badge, "000.000.000-00", cpfController),
+                      campo(
+                        "CPF", Icons.badge, "000.000.000-00", cpfController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [CpfInputFormatter()],
+                      ),
                       campo("E-mail", Icons.email, "seuemail@exemplo.com", emailController),
-                      campo("Telefone", Icons.phone, "(00) 00000-0000", telefoneController),
+                      campo(
+                        "Telefone", Icons.phone, "(00) 00000-0000", telefoneController,
+                        keyboardType: TextInputType.phone,
+                        inputFormatters: [TelefoneInputFormatter()],
+                      ),
                       campo(
                         "Senha",
                         Icons.lock,
@@ -301,6 +311,8 @@ Widget campo(
   TextEditingController controller, {
   bool obscure = false,
   bool mostrarAvisoSenha = false,
+  List<TextInputFormatter>? inputFormatters,
+  TextInputType? keyboardType,
 }) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 18),
@@ -333,6 +345,8 @@ Widget campo(
         TextField(
           controller: controller,
           obscureText: obscure,
+          keyboardType: keyboardType,          
+          inputFormatters: inputFormatters,
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: Icon(icone),

@@ -134,7 +134,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ValuationCard(dashboard: dashboard!),
 
                   const SizedBox(height: 24),
-
+                  
                   GlassContainer(
                     padding: const EdgeInsets.all(24),
                     child: Column(
