@@ -47,8 +47,33 @@ class _InvestPageState extends State<InvestPage> {
   StartupDetails? startup;
 
   String periodoSelecionado = '6M';
+  bool carregandoGrafico = false;
 
-  final Map<String, List<double>> valoresGrafico = {
+  final Map<String, String> periodoBackend = {
+    '1D': 'diario',
+    '7D': 'semanal',
+    '1M': 'mensal',
+    '6M': 'semestral',
+    'YTD': 'ytd',
+  };
+
+  Map<String, List<double>> valoresGrafico = {
+    '1D': [],
+    '7D': [],
+    '1M': [],
+    '6M': [],
+    'YTD': [],
+  };
+
+  Map<String, List<String>> labelsGrafico = {
+    '1D': [],
+    '7D': [],
+    '1M': [],
+    '6M': [],
+    'YTD': [],
+  };
+
+  final Map<String, List<double>> valoresGraficoFallback = {
     '1D': [20.0, 40.0, 35.0, 55.0, 70.0, 90.0],
     '7D': [35.0, 55.0, 48.0, 80.0, 95.0, 120.0],
     '1M': [50.0, 70.0, 65.0, 105.0, 130.0, 155.0],
@@ -56,20 +81,12 @@ class _InvestPageState extends State<InvestPage> {
     'YTD': [60.0, 95.0, 125.0, 160.0, 200.0, 190.0],
   };
 
-  final Map<String, List<String>> labelsGrafico = {
+  final Map<String, List<String>> labelsGraficoFallback = {
     '1D': ['09h', '11h', '13h', '15h', '17h', '19h'],
     '7D': ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
     '1M': ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'],
     '6M': ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
     'YTD': ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-  };
-
-  final Map<String, List<String>> escalaGrafico = {
-    '1D': ['R\$ 6', 'R\$ 4', 'R\$ 2', 'R\$ 0'],
-    '7D': ['R\$ 12', 'R\$ 8', 'R\$ 4', 'R\$ 0'],
-    '1M': ['R\$ 20', 'R\$ 15', 'R\$ 10', 'R\$ 0'],
-    '6M': ['R\$ 30', 'R\$ 20', 'R\$ 10', 'R\$ 0'],
-    'YTD': ['R\$ 40', 'R\$ 30', 'R\$ 20', 'R\$ 0'],
   };
 
   @override
@@ -102,6 +119,8 @@ class _InvestPageState extends State<InvestPage> {
         startup = dados;
         carregando = false;
       });
+
+      await carregarHistoricoGrafico(periodoSelecionado);
     } on FirebaseFunctionsException catch (e) {
       setState(() {
         carregando = false;
@@ -132,10 +151,10 @@ class _InvestPageState extends State<InvestPage> {
     if (user != null) {
       final token = await user.getIdToken(false);
       debugPrint('token (primeiros 30): ${token?.substring(0, 30)}');
-  }
+    }
 
     setState(() => enviandoPergunta = true);
-    
+
 
     try {
       await StartupService.createStartupQuestion(
@@ -229,8 +248,8 @@ class _InvestPageState extends State<InvestPage> {
                       s.description.isNotEmpty
                           ? s.description
                           : s.shortDescription.isNotEmpty
-                              ? s.shortDescription
-                              : 'Sem descrição.',
+                          ? s.shortDescription
+                          : 'Sem descrição.',
                       style: const TextStyle(
                         fontSize: 14,
                         height: 1.6,
@@ -472,10 +491,169 @@ class _InvestPageState extends State<InvestPage> {
   }
 
 
+  Future<void> carregarHistoricoGrafico(String periodoTela) async {
+    final periodo = periodoBackend[periodoTela];
+
+    if (periodo == null) return;
+
+    setState(() {
+      carregandoGrafico = true;
+    });
+
+    try {
+      final history = await _chamarHistoricoTokens(periodo);
+
+      final valores = <double>[];
+      final labels = <String>[];
+
+      for (final item in history) {
+        final priceCents = item['priceCents'];
+
+        final valorEmReais = priceCents is num
+            ? priceCents.toDouble() / 100
+            : double.tryParse(priceCents.toString()) ?? 0;
+
+        final criadoEmTexto = item['criadoEm']?.toString();
+        final criadoEm = criadoEmTexto != null
+            ? DateTime.tryParse(criadoEmTexto)
+            : null;
+
+        valores.add(valorEmReais);
+        labels.add(_labelGrafico(periodoTela, criadoEm));
+      }
+
+      setState(() {
+        valoresGrafico[periodoTela] = valores;
+        labelsGrafico[periodoTela] = labels;
+      });
+    } on FirebaseFunctionsException catch (e) {
+      debugPrint('Erro ao buscar histórico: ${e.code} - ${e.message}');
+    } catch (e) {
+      debugPrint('Erro inesperado ao buscar histórico: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          carregandoGrafico = false;
+        });
+      }
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _chamarHistoricoTokens(String periodo) async {
+    try {
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'getTokenPriceHistoryHandler',
+      );
+
+      final result = await callable.call({
+        'startupId': widget.startupId,
+        'periodo': periodo,
+      });
+
+      final data = Map<String, dynamic>.from(result.data as Map);
+      final history = data['history'] as List? ?? [];
+
+      return history
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+    } on FirebaseFunctionsException catch (e) {
+      if (e.code != 'not-found') rethrow;
+
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'getTokenPriceHistory',
+      );
+
+      final result = await callable.call({
+        'startupId': widget.startupId,
+        'periodo': periodo,
+      });
+
+      final data = Map<String, dynamic>.from(result.data as Map);
+      final history = data['history'] as List? ?? [];
+
+      return history
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+    }
+  }
+
+  String _labelGrafico(String periodoTela, DateTime? data) {
+    if (data == null) return '';
+
+    switch (periodoTela) {
+      case '1D':
+        return '${data.hour.toString().padLeft(2, '0')}h';
+      case '7D':
+        const dias = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+        return dias[data.weekday - 1];
+      case '1M':
+        return '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}';
+      case '6M':
+      case 'YTD':
+        const meses = [
+          'Jan',
+          'Fev',
+          'Mar',
+          'Abr',
+          'Mai',
+          'Jun',
+          'Jul',
+          'Ago',
+          'Set',
+          'Out',
+          'Nov',
+          'Dez',
+        ];
+        return meses[data.month - 1];
+      default:
+        return '';
+    }
+  }
+
+  String _formatarValorEscala(double valor) {
+    return 'R\$ ${valor.toStringAsFixed(valor >= 10 ? 0 : 2)}';
+  }
+
+  List<String> _montarEscala(List<double> values) {
+    if (values.isEmpty) {
+      return ['R\$ 0', 'R\$ 0', 'R\$ 0', 'R\$ 0'];
+    }
+
+    final maiorValor = values.reduce((a, b) => a > b ? a : b);
+
+    if (maiorValor <= 0) {
+      return ['R\$ 0', 'R\$ 0', 'R\$ 0', 'R\$ 0'];
+    }
+
+    return [
+      _formatarValorEscala(maiorValor),
+      _formatarValorEscala(maiorValor * 0.66),
+      _formatarValorEscala(maiorValor * 0.33),
+      'R\$ 0',
+    ];
+  }
+
   Widget _chartCard() {
-    final values = valoresGrafico[periodoSelecionado]!;
-    final labels = labelsGrafico[periodoSelecionado]!;
-    final escala = escalaGrafico[periodoSelecionado]!;
+    final values = valoresGrafico[periodoSelecionado]!.isNotEmpty
+        ? valoresGrafico[periodoSelecionado]!
+        : valoresGraficoFallback[periodoSelecionado]!;
+
+    final labels = labelsGrafico[periodoSelecionado]!.isNotEmpty
+        ? labelsGrafico[periodoSelecionado]!
+        : labelsGraficoFallback[periodoSelecionado]!;
+
+    final escala = _montarEscala(values);
+
+    final maiorValor = values.isEmpty
+        ? 1.0
+        : values.reduce((a, b) => a > b ? a : b);
+
+    final alturas = values.map((valor) {
+      if (maiorValor <= 0) return 0.0;
+
+      final altura = (valor / maiorValor) * 190;
+      return altura < 12 ? 12.0 : altura;
+    }).toList();
 
     return Container(
       width: double.infinity,
@@ -509,77 +687,94 @@ class _InvestPageState extends State<InvestPage> {
 
           const SizedBox(height: 26),
 
-          SizedBox(
-            height: 240,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: escala.map((item) {
-                    return Text(
-                      item,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey,
-                      ),
-                    );
-                  }).toList(),
-                ),
-
-                const SizedBox(width: 14),
-
-                Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: List.generate(values.length, (index) {
-                      final active = index == values.length - 1;
-
-                      return SizedBox(
-                        width: 38,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              width: 34,
-                              height: values[index],
-                              decoration: BoxDecoration(
-                                gradient: active
-                                    ? const LinearGradient(
-                                  colors: [
-                                    Color(0xFF0D2CC8),
-                                    Color(0xFF8D35E6),
-                                  ],
-                                  begin: Alignment.bottomCenter,
-                                  end: Alignment.topCenter,
-                                )
-                                    : null,
-                                color: active ? null : const Color(0xFF9DB7EA),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              labels[index],
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
+          if (carregandoGrafico)
+            const SizedBox(
+              height: 260,
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else
+            SizedBox(
+              height: 260,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: escala.map((item) {
+                      return Text(
+                        item,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey,
                         ),
                       );
-                    }),
+                    }).toList(),
                   ),
-                ),
-              ],
+
+                  const SizedBox(width: 14),
+
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: List.generate(values.length, (index) {
+                        final active = index == values.length - 1;
+
+                        return SizedBox(
+                          width: 38,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TweenAnimationBuilder<double>(
+                                key: ValueKey('$periodoSelecionado-$index'),
+                                tween: Tween<double>(
+                                  end: alturas[index],
+                                ),
+                                duration: const Duration(milliseconds: 800),
+                                curve: Curves.easeInOutCubic,
+                                builder: (context, alturaAnimada, child) {
+                                  return Container(
+                                    width: 34,
+                                    height: alturaAnimada,
+                                    decoration: BoxDecoration(
+                                      gradient: active
+                                          ? const LinearGradient(
+                                        colors: [
+                                          Color(0xFF0D2CC8),
+                                          Color(0xFF8D35E6),
+                                        ],
+                                        begin: Alignment.bottomCenter,
+                                        end: Alignment.topCenter,
+                                      )
+                                          : null,
+                                      color: active ? null : const Color(0xFF9DB7EA),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                index < labels.length ? labels[index] : '',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -587,10 +782,12 @@ class _InvestPageState extends State<InvestPage> {
 
   Widget _period(String text, {bool active = false}) {
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         setState(() {
           periodoSelecionado = text;
         });
+
+        await carregarHistoricoGrafico(text);
       },
       child: Container(
         margin: const EdgeInsets.only(right: 10),
@@ -639,10 +836,10 @@ class _InvestPageState extends State<InvestPage> {
           ),
           const SizedBox(height: 16),
           ...s.founders.map((founder) => _progress(
-                '${founder.name} (${founder.role})',
-                founder.equityPercent / 100,
-                '${founder.equityPercent.toStringAsFixed(0)}%',
-              )),
+            '${founder.name} (${founder.role})',
+            founder.equityPercent / 100,
+            '${founder.equityPercent.toStringAsFixed(0)}%',
+          )),
         ],
       ),
     );
@@ -746,141 +943,141 @@ class _InvestPageState extends State<InvestPage> {
   }
 
   Widget _questionsCard(StartupDetails s) {
-  final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
 
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(22),
-    decoration: _cardDecoration(),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Perguntas da\nComunidade',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 18),
-        _inputField(),
-        const SizedBox(height: 18),
-        if (s.publicQuestions.isEmpty)
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           const Text(
-            'Nenhuma pergunta enviada ainda.',
-            style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
-          )
-        else
-          ...s.publicQuestions.map((q) => Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _questionBubble(
-                  question: q,
-                  currentUid: currentUid,
-                ),
-              )),
-      ],
-    ),
-  );
-}
+            'Perguntas da\nComunidade',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 18),
+          _inputField(),
+          const SizedBox(height: 18),
+          if (s.publicQuestions.isEmpty)
+            const Text(
+              'Nenhuma pergunta enviada ainda.',
+              style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
+            )
+          else
+            ...s.publicQuestions.map((q) => Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _questionBubble(
+                question: q,
+                currentUid: currentUid,
+              ),
+            )),
+        ],
+      ),
+    );
+  }
 
   Widget _questionBubble({
-  required StartupQuestion question,
-  required String? currentUid,
-}) {
-  final isAnswer = question.isAnswer;
-  final canDelete = currentUid != null && question.authorUid == currentUid;
+    required StartupQuestion question,
+    required String? currentUid,
+  }) {
+    final isAnswer = question.isAnswer;
+    final canDelete = currentUid != null && question.authorUid == currentUid;
 
-  return Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      CircleAvatar(
-        radius: 18,
-        backgroundColor:
-            isAnswer ? const Color(0xFF0D2CC8) : const Color(0xFFEBD5FF),
-        child: Text(
-          isAnswer ? '◎' : iniciais(question.authorName),
-          style: TextStyle(
-            color: isAnswer ? Colors.white : const Color(0xFF8D35E6),
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          radius: 18,
+          backgroundColor:
+          isAnswer ? const Color(0xFF0D2CC8) : const Color(0xFFEBD5FF),
+          child: Text(
+            isAnswer ? '◎' : iniciais(question.authorName),
+            style: TextStyle(
+              color: isAnswer ? Colors.white : const Color(0xFF8D35E6),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
-      ),
-      const SizedBox(width: 14),
-      Expanded(
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: isAnswer ? Colors.white : const Color(0xFFEFF4FF),
-            borderRadius: BorderRadius.circular(16),
-            border: isAnswer ? Border.all(color: const Color(0xFFCBD5E1)) : null,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      question.authorName,
-                      style: const TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                  if (canDelete)
-                    GestureDetector(
-                      onTap: () => _confirmarExclusao(question),
-                      child: const Icon(
-                        Icons.delete_outline,
-                        size: 18,
-                        color: Color(0xFFEF4444),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: isAnswer ? Colors.white : const Color(0xFFEFF4FF),
+              borderRadius: BorderRadius.circular(16),
+              border: isAnswer ? Border.all(color: const Color(0xFFCBD5E1)) : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        question.authorName,
+                        style: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w700),
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(question.message,
-                  style: const TextStyle(fontSize: 13, height: 1.55)),
-            ],
-          ),
-        ),
-      ),
-    ],
-  );
-}
-Future<void> _confirmarExclusao(StartupQuestion question) async {
-  final confirmar = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Excluir pergunta'),
-      content: const Text('Tem certeza que deseja excluir esta pergunta?'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancelar'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: const Text(
-            'Excluir',
-            style: TextStyle(color: Color(0xFFEF4444)),
+                    if (canDelete)
+                      GestureDetector(
+                        onTap: () => _confirmarExclusao(question),
+                        child: const Icon(
+                          Icons.delete_outline,
+                          size: 18,
+                          color: Color(0xFFEF4444),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(question.message,
+                    style: const TextStyle(fontSize: 13, height: 1.55)),
+              ],
+            ),
           ),
         ),
       ],
-    ),
-  );
-
-  if (confirmar != true) return;
-
-  try {
-    await StartupService.deleteStartupQuestion(
-      startupId: widget.startupId,
-      questionId: question.id,
     );
-    await carregarDadosDaTela();
-  } on FirebaseFunctionsException catch (e) {
-    setState(() => erro = 'Erro: ${e.message}');
-  } catch (e) {
-    setState(() => erro = 'Erro ao excluir pergunta.');
   }
-}
+  Future<void> _confirmarExclusao(StartupQuestion question) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Excluir pergunta'),
+        content: const Text('Tem certeza que deseja excluir esta pergunta?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'Excluir',
+              style: TextStyle(color: Color(0xFFEF4444)),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    try {
+      await StartupService.deleteStartupQuestion(
+        startupId: widget.startupId,
+        questionId: question.id,
+      );
+      await carregarDadosDaTela();
+    } on FirebaseFunctionsException catch (e) {
+      setState(() => erro = 'Erro: ${e.message}');
+    } catch (e) {
+      setState(() => erro = 'Erro ao excluir pergunta.');
+    }
+  }
 
 
   Widget _inputField() {
@@ -904,10 +1101,10 @@ Future<void> _confirmarExclusao(StartupQuestion question) async {
           IconButton(
             icon: enviandoPergunta
                 ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
                 : const Icon(Icons.send, color: Color(0xFF0D2CC8)),
             onPressed: enviandoPergunta ? null : enviarPergunta,
           ),
@@ -917,31 +1114,31 @@ Future<void> _confirmarExclusao(StartupQuestion question) async {
   }
 
   Widget _investButton() {
-  return GestureDetector(
-    onTap: () => abrirModalInvestimento(
-      context,
-      startup: startup!,
-      startupId: widget.startupId,
-      onSucesso: carregarDadosDaTela, 
-    ),
-    child: Container(
-      width: double.infinity,
-      height: 58,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0D2CC8), Color(0xFF8D35E6)],
+    return GestureDetector(
+      onTap: () => abrirModalInvestimento(
+        context,
+        startup: startup!,
+        startupId: widget.startupId,
+        onSucesso: carregarDadosDaTela,
+      ),
+      child: Container(
+        width: double.infinity,
+        height: 58,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0D2CC8), Color(0xFF8D35E6)],
+          ),
+        ),
+        child: const Center(
+          child: Text(
+            'Quero Investir  →',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          ),
         ),
       ),
-      child: const Center(
-        child: Text(
-          'Quero Investir  →',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-        ),
-      ),
-    ),
-  );
-}
+    );
+  }
 
 
   BoxDecoration _cardDecoration() {
@@ -951,7 +1148,7 @@ Future<void> _confirmarExclusao(StartupQuestion question) async {
     );
   }
 
-  
+
 
 }
 
@@ -968,7 +1165,7 @@ class _MetricCard extends StatelessWidget {
     this.green = false,
   });
 
-  
+
 
   @override
   Widget build(BuildContext context) {
