@@ -55,16 +55,19 @@ class AuthService {
             .limit(1)
             .get();
 
+            debugPrint('Docs encontrados: ${query.docs.length}');
+
         if (query.docs.isEmpty) {
           throw Exception('CPF não encontrado.');
         }
 
         emailParaLogin = query.docs.first.data()['email'] as String;
+        debugPrint('Email encontrado: $emailParaLogin');
       }
 
       // faz login normal com email no Firebase Auth
       final credential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password);
+          .signInWithEmailAndPassword(email: emailParaLogin, password: password);
 
       final uid = credential.user!.uid;
 

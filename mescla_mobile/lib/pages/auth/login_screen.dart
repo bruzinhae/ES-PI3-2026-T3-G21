@@ -105,12 +105,8 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => carregando = true);
 
     try {
-      final emailOuCpf = emailController.text.trim();
-      final cpfLimpo = emailOuCpf.replaceAll(RegExp(r'\D'), '');
-      final loginIdentifier = _usandoCpf ? cpfLimpo : emailOuCpf;
-
       final userData = await AuthService.login(
-        email: loginIdentifier,
+        email: emailController.text.trim(),
         password: senhaController.text.trim(),
       );
 
