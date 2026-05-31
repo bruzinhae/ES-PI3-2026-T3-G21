@@ -149,11 +149,11 @@ class _PerfilPageState extends State<PerfilPage> {
     }
 //Gabriel Padreca Nicoletti
     final profileImageUrl = user?.profileImageUrl;
-    final Object? profileImageProvider = imagemPerfil != null
-        ? FileImage(imagemPerfil!)
-        : profileImageUrl != null && profileImageUrl.isNotEmpty
-            ? NetworkImage(profileImageUrl)
-            : null;
+    final ImageProvider<Object>? profileImageProvider = imagemPerfil != null
+    ? FileImage(imagemPerfil!) as ImageProvider<Object>
+    : (profileImageUrl != null && profileImageUrl.isNotEmpty
+        ? NetworkImage(profileImageUrl) as ImageProvider<Object>
+        : null);
             //
 
     return Scaffold(
