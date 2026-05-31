@@ -10,3 +10,6 @@ export {updateUserEmail} from "./handlers/updateUserEmail"
 export {updateUserPhone} from "./handlers/updateUserPhone"
 export {updateUserName} from "./handlers/updateUserName"
 export {updateUserCPF} from "./handlers/updateUserCPF"
+// Autor: Gabriel Padreca Nicoletti
+// RA: 20013009
+export {updateUserProfileImage} from "./handlers/updateUserProfileImage"

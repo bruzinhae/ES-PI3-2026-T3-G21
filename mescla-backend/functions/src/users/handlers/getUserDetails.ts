@@ -20,7 +20,10 @@ export const getUserDetails = onCall (async(request) => {
             cpf: user.cpf,
             telefone: user.telefone,
             mfaEnabled: user.mfaEnabled,
-            isAdmin: user.isAdmin
+            isAdmin: user.isAdmin,
+
+            // Autor: Gabriel Padreca Nicoletti
+            profileImageUrl: user.profileImageUrl ?? null
         };
     
     }

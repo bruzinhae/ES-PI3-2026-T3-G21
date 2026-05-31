@@ -9,6 +9,9 @@ class UserDetails {
   final bool mfaEnabled;
   final bool isAdmin;
 
+  // Autor: Gabriel Padreca Nicoletti
+  final String? profileImageUrl;
+
   UserDetails({
     required this.uid,
     required this.name,
@@ -17,6 +20,9 @@ class UserDetails {
     required this.telefone,
     required this.mfaEnabled,
     required this.isAdmin,
+
+    // Autor: Gabriel Padreca Nicoletti
+    this.profileImageUrl,
   });
 
   factory UserDetails.fromMap(Map<String, dynamic> map) {
@@ -28,8 +34,27 @@ class UserDetails {
       telefone: map['telefone'] ?? '',
       mfaEnabled: map['mfaEnabled'] ?? false,
       isAdmin: map['isAdmin'] ?? false,
+
+      // Autor: Gabriel Padreca Nicoletti
+      profileImageUrl: map['profileImageUrl'],
     );
   }
+
+  UserDetails copyWith({
+    String? profileImageUrl,
+  }) {
+    return UserDetails(
+      uid: uid,
+      name: name,
+      email: email,
+      cpf: cpf,
+      telefone: telefone,
+      mfaEnabled: mfaEnabled,
+      isAdmin: isAdmin,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+    );
+  }
+  //
 }
 
 class UserService {
@@ -58,6 +83,20 @@ class UserService {
 
     return Map<String, dynamic>.from(result.data);
   }
+
+  // Autor: Gabriel Padreca Nicoletti
+  Future<Map<String, dynamic>> updateUserProfileImage({
+    required String profileImageUrl,
+  }) async {
+    final callable = _functions.httpsCallable('updateUserProfileImage');
+
+    final result = await callable.call({
+      'profileImageUrl': profileImageUrl,
+    });
+
+    return Map<String, dynamic>.from(result.data);
+  }
+  //
 
   Future<Map<String, dynamic>> sendMfaCodeByEmail() async {
     final callable = _functions.httpsCallable('sendMfaCodeByEmail');
