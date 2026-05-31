@@ -1,11 +1,11 @@
-// Autor: Bruna Barbour Fernandes
-// RA: 23007950
+// Autor: Alinne Monteiro de Melo
+// RA: 24801649
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-// ── Modelos ───────────────────────────────────────────────────────────────────
+
 
 class StartupItem {
   final String id;
@@ -31,10 +31,10 @@ class StartupItem {
   }
 }
 
-/// Representa uma oferta aberta no livro P2P.
+/// representa uma oferta aberta no livro P2P.
 class StartupOffer {
   final String offerId;
-  final String type;       // "buy" | "sell"
+  final String type;       // "buy" ou "sell"
   final bool isOwn;        // true se foi criada pelo usuário logado
   final int quantity;
   final int priceCents;
@@ -65,13 +65,13 @@ class StartupOffer {
   bool get isBuy  => type == 'buy';
 }
 
-// ── TradingService ────────────────────────────────────────────────────────────
+// balcão de negociação
 
 class TradingService {
   static final _functions =
       FirebaseFunctions.instanceFor(region: 'us-central1');
 
-  // ── Startups ────────────────────────────────────────────────────────────────
+  // startups
 
   static Future<List<StartupItem>> listarStartups() async {
     final snapshot =
@@ -81,16 +81,8 @@ class TradingService {
         .toList();
   }
 
-  // ── Criação de oferta (substitui comprarTokens / venderTokens) ─────────────
+  // criação de oferta 
 
-  /// Cria uma oferta de compra ou venda no balcão P2P.
-  ///
-  /// [type]       — 'buy' ou 'sell'
-  /// [startupId]  — ID da startup
-  /// [quantity]   — quantidade de tokens
-  /// [priceCents] — preço por token em centavos (definido livremente pelo usuário)
-  ///
-  /// Retorna o [offerId] da oferta criada.
   static Future<String> criarOferta({
     required String type,
     required String startupId,
@@ -107,10 +99,9 @@ class TradingService {
     return result.data['data']['offerId'] as String;
   }
 
-  // ── Aceite de oferta ────────────────────────────────────────────────────────
 
-  /// Aceita uma oferta aberta (all-or-nothing).
-  /// Retorna o saldo atualizado do aceitador em centavos.
+  /// aceita uma oferta aberta
+  /// retorna o saldo atualizado do aceitador em centavos
   static Future<int> aceitarOferta(String offerId) async {
     final result =
         await _functions.httpsCallable('acceptOffer').call({'offerId': offerId});
@@ -118,10 +109,10 @@ class TradingService {
     return (result.data['data']['acceptorBalanceCents'] as num).toInt();
   }
 
-  // ── Livro de ofertas ────────────────────────────────────────────────────────
+  // livro de ofertas
 
-  /// Lista ofertas abertas de uma startup.
-  /// Retorna todas as ofertas unificadas (o Flutter separa por [StartupOffer.type]).
+  // lista ofertas abertas de uma startup
+  // retorna todas as ofertas unificadas
   static Future<List<StartupOffer>> listarOfertas(String startupId) async {
     await FirebaseAuth.instance.currentUser?.getIdToken(true);
     final result = await _functions
@@ -136,7 +127,7 @@ class TradingService {
         .toList();
   }
 
-  // ── Helpers de cálculo ──────────────────────────────────────────────────────
+  // helpers calculo
 
   static double centavosParaReais(int centavos) => centavos / 100;
 

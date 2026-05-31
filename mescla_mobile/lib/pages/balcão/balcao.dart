@@ -1,5 +1,5 @@
-// Autor: Bruna Barbour Fernandes
-// RA: 23007950
+// Autor: Alinne Monteiro de Melo
+// RA: 24801649
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -711,8 +711,8 @@ class _TradingPageState extends State<TradingPage>
 
   Widget _buildOrderBook() {
     // filtra pelo tipo oposto à aba: se você quer COMPRAR, vê ofertas de VENDA
-    // (são as que o usuario pode aceitar para comprar), e vice-versa.
-    // mas também mostra suas próprias ofertas criadas (isOwn = true) com badge.
+    // (são as que o usuario pode aceitar para comprar), e vice-versa
+    // mas também mostra suas próprias ofertas criadas (isOwn = true) com badge
     final ofertasFiltradas = _ofertas.where((o) {
       if (_livroTabComprar) return o.isSell; // você compra aceitando vendas
       return o.isBuy;                        // você vende aceitando compras
@@ -858,7 +858,7 @@ class _TradingPageState extends State<TradingPage>
       ),
       child: Row(
         children: [
-          // Quantidade + badge "minha" se for do próprio usuário
+          // quantidade + badge "minha" se for do próprio usuário
           Expanded(
             flex: 2,
             child: Row(
@@ -904,7 +904,7 @@ class _TradingPageState extends State<TradingPage>
             ),
           ),
 
-          // Botão: "Aceitar" para ofertas de outros, desabilitado para as próprias
+          // botão: "Aceitar" para ofertas de outros, desabilitado para as próprias
           SizedBox(
             width: 76,
             child: isOwn

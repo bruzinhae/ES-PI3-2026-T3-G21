@@ -77,7 +77,7 @@ class _CarteiraScreenState extends State<CarteiraScreen> {
 
             const SizedBox(height: 28),
 
-            // Meus Tokens — stream em tempo real
+            // meus tokens - stream em tempo real
             StreamBuilder<QuerySnapshot>(
               stream: WalletService.assetsStream(),
               builder: (context, snapshot) {
@@ -125,7 +125,7 @@ class _CarteiraScreenState extends State<CarteiraScreen> {
 
 }
 
-// Skeletons de carregamento
+// skeletons de carregamento
 class _CardSkeleton extends StatelessWidget {
   const _CardSkeleton();
 

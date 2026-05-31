@@ -81,8 +81,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         period: selectedPeriod,
       );
 
+      final pontosFiltrados = history.history.length > 24
+      ? history.history.sublist(history.history.length - 24)
+      : history.history;
+
       setState(() {
-        tokenHistory = history;
+        tokenHistory = TokenPriceHistory(
+          startupId: history.startupId,
+          history: pontosFiltrados,
+        );
         carregandoGrafico = false;
       });
     } catch (e) {

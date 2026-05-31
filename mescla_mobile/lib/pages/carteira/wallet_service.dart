@@ -17,7 +17,7 @@ class WalletService {
   static CollectionReference get _assetsCol =>
       _userDoc.collection('assets');
 
-  // streams: leitura em tempo real
+
 
   // saldo do usuário em tempo real
   static Stream<DocumentSnapshot> saldoStream() => _userDoc.snapshots();

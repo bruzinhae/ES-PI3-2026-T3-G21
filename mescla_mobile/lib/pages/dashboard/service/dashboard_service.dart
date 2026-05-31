@@ -4,7 +4,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 
-// ─── Models ────────────────────────────────────────────────────────────────
 
 class DashboardAsset {
   final String startupId;
@@ -135,7 +134,7 @@ class TokenPriceHistory {
   }
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
+// helpers
 
 String _formatarReais(int cents) {
   final reais = cents / 100;
@@ -147,7 +146,7 @@ String _formatarReais(int cents) {
   return 'R\$ $inteiro,${partes[1]}';
 }
 
-// ─── Service ───────────────────────────────────────────────────────────────
+// servicee
 
 class DashboardService {
   static final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(

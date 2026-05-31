@@ -50,7 +50,7 @@ class _TransacoesSectionState extends State<TransacoesSection> {
               );
             }
 
-            // Erro
+            // erro
             if (snapshot.hasError) {
               return _buildEmpty(
                 icon: Icons.error_outline,
@@ -62,7 +62,7 @@ class _TransacoesSectionState extends State<TransacoesSection> {
 
             final transactions = snapshot.data ?? [];
 
-            // Lista vazia
+            // lista vazia
             if (transactions.isEmpty) {
               return _buildEmpty(
                 icon: Icons.receipt_long_outlined,
@@ -71,7 +71,7 @@ class _TransacoesSectionState extends State<TransacoesSection> {
               );
             }
 
-            // Lista preenchida
+            // lista preenchida
             return Container(
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.7),

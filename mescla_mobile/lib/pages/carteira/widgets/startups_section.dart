@@ -37,7 +37,7 @@ class StartupsSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // Estado vazio
+        // estado vazio
         if (docs.isEmpty)
           Container(
             padding: const EdgeInsets.all(24),
@@ -66,7 +66,7 @@ class StartupsSection extends StatelessWidget {
             ),
           ),
 
-        // Lista de tokens
+        // lista de tokens
         for (final doc in docs) ...[
           _AssetCard(doc: doc),
           const SizedBox(height: 12),
@@ -102,7 +102,7 @@ class _AssetCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          // Logo da startup
+          // logo da startup
           Container(
             width: 48, height: 48,
             decoration: BoxDecoration(
@@ -119,7 +119,7 @@ class _AssetCard extends StatelessWidget {
           ),
           const SizedBox(width: 12),
 
-          // Nome e quantidade
+          // nome e quantidade
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,7 +133,7 @@ class _AssetCard extends StatelessWidget {
             ),
           ),
 
-          // Valor total investido
+          // valor total investido
           Text(
             formatarMoeda(totalCents),
             style: const TextStyle(fontFamily: 'Manrope', fontSize: 15, fontWeight: FontWeight.w600, color: kOnSurface),

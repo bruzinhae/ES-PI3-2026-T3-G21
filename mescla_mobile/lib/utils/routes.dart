@@ -1,3 +1,6 @@
+// autor: Alinne Monteiro de Melo
+// RA: 24801649
+
 import 'package:flutter/material.dart';
 import 'package:mescla_mobile/pages/carteira/carteira.dart';
 import 'package:mescla_mobile/pages/startups/catalogoStartUp.dart';

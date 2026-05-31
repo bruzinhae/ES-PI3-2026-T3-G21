@@ -1,3 +1,6 @@
+// Autor: Alinne Monteiro de Melo
+// RA: 24801649
+
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../startups/catalogoStartUp.dart';
@@ -54,8 +57,8 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
     setState(() => _carregando = true);
 
     try {
-      // verifyMfaLoginCode → login com MFA já ativo
-      // enableMfa → ativando MFA pela primeira vez
+      // verifyMfaLoginCode = login com MFA já ativo
+      // enableMfa =  ativando MFA pela primeira vez
       final functionName =
           widget.isLogin ? 'verifyMfaLoginCode' : 'enableMfa';
 
@@ -94,7 +97,6 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Header com gradiente igual ao login
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(24, 48, 24, 90),
@@ -152,7 +154,7 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
               ),
             ),
 
-            // Card com o formulário
+            // card com o formulário
             Transform.translate(
               offset: const Offset(0, -55),
               child: Padding(
