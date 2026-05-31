@@ -1,3 +1,8 @@
+/*
+Nome: Mateus Souza Marinho
+RA: 24005497
+*/
+
 export interface TokenSnapshotDocument {
   priceCents: number;
   criadoEm: Date;

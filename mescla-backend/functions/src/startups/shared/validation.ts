@@ -1,3 +1,8 @@
+/*
+Nome: Mateus Souza Marinho
+RA: 24005497
+*/
+
 export function normalizeString(value: unknown): string | undefined {
     if (typeof value !== "string") {
         return undefined;

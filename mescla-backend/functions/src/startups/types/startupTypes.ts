@@ -1,3 +1,8 @@
+/*
+Nome: Mateus Souza Marinho
+RA: 24005497
+*/
+
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 export type StartupStage = "nova" | "em_operacao" | "em_expansao";

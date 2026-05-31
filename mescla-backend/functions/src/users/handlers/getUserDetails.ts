@@ -1,3 +1,8 @@
+/*
+Nome: Mateus Souza Marinho
+RA: 24005497
+*/
+
 import { requireAuthenticatedUser } from "../../shared/auth";
 import { getUserByUid } from "../repositories/usersRepository";
 import {HttpsError, onCall} from "firebase-functions/https";
