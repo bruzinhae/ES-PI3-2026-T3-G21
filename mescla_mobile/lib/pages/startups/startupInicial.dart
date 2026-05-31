@@ -182,7 +182,6 @@ class _InvestPageState extends State<InvestPage> {
     return '${partes.first[0]}${partes.last[0]}'.toUpperCase();
   }
 
-  // ─── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -291,7 +290,6 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
-  // ─── Widgets ───────────────────────────────────────────────────────────────
 
   Widget _topBar() {
     return Row(
@@ -390,7 +388,7 @@ class _InvestPageState extends State<InvestPage> {
         _MetricCard(
           title: 'Valorização',
           value: s.valorizacaoFormatada,
-          green: true,
+          green: !s.valorizacaoFormatada.contains('-'),
         ),
       ],
     );
@@ -535,7 +533,6 @@ class _InvestPageState extends State<InvestPage> {
             chave = criadoEm.toIso8601String();
         }
 
-        // Mantém o último snapshot daquele grupo.
         pontosAgrupados[chave] = item;
       }
 
@@ -717,12 +714,10 @@ class _InvestPageState extends State<InvestPage> {
     final alturas = values.map((valor) {
       if (values.isEmpty) return 0.0;
 
-      // Quando os valores são iguais ou muito próximos, mantém uma altura padrão
-      // para não parecer que o gráfico quebrou.
+
       if (intervalo <= 0) return 120.0;
 
-      // Escala baseada no menor e no maior valor do período.
-      // Isso dá diferença visual mesmo quando o token varia pouco.
+
       final altura = 40 + ((valor - menorValor) / intervalo) * 150;
       return altura.clamp(12.0, 190.0);
     }).toList();
@@ -1254,7 +1249,6 @@ class _InvestPageState extends State<InvestPage> {
 
 }
 
-// metricCard
 
 class _MetricCard extends StatelessWidget {
   final String title;
@@ -1267,10 +1261,18 @@ class _MetricCard extends StatelessWidget {
     this.green = false,
   });
 
-
-
   @override
   Widget build(BuildContext context) {
+    final isValorizacao = title.toLowerCase().contains('valoriz');
+
+    final cor = green
+        ? const Color(0xFF16A34A)
+        : const Color(0xFFDC2626);
+
+    final icone = green
+        ? Icons.trending_up
+        : Icons.trending_down;
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -1283,14 +1285,25 @@ class _MetricCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 11, color: Color(0xFF4B5563)),
+            style: const TextStyle(
+              fontSize: 11,
+              color: Color(0xFF4B5563),
+            ),
           ),
+
           const SizedBox(height: 8),
+
           Row(
             children: [
-              if (green)
-                const Icon(Icons.trending_up, color: Colors.green, size: 16),
-              if (green) const SizedBox(width: 4),
+              if (isValorizacao) ...[
+                Icon(
+                  icone,
+                  color: cor,
+                  size: 16,
+                ),
+                const SizedBox(width: 4),
+              ],
+
               Expanded(
                 child: Text(
                   value,
@@ -1298,7 +1311,9 @@ class _MetricCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: green ? Colors.green : Colors.black,
+                    color: isValorizacao
+                        ? cor
+                        : Colors.black,
                   ),
                 ),
               ),
