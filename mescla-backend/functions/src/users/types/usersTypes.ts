@@ -12,6 +12,10 @@ export interface UserDocument {
     balanceCents:   number;    
     mfaEnabled:     boolean;   
     isAdmin:        boolean;   
+
+    // Autor: Gabriel Padreca Nicoletti
+    profileImageUrl?: string;
+    
     createdAt:      Timestamp;
     updatedAt:      Timestamp;
 }

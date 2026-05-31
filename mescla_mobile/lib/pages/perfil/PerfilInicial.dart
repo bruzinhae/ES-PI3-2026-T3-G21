@@ -12,6 +12,7 @@ import 'package:mescla_mobile/pages/auth/welcome_screen.dart';
 import '../../widgets/bottom_navBar.dart';
 import 'package:mescla_mobile/services/perfil_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 
 class PerfilPage extends StatefulWidget {
@@ -32,6 +33,9 @@ class _PerfilPageState extends State<PerfilPage> {
 
   File? imagemPerfil;
   final ImagePicker picker = ImagePicker();
+
+  // Autor: Gabriel Padreca Nicoletti
+  bool salvandoImagemPerfil = false;
 
   @override
   void initState() {
@@ -65,14 +69,44 @@ class _PerfilPageState extends State<PerfilPage> {
     try {
       final XFile? imagem = await picker.pickImage(
         source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
         imageQuality: 80,
       );
 
       if (imagem == null) return;
 
+//Gabriel Padreca Nicoletti
+      final arquivo = File(imagem.path);
+
       setState(() {
-        imagemPerfil = File(imagem.path);
+        imagemPerfil = arquivo;
+        salvandoImagemPerfil = true;
       });
+
+      final uid = FirebaseAuth.instance.currentUser!.uid;
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('users/$uid/profile/avatar.jpg');
+
+      await storageRef.putFile(
+        arquivo,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+
+      final profileImageUrl = await storageRef.getDownloadURL();
+
+      await userService.updateUserProfileImage(
+        profileImageUrl: profileImageUrl,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        user = user?.copyWith(profileImageUrl: profileImageUrl);
+        salvandoImagemPerfil = false;
+      });
+      //
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -80,10 +114,19 @@ class _PerfilPageState extends State<PerfilPage> {
         ),
       );
     } catch (e) {
+      //Gabriel Padreca Nicoletti
+      if (mounted) {
+        setState(() {
+          salvandoImagemPerfil = false;
+        });
+      }
+
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Erro ao selecionar imagem.'),
-        ),
+          content: Text('Erro ao salvar imagem de perfil.'),
+        ),//
       );
     }
   }
@@ -104,6 +147,14 @@ class _PerfilPageState extends State<PerfilPage> {
         ),
       );
     }
+//Gabriel Padreca Nicoletti
+    final profileImageUrl = user?.profileImageUrl;
+    final ImageProvider? profileImageProvider = imagemPerfil != null
+        ? FileImage(imagemPerfil!)
+        : profileImageUrl != null && profileImageUrl.isNotEmpty
+            ? NetworkImage(profileImageUrl)
+            : null;
+            //
 
     return Scaffold(
       backgroundColor: kSurface,
@@ -126,10 +177,8 @@ class _PerfilPageState extends State<PerfilPage> {
                         CircleAvatar(
                           radius: 54,
                           backgroundColor: const Color(0xFFE5E7EB),
-                          backgroundImage: imagemPerfil != null
-                              ? FileImage(imagemPerfil!)
-                              : null,
-                          child: imagemPerfil == null
+                          backgroundImage: profileImageProvider,
+                          child: profileImageProvider == null
                               ? const Icon(
                             Icons.person,
                             size: 54,
@@ -142,15 +191,21 @@ class _PerfilPageState extends State<PerfilPage> {
                           bottom: 0,
                           right: 0,
                           child: GestureDetector(
-                            onTap: selecionarImagem,
+                            //Gabriel Padreca Nicoletti
+                            onTap: salvandoImagemPerfil ? null : selecionarImagem,
+                            //
                             child: Container(
                               padding: const EdgeInsets.all(7),
                               decoration: const BoxDecoration(
                                 color: kPrimary,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
-                                Icons.edit,
+                              //Gabriel Padreca Nicoletti
+                              child: Icon(
+                                salvandoImagemPerfil
+                                    ? Icons.hourglass_top
+                                    : Icons.edit,
+                                    //
                                 color: Colors.white,
                                 size: 18,
                               ),
