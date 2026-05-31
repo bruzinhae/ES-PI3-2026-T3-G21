@@ -503,10 +503,55 @@ class _InvestPageState extends State<InvestPage> {
     try {
       final history = await _chamarHistoricoTokens(periodo);
 
+      final pontosAgrupados = <String, Map<String, dynamic>>{};
+
+      for (final item in history) {
+        final criadoEmTexto = item['criadoEm']?.toString();
+        final criadoEm = criadoEmTexto != null
+            ? DateTime.tryParse(criadoEmTexto)
+            : null;
+
+        if (criadoEm == null) continue;
+
+        String chave;
+
+        switch (periodoTela) {
+          case '1D':
+            chave =
+            '${criadoEm.year}-${criadoEm.month}-${criadoEm.day}-${criadoEm.hour}';
+            break;
+          case '7D':
+            chave = '${criadoEm.year}-${criadoEm.month}-${criadoEm.day}';
+            break;
+          case '1M':
+            final semanaDoMes = ((criadoEm.day - 1) ~/ 7) + 1;
+            chave = '${criadoEm.year}-${criadoEm.month}-semana-$semanaDoMes';
+            break;
+          case '6M':
+          case 'YTD':
+            chave = '${criadoEm.year}-${criadoEm.month}';
+            break;
+          default:
+            chave = criadoEm.toIso8601String();
+        }
+
+        // Mantém o último snapshot daquele grupo.
+        pontosAgrupados[chave] = item;
+      }
+
+      final pontosOrdenados = pontosAgrupados.values.toList()
+        ..sort((a, b) {
+          final dataA = DateTime.tryParse(a['criadoEm']?.toString() ?? '') ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+          final dataB = DateTime.tryParse(b['criadoEm']?.toString() ?? '') ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+          return dataA.compareTo(dataB);
+        });
+
       final valores = <double>[];
       final labels = <String>[];
 
-      for (final item in history) {
+      for (final item in pontosOrdenados) {
         final priceCents = item['priceCents'];
 
         final valorEmReais = priceCents is num
@@ -521,6 +566,8 @@ class _InvestPageState extends State<InvestPage> {
         valores.add(valorEmReais);
         labels.add(_labelGrafico(periodoTela, criadoEm));
       }
+
+      if (!mounted) return;
 
       setState(() {
         valoresGrafico[periodoTela] = valores;
@@ -587,7 +634,8 @@ class _InvestPageState extends State<InvestPage> {
         const dias = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
         return dias[data.weekday - 1];
       case '1M':
-        return '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}';
+        final semanaDoMes = ((data.day - 1) ~/ 7) + 1;
+        return 'Sem $semanaDoMes';
       case '6M':
       case 'YTD':
         const meses = [
@@ -619,17 +667,29 @@ class _InvestPageState extends State<InvestPage> {
       return ['R\$ 0', 'R\$ 0', 'R\$ 0', 'R\$ 0'];
     }
 
+    final menorValor = values.reduce((a, b) => a < b ? a : b);
     final maiorValor = values.reduce((a, b) => a > b ? a : b);
 
     if (maiorValor <= 0) {
       return ['R\$ 0', 'R\$ 0', 'R\$ 0', 'R\$ 0'];
     }
 
+    if (maiorValor == menorValor) {
+      return [
+        _formatarValorEscala(maiorValor),
+        _formatarValorEscala(maiorValor),
+        _formatarValorEscala(maiorValor),
+        _formatarValorEscala(menorValor),
+      ];
+    }
+
+    final intervalo = maiorValor - menorValor;
+
     return [
       _formatarValorEscala(maiorValor),
-      _formatarValorEscala(maiorValor * 0.66),
-      _formatarValorEscala(maiorValor * 0.33),
-      'R\$ 0',
+      _formatarValorEscala(menorValor + (intervalo * 0.66)),
+      _formatarValorEscala(menorValor + (intervalo * 0.33)),
+      _formatarValorEscala(menorValor),
     ];
   }
 
@@ -644,15 +704,27 @@ class _InvestPageState extends State<InvestPage> {
 
     final escala = _montarEscala(values);
 
+    final menorValor = values.isEmpty
+        ? 0.0
+        : values.reduce((a, b) => a < b ? a : b);
+
     final maiorValor = values.isEmpty
         ? 1.0
         : values.reduce((a, b) => a > b ? a : b);
 
-    final alturas = values.map((valor) {
-      if (maiorValor <= 0) return 0.0;
+    final intervalo = maiorValor - menorValor;
 
-      final altura = (valor / maiorValor) * 190;
-      return altura < 12 ? 12.0 : altura;
+    final alturas = values.map((valor) {
+      if (values.isEmpty) return 0.0;
+
+      // Quando os valores são iguais ou muito próximos, mantém uma altura padrão
+      // para não parecer que o gráfico quebrou.
+      if (intervalo <= 0) return 120.0;
+
+      // Escala baseada no menor e no maior valor do período.
+      // Isso dá diferença visual mesmo quando o token varia pouco.
+      final altura = 40 + ((valor - menorValor) / intervalo) * 150;
+      return altura.clamp(12.0, 190.0);
     }).toList();
 
     return Container(
@@ -700,76 +772,106 @@ class _InvestPageState extends State<InvestPage> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: escala.map((item) {
-                      return Text(
-                        item,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey,
-                        ),
-                      );
-                    }).toList(),
-                  ),
-
-                  const SizedBox(width: 14),
-
-                  Expanded(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: List.generate(values.length, (index) {
-                        final active = index == values.length - 1;
-
-                        return SizedBox(
-                          width: 38,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TweenAnimationBuilder<double>(
-                                key: ValueKey('$periodoSelecionado-$index'),
-                                tween: Tween<double>(
-                                  end: alturas[index],
-                                ),
-                                duration: const Duration(milliseconds: 800),
-                                curve: Curves.easeInOutCubic,
-                                builder: (context, alturaAnimada, child) {
-                                  return Container(
-                                    width: 34,
-                                    height: alturaAnimada,
-                                    decoration: BoxDecoration(
-                                      gradient: active
-                                          ? const LinearGradient(
-                                        colors: [
-                                          Color(0xFF0D2CC8),
-                                          Color(0xFF8D35E6),
-                                        ],
-                                        begin: Alignment.bottomCenter,
-                                        end: Alignment.topCenter,
-                                      )
-                                          : null,
-                                      color: active ? null : const Color(0xFF9DB7EA),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                index < labels.length ? labels[index] : '',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 9,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
+                  SizedBox(
+                    width: 48,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: escala.map((item) {
+                        return Text(
+                          item,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey,
                           ),
                         );
-                      }),
+                      }).toList(),
+                    ),
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final larguraMinima = constraints.maxWidth;
+                        final larguraConteudo = values.length * 48.0;
+                        final larguraGrafico = larguraConteudo < larguraMinima
+                            ? larguraMinima
+                            : larguraConteudo;
+
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          child: SizedBox(
+                            width: larguraGrafico,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisAlignment: values.length <= 6
+                                  ? MainAxisAlignment.spaceAround
+                                  : MainAxisAlignment.start,
+                              children: List.generate(values.length, (index) {
+                                final active = index == values.length - 1;
+
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                                  child: SizedBox(
+                                    width: 38,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        TweenAnimationBuilder<double>(
+                                          key: ValueKey('$periodoSelecionado-$index-${alturas[index]}'),
+                                          tween: Tween<double>(
+                                            begin: 0,
+                                            end: alturas[index],
+                                          ),
+                                          duration: const Duration(milliseconds: 700),
+                                          curve: Curves.easeOutCubic,
+                                          builder: (context, alturaAnimada, child) {
+                                            return Container(
+                                              width: 34,
+                                              height: alturaAnimada,
+                                              decoration: BoxDecoration(
+                                                gradient: active
+                                                    ? const LinearGradient(
+                                                  colors: [
+                                                    Color(0xFF0D2CC8),
+                                                    Color(0xFF8D35E6),
+                                                  ],
+                                                  begin: Alignment.bottomCenter,
+                                                  end: Alignment.topCenter,
+                                                )
+                                                    : null,
+                                                color: active
+                                                    ? null
+                                                    : const Color(0xFF9DB7EA),
+                                                borderRadius:
+                                                BorderRadius.circular(8),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          index < labels.length ? labels[index] : '',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontSize: 9,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
