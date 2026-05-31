@@ -105,6 +105,7 @@ class StartupDetails {
   final String shortDescription;
   final String description;
   final String executiveSummary;
+  final double variacaoPercent;
 
   /// centavos (ex: 150000000 = R$ 1.500.000,00)
   final int capitalRaisedCents;
@@ -142,6 +143,8 @@ class StartupDetails {
     required this.founders,
     required this.externalMembers,
     required this.demoVideos,
+    required this.variacaoPercent,
+
     this.pitchDeckUrl,
     this.coverImageUrl,
     this.emailContact,
@@ -163,6 +166,7 @@ class StartupDetails {
       capitalRaisedCents: (map['capitalRaisedCents'] as num?)?.toInt() ?? 0,
       totalTokensIssued: (map['totalTokensIssued'] as num?)?.toInt() ?? 0,
       currentTokenPriceCents: (map['currentTokenPriceCents'] as num?)?.toInt() ?? 0,
+      variacaoPercent: (map['variacaoPercent'] as num?)?.toDouble() ?? 0,
       tags: List<String>.from(map['tags'] ?? []),
       founders: (map['founders'] as List? ?? [])
           .map((f) => Founder.fromMap(Map<String, dynamic>.from(f)))
@@ -217,11 +221,9 @@ class StartupDetails {
   String get tokensFormatados => formatarInteiro(totalTokensIssued);
   String get tokenPriceFormatado => formatarReais(currentTokenPriceCents);
 
-  /// valorização = preço atual do token formatado como reais
-  /// a fazer %
   String get valorizacaoFormatada {
-    if (currentTokenPriceCents == 0) return '-';
-    return formatarReais(currentTokenPriceCents);
+    final sinal = variacaoPercent >= 0 ? '+' : '';
+    return '$sinal${variacaoPercent.toStringAsFixed(2)}%';
   }
 
   String get stageFormatado {

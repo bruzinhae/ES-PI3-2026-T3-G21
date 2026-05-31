@@ -1,6 +1,7 @@
 import { HttpsError, onCall } from "firebase-functions/https";
 import { requireAuthenticatedUser } from "../../shared/auth";
 import { normalizeString } from "../shared/validation";
+import { getTokenPriceHistory } from '../../tokens/repositories/tokensRepository';
 
 import {
   getStartupById,
@@ -67,11 +68,25 @@ export const getStartupDetails = onCall(async (request) => {
   }
   console.log('documents montados:', documents);
 
+
+  // calcula variação do último dia
+  const desde = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const history = await getTokenPriceHistory(startupId, desde);
+
+  let variacaoPercent = 0;
+  if (history.length >= 2) {
+    const precoInicial = history[0].priceCents;
+    const precoFinal = history[history.length - 1].priceCents;
+    variacaoPercent = parseFloat(((precoFinal - precoInicial) / precoInicial * 100).toFixed(2));
+  }
+
+
   return {
     data: {
       id: startupId,
 
       ...startup,
+      variacaoPercent,
       documents,
 
       createdAt: startup.createdAt

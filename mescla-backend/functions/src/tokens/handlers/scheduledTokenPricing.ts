@@ -6,7 +6,7 @@ import { startupsCollection } from '../../startups/repositories/startupsReposito
 import { saveTokenSnapshot, updateTokenPriceTx } from '../repositories/tokensRepository';
 import { db } from '../../shared/firebase';
 
-export const scheduledTokenPricing = onSchedule('every 1 hours', async () => {
+export const scheduledTokenPricing = onSchedule('every 5 minutes', async () => {
   const startups = await startupsCollection.get();
 
   for (const startup of startups.docs) {
