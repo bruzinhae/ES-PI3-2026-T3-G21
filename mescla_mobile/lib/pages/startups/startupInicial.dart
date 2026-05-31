@@ -4,12 +4,22 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'catalogoStartUp.dart';
-import '../pages/../startups/services/startup_service.dart';
+import 'services/startup_service.dart';
 import '../../widgets/bottom_navBar.dart';
 import 'modal_investimento.dart';
 import 'modal_perguntaPrivada.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+import '../../widgets/bottom_navBar.dart';
+
+import 'widgets/barra_superior.dart';
+import 'widgets/tela_carregamento.dart';
+import 'widgets/estado_vazio.dart';
+import 'widgets/chip_personalizado.dart';
+import 'widgets/card_info.dart';
+import 'widgets/card_secao.dart';
+import 'widgets/botao_gradiente.dart';
 
 class StartupInicial extends StatelessWidget {
   final String startupId;
@@ -43,6 +53,8 @@ class _InvestPageState extends State<InvestPage> {
   bool carregando = true;
   bool enviandoPergunta = false;
   String? erro;
+
+  final List<Map<String, dynamic>> mensagensLocais = [];
 
   StartupDetails? startup;
 
@@ -109,11 +121,6 @@ class _InvestPageState extends State<InvestPage> {
 
     try {
       final dados = await StartupService.getStartupDetails(widget.startupId);
-      debugPrint('=== DOCUMENTS ===');
-      debugPrint(dados.documents.toString());
-      debugPrint('executiveSummary: ${dados.executiveSummary}');
-      debugPrint('pitchDeckUrl: ${dados.pitchDeckUrl}');
-      debugPrint('demoVideos: ${dados.demoVideos}');
 
       setState(() {
         startup = dados;
@@ -145,13 +152,6 @@ class _InvestPageState extends State<InvestPage> {
     if (texto.isEmpty) return;
 
     final user = FirebaseAuth.instance.currentUser;
-    debugPrint('=== ANTES DE ENVIAR ===');
-    debugPrint('uid: ${user?.uid}');
-    debugPrint('email: ${user?.email}');
-    if (user != null) {
-      final token = await user.getIdToken(false);
-      debugPrint('token (primeiros 30): ${token?.substring(0, 30)}');
-    }
 
     setState(() => enviandoPergunta = true);
 
@@ -163,6 +163,25 @@ class _InvestPageState extends State<InvestPage> {
       );
 
       _controller.clear();
+
+      if (!mounted) return;
+
+      setState(() {
+        mensagensLocais.add({
+          'authorName': user?.displayName?.trim().isNotEmpty == true
+              ? user!.displayName!
+              : user?.email?.split('@').first ?? 'Você',
+          'message': texto,
+          'isAnswer': false,
+        });
+
+        mensagensLocais.add({
+          'authorName': startup?.name ?? 'Time da startup',
+          'message':
+          'Olá! Recebemos sua pergunta. Nosso time irá analisar e responder em breve.',
+          'isAnswer': true,
+        });
+      });
     } on FirebaseFunctionsException catch (e) {
       setState(() => erro = 'Erro: ${e.message}');
       debugPrint('Código: ${e.code}');
@@ -189,7 +208,7 @@ class _InvestPageState extends State<InvestPage> {
       return const Scaffold(
         backgroundColor: Color(0xFFEFF4FF),
         body: SafeArea(
-          child: Center(child: CircularProgressIndicator()),
+          child: TelaCarregamento(),
         ),
       );
     }
@@ -198,15 +217,8 @@ class _InvestPageState extends State<InvestPage> {
       return Scaffold(
         backgroundColor: const Color(0xFFEFF4FF),
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Center(
-              child: Text(
-                erro!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
+          child: EstadoVazio(
+            mensagem: erro!,
           ),
         ),
       );
@@ -292,28 +304,12 @@ class _InvestPageState extends State<InvestPage> {
 
 
   Widget _topBar() {
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: () => Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const CatalogoStartUp()),
-          ),
-          child: const Icon(Icons.arrow_back, color: Color(0xFF0D2CC8), size: 22),
-        ),
-        const SizedBox(width: 18),
-        const Expanded(
-          child: Text(
-            'MesclaInvest',
-            style: TextStyle(
-              color: Color(0xFF0D2CC8),
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-            ),
-          ),
-        ),
-        const Icon(Icons.favorite_border, color: Color(0xFF0D2CC8), size: 24),
-      ],
+    return BarraSuperiorMescla(
+      mostrarFavorito: true,
+      aoVoltar: () => Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const CatalogoStartUp()),
+      ),
     );
   }
 
@@ -329,21 +325,8 @@ class _InvestPageState extends State<InvestPage> {
   }
 
   Widget _chip(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-      decoration: BoxDecoration(
-        color: const Color(0xFFDDE8FF),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Color(0xFF0D2CC8),
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1,
-        ),
-      ),
+    return ChipPersonalizado(
+      texto: text,
     );
   }
 
@@ -365,30 +348,38 @@ class _InvestPageState extends State<InvestPage> {
   }
 
   Widget _metrics(StartupDetails s) {
+    final valorizacaoPositiva = !s.valorizacaoFormatada.contains('-');
+
     return GridView.count(
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       crossAxisCount: 2,
-      childAspectRatio: 2,
+      childAspectRatio: 1.45,
       crossAxisSpacing: 14,
       mainAxisSpacing: 14,
       children: [
-        _MetricCard(
-          title: 'Capital aportado',
-          value: s.capitalFormatado,
+        CardInfo(
+          titulo: 'Capital aportado',
+          valor: s.capitalFormatado,
+          icone: Icons.account_balance_wallet_outlined,
         ),
-        _MetricCard(
-          title: 'Tokens totais',
-          value: s.tokensFormatados,
+        CardInfo(
+          titulo: 'Tokens totais',
+          valor: s.tokensFormatados,
+          icone: Icons.generating_tokens_outlined,
         ),
-        _MetricCard(
-          title: 'Valor do Token',
-          value: s.tokenPriceFormatado,
+        CardInfo(
+          titulo: 'Valor do Token',
+          valor: s.tokenPriceFormatado,
+          icone: Icons.paid_outlined,
         ),
-        _MetricCard(
-          title: 'Valorização',
-          value: s.valorizacaoFormatada,
-          green: !s.valorizacaoFormatada.contains('-'),
+        CardInfo(
+          titulo: 'Valorização',
+          valor: s.valorizacaoFormatada,
+          icone: valorizacaoPositiva ? Icons.trending_up : Icons.trending_down,
+          cor: valorizacaoPositiva
+              ? const Color(0xFF16A34A)
+              : const Color(0xFFDC2626),
         ),
       ],
     );
@@ -722,11 +713,9 @@ class _InvestPageState extends State<InvestPage> {
       return altura.clamp(12.0, 190.0);
     }).toList();
 
-    return Container(
-      width: double.infinity,
+    return CardSecao(
       padding: const EdgeInsets.all(22),
-      decoration: _cardDecoration(),
-      child: Column(
+      filho: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
@@ -907,22 +896,16 @@ class _InvestPageState extends State<InvestPage> {
 
   Widget _teamCard(StartupDetails s) {
     if (s.founders.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: _cardDecoration(),
-        child: const Text(
+      return const CardSecao(
+        filho: Text(
           'Equipe e Governança não informada.',
           style: TextStyle(fontSize: 14),
         ),
       );
     }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: _cardDecoration(),
-      child: Column(
+    return CardSecao(
+      filho: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Equipe e Governança', style: TextStyle(fontSize: 16)),
@@ -1042,11 +1025,9 @@ class _InvestPageState extends State<InvestPage> {
   Widget _questionsCard(StartupDetails s) {
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
 
-    return Container(
-      width: double.infinity,
+    return CardSecao(
       padding: const EdgeInsets.all(22),
-      decoration: _cardDecoration(),
-      child: Column(
+      filho: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
@@ -1056,12 +1037,12 @@ class _InvestPageState extends State<InvestPage> {
           const SizedBox(height: 18),
           _inputField(),
           const SizedBox(height: 18),
-          if (s.publicQuestions.isEmpty)
+          if (s.publicQuestions.isEmpty && mensagensLocais.isEmpty)
             const Text(
               'Nenhuma pergunta enviada ainda.',
               style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
             )
-          else
+          else ...[
             ...s.publicQuestions.map((q) => Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: _questionBubble(
@@ -1069,8 +1050,68 @@ class _InvestPageState extends State<InvestPage> {
                 currentUid: currentUid,
               ),
             )),
+            ...mensagensLocais.map((mensagem) => Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _localQuestionBubble(mensagem),
+            )),
+          ],
         ],
       ),
+    );
+  }
+
+  Widget _localQuestionBubble(Map<String, dynamic> mensagem) {
+    final isAnswer = mensagem['isAnswer'] == true;
+    final authorName = mensagem['authorName']?.toString() ?? 'Usuário';
+    final message = mensagem['message']?.toString() ?? '';
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          radius: 18,
+          backgroundColor:
+          isAnswer ? const Color(0xFF0D2CC8) : const Color(0xFFEBD5FF),
+          child: Text(
+            isAnswer ? '◎' : iniciais(authorName),
+            style: TextStyle(
+              color: isAnswer ? Colors.white : const Color(0xFF8D35E6),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: isAnswer ? Colors.white : const Color(0xFFEFF4FF),
+              borderRadius: BorderRadius.circular(16),
+              border: isAnswer
+                  ? Border.all(color: const Color(0xFFCBD5E1))
+                  : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  authorName,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  message,
+                  style: const TextStyle(fontSize: 13, height: 1.55),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1211,28 +1252,13 @@ class _InvestPageState extends State<InvestPage> {
   }
 
   Widget _investButton() {
-    return GestureDetector(
-      onTap: () => abrirModalInvestimento(
+    return BotaoGradiente(
+      texto: 'Quero Investir  →',
+      aoPressionar: () => abrirModalInvestimento(
         context,
         startup: startup!,
         startupId: widget.startupId,
         onSucesso: carregarDadosDaTela,
-      ),
-      child: Container(
-        width: double.infinity,
-        height: 58,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          gradient: const LinearGradient(
-            colors: [Color(0xFF0D2CC8), Color(0xFF8D35E6)],
-          ),
-        ),
-        child: const Center(
-          child: Text(
-            'Quero Investir  →',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-          ),
-        ),
       ),
     );
   }
@@ -1250,130 +1276,3 @@ class _InvestPageState extends State<InvestPage> {
 }
 
 
-class _MetricCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final bool green;
-
-  const _MetricCard({
-    required this.title,
-    required this.value,
-    this.green = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isValorizacao = title.toLowerCase().contains('valoriz');
-
-    final cor = green
-        ? const Color(0xFF16A34A)
-        : const Color(0xFFDC2626);
-
-    final icone = green
-        ? Icons.trending_up
-        : Icons.trending_down;
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF4B5563),
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          Row(
-            children: [
-              if (isValorizacao) ...[
-                Icon(
-                  icone,
-                  color: cor,
-                  size: 16,
-                ),
-                const SizedBox(width: 4),
-              ],
-
-              Expanded(
-                child: Text(
-                  value,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: isValorizacao
-                        ? cor
-                        : Colors.black,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-class _InvestorMetric extends StatelessWidget {
-  final String title;
-  final String value;
-  final String? suffix;
-  final bool green;
-
-  const _InvestorMetric({
-    required this.title,
-    required this.value,
-    this.suffix,
-    this.green = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            color: Color(0xFF94A3B8),
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.4,
-          ),
-        ),
-        const SizedBox(height: 8),
-        RichText(
-          text: TextSpan(
-            text: value,
-            style: TextStyle(
-              color: green ? const Color(0xFF34D399) : Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-            children: [
-              if (suffix != null)
-                TextSpan(
-                  text: suffix,
-                  style: const TextStyle(
-                    color: Color(0xFF94A3B8),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
