@@ -558,30 +558,24 @@ class _InfoRow extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(
-              label,
-              style: const TextStyle(
-                color: kOutline,
-                fontSize: 16,
+            SizedBox(
+              width: 130,
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: kOutline,
+                  fontSize: 16,
+                ),
               ),
             ),
 
-            const Spacer(),
-
-            if (icon != null) ...[
-              Icon(
-                icon,
-                color: kPrimary,
-                size: 19,
-              ),
-              const SizedBox(width: 5),
-            ],
-
-            Flexible(
+            Expanded(
               child: Text(
                 value,
                 textAlign: TextAlign.right,
-                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                overflow: TextOverflow.visible,
+                softWrap: false,
                 style: TextStyle(
                   color: valueColor ?? Colors.black,
                   fontSize: 16,
