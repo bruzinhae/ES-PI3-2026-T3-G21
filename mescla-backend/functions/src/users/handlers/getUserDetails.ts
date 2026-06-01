@@ -9,9 +9,9 @@ import {HttpsError, onCall} from "firebase-functions/https";
 
 export const getUserDetails = onCall (async(request) => {
     try{
-        
+
         const {uid} = requireAuthenticatedUser(request)
-        
+
         if(!uid){
             throw new HttpsError("invalid-argument", "UID é obrigatório.");
         }
@@ -30,7 +30,7 @@ export const getUserDetails = onCall (async(request) => {
             // Autor: Gabriel Padreca Nicoletti
             profileImageUrl: user.profileImageUrl ?? null
         };
-    
+
     }
     catch(error){
         console.error("Error fetching user details: ", error);

@@ -34,8 +34,10 @@ export const updateUserPhone = onCall(async (request) => {
         await updateField(user.uid, "phone", newPhone);
 
         return {
-            message: "Número de telefone atualizado com sucesso!",
-            newPhone: newPhone
+          message: "Número de telefone atualizado com sucesso!",
+          phone: newPhone,
+          telefone: newPhone,
+          newPhone: newPhone
         };
     }
     catch(error){
