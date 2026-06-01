@@ -69,14 +69,11 @@ class _PerfilPageState extends State<PerfilPage> {
     final novoTelefone = telefoneController.text.trim();
 
     try {
-      setState(() {
-        salvandoTelefone = true;
-      });
+      setState(() => salvandoTelefone = true);
 
-      final response = await userService.updateUserPhone(
-        newPhone: novoTelefone,
-      );
+      final response = await userService.updateUserPhone(newPhone: novoTelefone);
 
+      // ← variável LOCAL, definida aqui dentro
       final telefoneAtualizado = response['phone']?.toString() ??
           response['telefone']?.toString() ??
           response['newPhone']?.toString() ??
@@ -85,39 +82,20 @@ class _PerfilPageState extends State<PerfilPage> {
       if (!mounted) return;
 
       setState(() {
-        telefoneController.value = TextEditingValue(
-          text: telefoneAtualizado,
-          selection: TextSelection.collapsed(
-            offset: telefoneAtualizado.length,
-          ),
-        );
-
-        user = user?.copyWith(
-          telefone: telefoneAtualizado,
-        );
-
+        user = user?.copyWith(telefone: telefoneAtualizado); // usa a var local
+        telefoneController.text = telefoneAtualizado;        // usa a var local
         editando = false;
         salvandoTelefone = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Telefone atualizado com sucesso!'),
-        ),
+        const SnackBar(content: Text('Telefone atualizado com sucesso!')),
       );
     } catch (e) {
       if (!mounted) return;
-
-      setState(() {
-        salvandoTelefone = false;
-      });
-
+      setState(() => salvandoTelefone = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e.toString().replaceFirst('Exception: ', ''),
-          ),
-        ),
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     }
   }
@@ -333,6 +311,7 @@ class _PerfilPageState extends State<PerfilPage> {
                 editando: editando,
                 salvandoTelefone: salvandoTelefone,
                 telefoneController: telefoneController,
+                telefone: user?.telefone ?? '',                                    // ← add
                 cpf: user?.cpf ?? 'CPF não informado',
                 tipoConta: user?.isAdmin == true ? 'Administrador' : 'Investidor',
                 onSalvar: salvarTelefone,
@@ -354,7 +333,11 @@ class _PerfilPageState extends State<PerfilPage> {
 
               const SizedBox(height: 18),
 
-              _SecurityCard(),
+              _SecurityCard(
+                onEmailAtualizado: () async {
+                  await carregarUsuario();
+                },
+              ),
 
               const SizedBox(height: 42),
 
@@ -401,6 +384,7 @@ class _InfoCard extends StatelessWidget {
   final bool editando;
   final bool salvandoTelefone;
   final TextEditingController telefoneController;
+  final String telefone;                          // ← add
   final String cpf;
   final String tipoConta;
   final Future<void> Function() onSalvar;
@@ -409,6 +393,7 @@ class _InfoCard extends StatelessWidget {
     required this.editando,
     required this.salvandoTelefone,
     required this.telefoneController,
+    required this.telefone,                       // ← add
     required this.cpf,
     required this.tipoConta,
     required this.onSalvar,
@@ -465,9 +450,7 @@ class _InfoCard extends StatelessWidget {
           )
               : _InfoRow(
             label: 'Telefone',
-            value: telefoneController.text.isEmpty
-                ? 'Telefone não informado'
-                : telefoneController.text,
+            value: telefone.isEmpty ? 'Telefone não informado' : telefone,
           ),
 
           _InfoRow(
@@ -658,6 +641,12 @@ class _Header extends StatelessWidget {
 }
 
 class _SecurityCard extends StatelessWidget {
+  final Future<void> Function() onEmailAtualizado;
+
+  const _SecurityCard({
+    required this.onEmailAtualizado,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -688,13 +677,15 @@ class _SecurityCard extends StatelessWidget {
           _SecurityItem(
             icon: Icons.email_outlined,
             title: 'Alterar email',
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => AlterarEmailPage(),
+                  builder: (_) => const AlterarEmailPage(),
                 ),
               );
+
+              await onEmailAtualizado();
             },
           ),
 
