@@ -8,8 +8,6 @@ class UserDetails {
   final String telefone;
   final bool mfaEnabled;
   final bool isAdmin;
-
-  // Autor: Gabriel Padreca Nicoletti
   final String? profileImageUrl;
 
   UserDetails({
@@ -20,8 +18,6 @@ class UserDetails {
     required this.telefone,
     required this.mfaEnabled,
     required this.isAdmin,
-
-    // Autor: Gabriel Padreca Nicoletti
     this.profileImageUrl,
   });
 
@@ -31,16 +27,14 @@ class UserDetails {
       name: map['name'] ?? '',
       email: map['email'] ?? '',
       cpf: map['cpf'] ?? '',
-      telefone: map['telefone'] ?? '',
-      mfaEnabled: map['mfaEnabled'] ?? false,
+      telefone: map['phone'] ?? map['telefone'] ?? '',      mfaEnabled: map['mfaEnabled'] ?? false,
       isAdmin: map['isAdmin'] ?? false,
-
-      // Autor: Gabriel Padreca Nicoletti
       profileImageUrl: map['profileImageUrl'],
     );
   }
 
   UserDetails copyWith({
+    String? telefone,
     String? profileImageUrl,
   }) {
     return UserDetails(
@@ -48,13 +42,12 @@ class UserDetails {
       name: name,
       email: email,
       cpf: cpf,
-      telefone: telefone,
+      telefone: telefone ?? this.telefone,
       mfaEnabled: mfaEnabled,
       isAdmin: isAdmin,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
     );
   }
-  //
 }
 
 class UserService {
@@ -72,6 +65,18 @@ class UserService {
     return UserDetails.fromMap(data);
   }
 
+  Future<Map<String, dynamic>> updateUserPhone({
+    required String newPhone,
+  }) async {
+    final callable = _functions.httpsCallable('updateUserPhone');
+
+    final result = await callable.call({
+      'newPhone': newPhone,
+    });
+
+    return Map<String, dynamic>.from(result.data);
+  }
+
   Future<Map<String, dynamic>> updateUserEmail({
     required String newEmail,
   }) async {
@@ -84,7 +89,6 @@ class UserService {
     return Map<String, dynamic>.from(result.data);
   }
 
-  // Autor: Gabriel Padreca Nicoletti
   Future<Map<String, dynamic>> updateUserProfileImage({
     required String profileImageUrl,
   }) async {
@@ -96,7 +100,6 @@ class UserService {
 
     return Map<String, dynamic>.from(result.data);
   }
-  //
 
   Future<Map<String, dynamic>> sendMfaCodeByEmail() async {
     final callable = _functions.httpsCallable('sendMfaCodeByEmail');

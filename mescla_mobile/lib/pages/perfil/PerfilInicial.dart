@@ -25,6 +25,7 @@ class PerfilPage extends StatefulWidget {
 class _PerfilPageState extends State<PerfilPage> {
   bool editando = false;
   bool carregando = true;
+  bool salvandoTelefone = false;
 
   UserDetails? user;
 
@@ -34,7 +35,6 @@ class _PerfilPageState extends State<PerfilPage> {
   File? imagemPerfil;
   final ImagePicker picker = ImagePicker();
 
-  // Autor: Gabriel Padreca Nicoletti
   bool salvandoImagemPerfil = false;
 
   @override
@@ -65,6 +65,63 @@ class _PerfilPageState extends State<PerfilPage> {
     }
   }
 
+  Future<void> salvarTelefone() async {
+    final novoTelefone = telefoneController.text.trim();
+
+    try {
+      setState(() {
+        salvandoTelefone = true;
+      });
+
+      final response = await userService.updateUserPhone(
+        newPhone: novoTelefone,
+      );
+
+      final telefoneAtualizado = response['phone']?.toString() ??
+          response['telefone']?.toString() ??
+          response['newPhone']?.toString() ??
+          novoTelefone;
+
+      if (!mounted) return;
+
+      setState(() {
+        telefoneController.value = TextEditingValue(
+          text: telefoneAtualizado,
+          selection: TextSelection.collapsed(
+            offset: telefoneAtualizado.length,
+          ),
+        );
+
+        user = user?.copyWith(
+          telefone: telefoneAtualizado,
+        );
+
+        editando = false;
+        salvandoTelefone = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Telefone atualizado com sucesso!'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        salvandoTelefone = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().replaceFirst('Exception: ', ''),
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> selecionarImagem() async {
     try {
       final XFile? imagem = await picker.pickImage(
@@ -76,7 +133,6 @@ class _PerfilPageState extends State<PerfilPage> {
 
       if (imagem == null) return;
 
-//Gabriel Padreca Nicoletti
       final arquivo = File(imagem.path);
 
       setState(() {
@@ -85,9 +141,8 @@ class _PerfilPageState extends State<PerfilPage> {
       });
 
       final uid = FirebaseAuth.instance.currentUser!.uid;
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('users/$uid/profile/avatar.jpg');
+      final storageRef =
+      FirebaseStorage.instance.ref().child('users/$uid/profile/avatar.jpg');
 
       await storageRef.putFile(
         arquivo,
@@ -106,7 +161,6 @@ class _PerfilPageState extends State<PerfilPage> {
         user = user?.copyWith(profileImageUrl: profileImageUrl);
         salvandoImagemPerfil = false;
       });
-      //
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -114,7 +168,6 @@ class _PerfilPageState extends State<PerfilPage> {
         ),
       );
     } catch (e) {
-      //Gabriel Padreca Nicoletti
       if (mounted) {
         setState(() {
           salvandoImagemPerfil = false;
@@ -126,7 +179,7 @@ class _PerfilPageState extends State<PerfilPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Erro ao salvar imagem de perfil.'),
-        ),//
+        ),
       );
     }
   }
@@ -147,14 +200,13 @@ class _PerfilPageState extends State<PerfilPage> {
         ),
       );
     }
-//Gabriel Padreca Nicoletti
+
     final profileImageUrl = user?.profileImageUrl;
     final ImageProvider<Object>? profileImageProvider = imagemPerfil != null
-    ? FileImage(imagemPerfil!) as ImageProvider<Object>
-    : (profileImageUrl != null && profileImageUrl.isNotEmpty
+        ? FileImage(imagemPerfil!) as ImageProvider<Object>
+        : (profileImageUrl != null && profileImageUrl.isNotEmpty
         ? NetworkImage(profileImageUrl) as ImageProvider<Object>
         : null);
-            //
 
     return Scaffold(
       backgroundColor: kSurface,
@@ -166,7 +218,6 @@ class _PerfilPageState extends State<PerfilPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const _Header(),
-
               const SizedBox(height: 36),
 
               Center(
@@ -186,26 +237,21 @@ class _PerfilPageState extends State<PerfilPage> {
                           )
                               : null,
                         ),
-
                         Positioned(
                           bottom: 0,
                           right: 0,
                           child: GestureDetector(
-                            //Gabriel Padreca Nicoletti
                             onTap: salvandoImagemPerfil ? null : selecionarImagem,
-                            //
                             child: Container(
                               padding: const EdgeInsets.all(7),
                               decoration: const BoxDecoration(
                                 color: kPrimary,
                                 shape: BoxShape.circle,
                               ),
-                              //Gabriel Padreca Nicoletti
                               child: Icon(
                                 salvandoImagemPerfil
                                     ? Icons.hourglass_top
                                     : Icons.edit,
-                                    //
                                 color: Colors.white,
                                 size: 18,
                               ),
@@ -245,9 +291,16 @@ class _PerfilPageState extends State<PerfilPage> {
                         width: double.infinity,
                         height: 52,
                         child: OutlinedButton(
-                          onPressed: () {
+                          onPressed: salvandoTelefone
+                              ? null
+                              : () {
                             setState(() {
                               editando = !editando;
+
+                              if (!editando) {
+                                telefoneController.text =
+                                    user?.telefone ?? '';
+                              }
                             });
                           },
                           style: OutlinedButton.styleFrom(
@@ -278,14 +331,11 @@ class _PerfilPageState extends State<PerfilPage> {
 
               _InfoCard(
                 editando: editando,
+                salvandoTelefone: salvandoTelefone,
                 telefoneController: telefoneController,
                 cpf: user?.cpf ?? 'CPF não informado',
                 tipoConta: user?.isAdmin == true ? 'Administrador' : 'Investidor',
-                onSalvar: () {
-                  setState(() {
-                    editando = false;
-                  });
-                },
+                onSalvar: salvarTelefone,
               ),
 
               const SizedBox(height: 36),
@@ -349,13 +399,15 @@ class _PerfilPageState extends State<PerfilPage> {
 
 class _InfoCard extends StatelessWidget {
   final bool editando;
+  final bool salvandoTelefone;
   final TextEditingController telefoneController;
   final String cpf;
   final String tipoConta;
-  final VoidCallback onSalvar;
+  final Future<void> Function() onSalvar;
 
   const _InfoCard({
     required this.editando,
+    required this.salvandoTelefone,
     required this.telefoneController,
     required this.cpf,
     required this.tipoConta,
@@ -430,14 +482,27 @@ class _InfoCard extends StatelessWidget {
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed: onSalvar,
+                onPressed: salvandoTelefone
+                    ? null
+                    : () async {
+                  await onSalvar();
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: const Text(
+                child: salvandoTelefone
+                    ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+                    : const Text(
                   'Salvar alterações',
                   style: TextStyle(
                     color: Colors.white,
@@ -467,8 +532,10 @@ class _EditableInfoRow extends StatelessWidget {
       children: [
         TextField(
           controller: controller,
+          keyboardType: TextInputType.phone,
           decoration: InputDecoration(
             labelText: label,
+            hintText: 'Digite apenas números',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
             ),
@@ -524,7 +591,6 @@ class _InfoRow extends StatelessWidget {
                 color: kPrimary,
                 size: 19,
               ),
-
               const SizedBox(width: 5),
             ],
 
@@ -576,7 +642,6 @@ class _Header extends StatelessWidget {
       child: const Row(
         children: [
           SizedBox(width: 8),
-
           Text(
             'MesclaInvest',
             style: TextStyle(
@@ -585,7 +650,6 @@ class _Header extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-
           Spacer(),
         ],
       ),
