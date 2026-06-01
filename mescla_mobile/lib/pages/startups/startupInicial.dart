@@ -10,8 +10,7 @@ import 'modal_investimento.dart';
 import 'modal_perguntaPrivada.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-import '../../widgets/bottom_navBar.dart';
+import 'package:mescla_mobile/utils/app_colors.dart';
 
 import 'widgets/barra_superior.dart';
 import 'widgets/tela_carregamento.dart';
@@ -206,7 +205,7 @@ class _InvestPageState extends State<InvestPage> {
   Widget build(BuildContext context) {
     if (carregando) {
       return const Scaffold(
-        backgroundColor: Color(0xFFEFF4FF),
+        backgroundColor: kSurface,
         body: SafeArea(
           child: TelaCarregamento(),
         ),
@@ -215,7 +214,7 @@ class _InvestPageState extends State<InvestPage> {
 
     if (erro != null) {
       return Scaffold(
-        backgroundColor: const Color(0xFFEFF4FF),
+        backgroundColor: kSurface,
         body: SafeArea(
           child: EstadoVazio(
             mensagem: erro!,
@@ -230,7 +229,7 @@ class _InvestPageState extends State<InvestPage> {
       bottomNavigationBar: const BottomNavBar(
         selectedIndex: 0,
       ),
-      backgroundColor: const Color(0xFFEFF4FF),
+      backgroundColor: kSurface,
 
       body: SafeArea(
         child: Column(
@@ -249,7 +248,7 @@ class _InvestPageState extends State<InvestPage> {
                       s.name,
                       style: const TextStyle(
                         fontSize: 16,
-                        color: Color(0xFF1F2937),
+                        color: kOnSurface,
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -264,7 +263,7 @@ class _InvestPageState extends State<InvestPage> {
                       style: const TextStyle(
                         fontSize: 14,
                         height: 1.6,
-                        color: Color(0xFF4B5563),
+                        color: kOutline,
                       ),
                     ),
                     const SizedBox(height: 28),
@@ -282,7 +281,7 @@ class _InvestPageState extends State<InvestPage> {
                       'Documentação Pública',
                       style: TextStyle(
                         fontSize: 15,
-                        color: Color(0xFF1F2937),
+                        color: kOnSurface,
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -333,12 +332,12 @@ class _InvestPageState extends State<InvestPage> {
   Widget _series(StartupDetails s) {
     return Row(
       children: [
-        const Icon(Icons.eco_outlined, color: Color(0xFF0D2CC8), size: 26),
+        const Icon(Icons.eco_outlined, color: kPrimary, size: 26),
         const SizedBox(width: 12),
         Text(
           s.name,
           style: const TextStyle(
-            color: Color(0xFF0D2CC8),
+            color: kPrimary,
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
@@ -390,14 +389,7 @@ class _InvestPageState extends State<InvestPage> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(28, 28, 28, 28),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0D2CC8),
-            Color(0xFF8D35E6),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: kGradient,
         borderRadius: BorderRadius.circular(30),
       ),
       child: Column(
@@ -726,7 +718,7 @@ class _InvestPageState extends State<InvestPage> {
             'Desempenho acumulado do token no período',
             style: TextStyle(
               fontSize: 11,
-              color: Color(0xFF4B5563),
+              color: kOutline,
             ),
           ),
           const SizedBox(height: 16),
@@ -818,14 +810,7 @@ class _InvestPageState extends State<InvestPage> {
                                               height: alturaAnimada,
                                               decoration: BoxDecoration(
                                                 gradient: active
-                                                    ? const LinearGradient(
-                                                  colors: [
-                                                    Color(0xFF0D2CC8),
-                                                    Color(0xFF8D35E6),
-                                                  ],
-                                                  begin: Alignment.bottomCenter,
-                                                  end: Alignment.topCenter,
-                                                )
+                                                    ? kGradient
                                                     : null,
                                                 color: active
                                                     ? null
@@ -879,7 +864,7 @@ class _InvestPageState extends State<InvestPage> {
         margin: const EdgeInsets.only(right: 10),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFF0D2CC8) : const Color(0xFFE7EEFF),
+          color: active ? kPrimary : const Color(0xFFE7EEFF),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Text(
@@ -943,7 +928,7 @@ class _InvestPageState extends State<InvestPage> {
               value: value,
               minHeight: 7,
               backgroundColor: const Color(0xFFE3EAF8),
-              valueColor: const AlwaysStoppedAnimation(Color(0xFF0D2CC8)),
+              valueColor: const AlwaysStoppedAnimation(kPrimary),
             ),
           ),
         ],
@@ -955,7 +940,7 @@ class _InvestPageState extends State<InvestPage> {
     if (s.documents.isEmpty) {
       return const Text(
         'Nenhum documento público disponível.',
-        style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
+        style: TextStyle(fontSize: 13, color: kOutline),
       );
     }
 
@@ -1009,7 +994,7 @@ class _InvestPageState extends State<InvestPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: const Color(0xFF0D2CC8), size: 28),
+            Icon(icon, color: kPrimary, size: 28),
             const SizedBox(height: 12),
             Text(
               text,
@@ -1040,7 +1025,7 @@ class _InvestPageState extends State<InvestPage> {
           if (s.publicQuestions.isEmpty && mensagensLocais.isEmpty)
             const Text(
               'Nenhuma pergunta enviada ainda.',
-              style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
+              style: TextStyle(fontSize: 13, color: kOutline),
             )
           else ...[
             ...s.publicQuestions.map((q) => Padding(
@@ -1071,11 +1056,11 @@ class _InvestPageState extends State<InvestPage> {
         CircleAvatar(
           radius: 18,
           backgroundColor:
-          isAnswer ? const Color(0xFF0D2CC8) : const Color(0xFFEBD5FF),
+          isAnswer ? kPrimary : const Color(0xFFEBD5FF),
           child: Text(
             isAnswer ? '◎' : iniciais(authorName),
             style: TextStyle(
-              color: isAnswer ? Colors.white : const Color(0xFF8D35E6),
+              color: isAnswer ? Colors.white : kSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
@@ -1086,7 +1071,7 @@ class _InvestPageState extends State<InvestPage> {
           child: Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: isAnswer ? Colors.white : const Color(0xFFEFF4FF),
+              color: isAnswer ? Colors.white : kSurface,
               borderRadius: BorderRadius.circular(16),
               border: isAnswer
                   ? Border.all(color: const Color(0xFFCBD5E1))
@@ -1128,11 +1113,11 @@ class _InvestPageState extends State<InvestPage> {
         CircleAvatar(
           radius: 18,
           backgroundColor:
-          isAnswer ? const Color(0xFF0D2CC8) : const Color(0xFFEBD5FF),
+          isAnswer ? kPrimary : const Color(0xFFEBD5FF),
           child: Text(
             isAnswer ? '◎' : iniciais(question.authorName),
             style: TextStyle(
-              color: isAnswer ? Colors.white : const Color(0xFF8D35E6),
+              color: isAnswer ? Colors.white : kSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
@@ -1143,7 +1128,7 @@ class _InvestPageState extends State<InvestPage> {
           child: Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: isAnswer ? Colors.white : const Color(0xFFEFF4FF),
+              color: isAnswer ? Colors.white : kSurface,
               borderRadius: BorderRadius.circular(16),
               border: isAnswer ? Border.all(color: const Color(0xFFCBD5E1)) : null,
             ),
@@ -1243,7 +1228,7 @@ class _InvestPageState extends State<InvestPage> {
               height: 18,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-                : const Icon(Icons.send, color: Color(0xFF0D2CC8)),
+                : const Icon(Icons.send, color: kPrimary),
             onPressed: enviandoPergunta ? null : enviarPergunta,
           ),
         ],
@@ -1270,9 +1255,6 @@ class _InvestPageState extends State<InvestPage> {
       borderRadius: BorderRadius.circular(26),
     );
   }
-
-
-
 }
 
 

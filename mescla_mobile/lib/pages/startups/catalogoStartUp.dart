@@ -3,17 +3,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:mescla_mobile/utils/app_colors.dart';
 import 'startupInicial.dart';
 import 'services/startup_service.dart';
 import '../balcão/balcao.dart';
 import '../carteira/carteira.dart';
 import '../../widgets/bottom_navBar.dart';
-
-const kPrimary   = Color(0xFF0035B9);
-const kSecondary = Color(0xFF7E41AD);
-const kSurface   = Color(0xFFF8F9FF);
-const kOnSurface = Color(0xFF0B1C30);
-const kOutline   = Color(0xFF747686);
 
 class CatalogoStartUp extends StatelessWidget {
   const CatalogoStartUp({super.key});
@@ -32,8 +27,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
-
   String filtroSelecionado = "Todas";
   String busca = "";
 
@@ -124,8 +117,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final texto = valor.toString().trim();
     if (texto.isEmpty) return 'Não informado';
 
-    // Se já veio formatado do mesmo jeito da página de detalhes,
-    // mantém exatamente como está.
     if (texto.contains('%')) return texto;
 
     return formatarPorcentagem(valor);
@@ -133,8 +124,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<String?> buscarValorizacaoStartup(String startupId) async {
     try {
-      // Usa a mesma fonte da página de detalhes.
-      // Na StartupInicial, o card usa s.valorizacaoFormatada.
       final detalhes = await StartupService.getStartupDetails(startupId);
       final valor = detalhes.valorizacaoFormatada.trim();
 
@@ -184,10 +173,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Color corStage(String? stage) {
-    if (stage == "nova") return const Color(0xFFDDE5F7);
-    if (stage == "em_operacao") return const Color(0xFFE5E8F5);
+    if (stage == "nova") return kPrimary.withOpacity(0.12);
+    if (stage == "em_operacao") return kSecondary.withOpacity(0.12);
     if (stage == "em_expansao") return const Color(0xFFDFF3E4);
-    return const Color(0xFFEDEDED);
+    return kOutline.withOpacity(0.15);
   }
 
   IconData iconeStartup(Map<String, dynamic> startup) {
@@ -294,7 +283,7 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: const BottomNavBar(
         selectedIndex: 0,
       ),
-      backgroundColor: const Color(0xFFEDEFF5),
+      backgroundColor: kSurface,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -308,6 +297,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
+                  color: kOnSurface,
                 ),
               ),
               const SizedBox(height: 16),
@@ -320,29 +310,29 @@ class _HomeScreenState extends State<HomeScreen> {
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.all(32),
-                    child: CircularProgressIndicator(),
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation(kPrimary),
+                    ),
                   ),
                 )
-              else
-                if (erro != null)
-                  Center(
-                    child: Text(
-                      erro!,
-                      style: const TextStyle(color: Colors.red),
+              else if (erro != null)
+                Center(
+                  child: Text(
+                    erro!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                )
+              else if (startups.isEmpty)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Text("Nenhuma startup encontrada."),
                     ),
                   )
                 else
-                  if (startups.isEmpty)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(32),
-                        child: Text("Nenhuma startup encontrada."),
-                      ),
-                    )
-                  else
-                    ...startups.map((startup) {
-                      return _startupCard(context, startup);
-                    }),
+                  ...startups.map((startup) {
+                    return _startupCard(context, startup);
+                  }),
 
               const SizedBox(height: 80),
             ],
@@ -353,13 +343,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _topBar() {
-    return Row(
+    return const Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: const [
+      children: [
         Text(
           "MesclaInvest",
           style: TextStyle(
-            color: Color(0xFF3D5AFE),
+            color: kPrimary,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -373,6 +363,7 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: kOutline.withOpacity(0.16)),
       ),
       child: TextField(
         onChanged: (value) {
@@ -380,8 +371,9 @@ class _HomeScreenState extends State<HomeScreen> {
           carregarStartups();
         },
         decoration: const InputDecoration(
-          icon: Icon(Icons.search),
+          icon: Icon(Icons.search, color: kOutline),
           hintText: "Buscar startups...",
+          hintStyle: TextStyle(color: kOutline),
           border: InputBorder.none,
         ),
       ),
@@ -418,21 +410,15 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
           decoration: BoxDecoration(
-            gradient: selected
-                ? const LinearGradient(
-              colors: [
-                Color(0xFF3D5AFE),
-                Color(0xFF7B1FA2),
-              ],
-            )
-                : null,
+            gradient: selected ? kGradient : null,
             color: selected ? null : Colors.white,
             borderRadius: BorderRadius.circular(25),
+            border: selected ? null : Border.all(color: kOutline.withOpacity(0.16)),
           ),
           child: Text(
             text,
             style: TextStyle(
-              color: selected ? Colors.white : Colors.black54,
+              color: selected ? Colors.white : kOutline,
               fontWeight: selected ? FontWeight.bold : FontWeight.normal,
             ),
           ),
@@ -447,9 +433,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final stage = startup["stage"];
     final tags = startup["tags"];
 
-    final valorAportado =
-        startup["capitalRaisedCents"] ?? startup["value"] ??
-            startup["valuation"];
+    final valorAportado = startup["capitalRaisedCents"] ??
+        startup["value"] ??
+        startup["valuation"];
     final tokens = startup["totalTokensIssued"] ?? startup["totalTokens"];
     final startupId = _extrairStartupId(startup);
 
@@ -470,7 +456,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final crescimentoNumero = _converterNumero(crescimento);
     final crescimentoPositivo = (crescimentoNumero ?? 0) >= 0;
     final crescimentoColor = crescimentoNumero == null
-        ? const Color(0xFF7E41AD)
+        ? kSecondary
         : crescimentoPositivo
         ? const Color(0xFF16A34A)
         : const Color(0xFFDC2626);
@@ -486,6 +472,13 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: kPrimary.withOpacity(0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -496,12 +489,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF3D5AFE),
-                      Color(0xFF7B1FA2),
-                    ],
-                  ),
+                  gradient: kGradient,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
@@ -519,6 +507,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: kOnSurface,
                       ),
                     ),
                     Text(
@@ -526,22 +515,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: const TextStyle(
                         fontSize: 12,
                         letterSpacing: 1.2,
-                        color: Colors.blue,
+                        color: kPrimary,
                       ),
                     ),
                   ],
                 ),
               ),
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: corStage(stage),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   formatarStage(stage),
-                  style: const TextStyle(fontSize: 12),
+                  style: const TextStyle(fontSize: 12, color: kOnSurface),
                 ),
               ),
             ],
@@ -550,7 +538,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             descricao,
             style: const TextStyle(
-              color: Colors.black54,
+              color: kOutline,
               height: 1.4,
             ),
           ),
@@ -591,20 +579,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        StartupInicial(
-                          startupId: _extrairStartupId(startup) ?? startup["id"].toString(),
-                        ),
+                    builder: (context) => StartupInicial(
+                      startupId: _extrairStartupId(startup) ?? startup["id"].toString(),
+                    ),
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
+                foregroundColor: kPrimary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 12,
                 ),
+                side: BorderSide(color: kPrimary.withOpacity(0.20)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(25),
                 ),
@@ -623,7 +611,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Color? color,
         IconData? icon,
       }) {
-    final corPrincipal = color ?? const Color(0xFF0B1C30);
+    final corPrincipal = color ?? kOnSurface;
 
     return Container(
       constraints: const BoxConstraints(
@@ -631,10 +619,10 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4F6FF),
+        color: kSurface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: const Color(0xFFE1E6F5),
+          color: kOutline.withOpacity(0.14),
         ),
       ),
       child: Column(
@@ -657,7 +645,7 @@ class _HomeScreenState extends State<HomeScreen> {
               fontSize: 9,
               letterSpacing: 0.8,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF747686),
+              color: kOutline,
             ),
           ),
           const SizedBox(height: 5),
@@ -678,5 +666,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
 }
