@@ -70,7 +70,7 @@ export async function updateField(
   data: unknown
 ): Promise<void> {
 
-  const ALLOWED_FIELDS: readonly UpdatableField[] = ["name", "phone", "cpf"];
+  const ALLOWED_FIELDS: readonly UpdatableField[] = ["name", "phone", "cpf", "telefone"];
 
   if (!ALLOWED_FIELDS.includes(field)) {
     throw new HttpsError("invalid-argument", `Campo '${field}' não pode ser atualizado.`);

@@ -16,13 +16,19 @@ import{
     requireAuthenticatedUser
 }  from "../../shared/auth";
 
-import { validatePhone } from "../shared/validation";
+import { 
+    validatePhone,
+    telefoneFormat
+} from "../shared/validation";
 
 
 export const updateUserPhone = onCall(async (request) => {
     try{
+        
         const user = requireAuthenticatedUser(request);
+
         const {newPhone} = request.data;
+        const newTelefone = telefoneFormat(newPhone);
         
         if(!newPhone){
             throw new HttpsError("invalid-argument", "O número de telefone é obrigatório.");
@@ -32,12 +38,12 @@ export const updateUserPhone = onCall(async (request) => {
         }
 
         await updateField(user.uid, "phone", newPhone);
-
+        await updateField(user.uid, "telefone", newTelefone);
+        
         return {
           message: "Número de telefone atualizado com sucesso!",
-          phone: newPhone,
-          telefone: newPhone,
-          newPhone: newPhone
+          newPhone: newPhone,
+          newTelefone: newTelefone
         };
     }
     catch(error){
