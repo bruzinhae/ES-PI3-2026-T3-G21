@@ -10,7 +10,6 @@ import '../../services/auth_service.dart';
 import '../startups/catalogoStartUp.dart';
 import 'package:mescla_mobile/utils/formatters.dart';
 
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -18,14 +17,25 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
+
 class _LoginScreenState extends State<LoginScreen> {
+  // controladores para capturar o texto digitado em cada campo
   final TextEditingController emailController = TextEditingController();
   final TextEditingController senhaController = TextEditingController();
+
+  // controla se a senha está visível ou oculta
   bool obscurePassword = true;
+
+  // controla a exibição do indicador de carregamento no botão
   bool carregando = false;
+
+  // formatador de CPF para aplicar a máscara 000.000.000-00
   final _cpfFormatter = CpfInputFormatter();
+
+  // indica se o usuário está digitando CPF em vez de e-mail
   bool _usandoCpf = false;
 
+  // exibe uma mensagem de erro vermelha na parte inferior da tela
   void mostrarErro(String mensagem) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -35,15 +45,18 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // valida os campos antes de tentar fazer o login
   bool validarLogin() {
     final emailOuCpf = emailController.text.trim();
     final senha = senhaController.text.trim();
 
+    // verifica se os campos estão vazios
     if (emailOuCpf.isEmpty || senha.isEmpty) {
       mostrarErro("Preencha e-mail/CPF e senha.");
       return false;
     }
 
+    // verifica se a senha tem no mínimo 6 caracteres
     if (senha.length < 6) {
       mostrarErro("A senha deve ter no mínimo 6 caracteres.");
       return false;
@@ -52,6 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return true;
   }
 
+  // navega para a tela principal do app substituindo a pilha de navegação
   void _irParaHome() {
     Navigator.pushReplacement(
       context,
@@ -59,10 +73,11 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // exibe um popup perguntando se o usuário quer ativar a verificação em duas etapas
   Future<void> mostrarPopup2FA() async {
     await showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: false, // impede fechar o popup clicando fora dele
       builder: (_) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
@@ -73,20 +88,22 @@ class _LoginScreenState extends State<LoginScreen> {
             "Essa segurança extra protege sua conta com um código enviado por e-mail.",
           ),
           actions: [
+            // opção de pular a ativação do MFA e ir direto para o home
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                _irParaHome(); // "Agora não" vai direto para home
+                _irParaHome();
               },
               child: const Text("Agora não"),
             ),
+            // opção de ativar o MFA agora, levando para a tela de código
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                // "Ativar agora" vai para tela de código MFA (fluxo de ativação)
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
+                    // isLogin: false indica que é ativação, não verificação de login
                     builder: (_) => const MfaCodeScreen(isLogin: false),
                   ),
                 );
@@ -99,12 +116,16 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // função principal que executa o fluxo de login
   Future<void> fazerLogin() async {
+    // interrompe se a validação dos campos falhar
     if (!validarLogin()) return;
 
+    // ativa o indicador de carregamento
     setState(() => carregando = true);
 
     try {
+      // chama o serviço de autenticação com e-mail/CPF e senha
       final userData = await AuthService.login(
         email: emailController.text.trim(),
         password: senhaController.text.trim(),
@@ -113,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (userData['mfaEnabled'] == true) {
-        // usuário já tem MFA ativo -> envia código e vai para tela de verificação
+        // se o usuário já tem MFA ativo, envia o código por e-mail e redireciona para verificação
         await FirebaseFunctions.instance
             .httpsCallable('sendMfaCodeByEmail')
             .call();
@@ -122,20 +143,23 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
+            // isLogin: true indica que é uma verificação de login com MFA já ativo
             builder: (_) => const MfaCodeScreen(isLogin: true),
           ),
         );
       } else {
-        // usuário sem MFA -> pergunta se quer ativar
+        // se o usuário não tem MFA, pergunta se quer ativar
         await mostrarPopup2FA();
       }
     } catch (e) {
       mostrarErro("Erro ao entrar. Verifique seus dados.");
     } finally {
+      // desativa o carregamento independente de sucesso ou erro
       if (mounted) setState(() => carregando = false);
     }
   }
 
+  // libera os controladores da memória quando a tela é destruída
   @override
   void dispose() {
     emailController.dispose();
@@ -149,6 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            // cabeçalho com gradiente azul-roxo contendo logo e título
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(24, 48, 24, 90),
@@ -167,6 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Stack(
                     alignment: Alignment.center,
                     children: [
+                      // botão de voltar posicionado à esquerda do cabeçalho
                       Align(
                         alignment: Alignment.centerLeft,
                         child: CircleAvatar(
@@ -182,6 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
+                      // logo centralizado usando Stack para sobrepor ao botão de voltar
                       Image.asset(
                         'assets/images/logoMescla.png',
                         height: 110,
@@ -211,8 +238,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
             ),
+
+            // card branco com o formulário, sobreposto ao cabeçalho usando Transform
             Transform.translate(
-              offset: const Offset(0, -55),
+              offset: const Offset(0, -55), // sobe 55px para sobrepor ao gradiente
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 22),
                 child: Container(
@@ -250,6 +279,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 25),
+
                       const Text(
                         'E-mail ou CPF',
                         style: TextStyle(
@@ -259,6 +289,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
+
+                      // campo de e-mail ou CPF com detecção automática do tipo de entrada
                       Container(
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1F3FA),
@@ -267,10 +299,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         child: TextField(
                           controller: emailController,
-                          keyboardType: TextInputType.emailAddress,
+                          keyboardType: TextInputType.emailAddress, // tipo de teclado que será aberto 
+                          // aplica o formatador de CPF somente quando o campo detectar números
                           inputFormatters: _usandoCpf ? [_cpfFormatter] : [],
                           onChanged: (value) {
-                            final apenasNumeros = value.replaceAll(RegExp(r'\D'), '');
+                            // detecta se o conteúdo é apenas numérico (CPF) ou texto (e-mail)
                             final eNumerico = value.trim().isNotEmpty &&
                                 value.trim().replaceAll(RegExp(r'[\d.\-]'), '').isEmpty;
                             setState(() {
@@ -293,6 +326,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
+
                       const Text(
                         'Senha',
                         style: TextStyle(
@@ -302,6 +336,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
+
+                      // campo de senha com botão para alternar visibilidade
                       Container(
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1F3FA),
@@ -310,6 +346,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         child: TextField(
                           controller: senhaController,
+                          // obscureText oculta os caracteres quando true
                           obscureText: obscurePassword,
                           decoration: InputDecoration(
                             border: InputBorder.none,
@@ -324,6 +361,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               color: Color(0xFF8E93A8),
                               fontSize: 16,
                             ),
+                            // ícone de olho para mostrar ou esconder a senha
                             suffixIcon: IconButton(
                               onPressed: () {
                                 setState(() {
@@ -341,6 +379,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 5),
+
+                      // link para a tela de recuperação de senha alinhado à direita
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
@@ -363,6 +403,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 1),
+
+                      // botão de entrar com gradiente e sombra colorida
                       SizedBox(
                         width: double.infinity,
                         height: 70,
@@ -385,6 +427,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ],
                           ),
                           child: ElevatedButton(
+                            // desabilita o botão enquanto está carregando
                             onPressed: carregando ? null : fazerLogin,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
@@ -393,6 +436,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(35),
                               ),
                             ),
+                            // mostra spinner enquanto carrega ou o texto/ícone quando ocioso
                             child: carregando
                                 ? const CircularProgressIndicator(
                                     color: Colors.white)
@@ -423,13 +467,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
+
+            // rodapé com link para a tela de cadastro
             Transform.translate(
               offset: const Offset(0, -20),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 28),
                 child: Column(
                   children: [
-                    const SizedBox(height: 0),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
