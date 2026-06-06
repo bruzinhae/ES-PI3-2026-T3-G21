@@ -5,8 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../startups/catalogoStartUp.dart';
 
+// usada tanto para confirmar o login quanto para ativar o MFA pela primeira vez
 class MfaCodeScreen extends StatefulWidget {
-  final bool isLogin; 
+  // isLogin define o comportamento da tela:
+  // true  = usuário já tem MFA e está fazendo login
+  // false = usuário está ativando o MFA pela primeira vez
+  final bool isLogin;
 
   const MfaCodeScreen({super.key, required this.isLogin});
 
@@ -15,21 +19,27 @@ class MfaCodeScreen extends StatefulWidget {
 }
 
 class _MfaCodeScreenState extends State<MfaCodeScreen> {
+  // controller para capturar o código de 6 dígitos digitado pelo usuário
   final TextEditingController _codeController = TextEditingController();
+
+  // controla a exibição do indicador de carregamento no botão
   bool _carregando = false;
 
+  // ao abrir a tela, envia o código automaticamente sem precisar de ação do usuário
   @override
   void initState() {
     super.initState();
-    _enviarCodigo(); // envia o código automaticamente ao abrir a tela
+    _enviarCodigo();
   }
 
+  // chama a Cloud Function do Firebase que envia o código por e-mail
   Future<void> _enviarCodigo() async {
     try {
       await FirebaseFunctions.instance
           .httpsCallable('sendMfaCodeByEmail')
           .call();
     } catch (e) {
+      // exibe erro se o envio falhar, mas não bloqueia a tela
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -41,9 +51,11 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
     }
   }
 
+  // verifica o código digitado chamando a Cloud Function correspondente
   Future<void> _confirmarCodigo() async {
     final code = _codeController.text.trim();
 
+    // valida se o código tem exatamente 6 dígitos antes de enviar
     if (code.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -57,8 +69,9 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
     setState(() => _carregando = true);
 
     try {
-      // verifyMfaLoginCode = login com MFA já ativo
-      // enableMfa =  ativando MFA pela primeira vez
+      // escolhe qual Cloud Function chamar dependendo do contexto da tela
+      // verifyMfaLoginCode: verifica o código durante o login com MFA ativo
+      // enableMfa: ativa o MFA pela primeira vez após verificar o código
       final functionName =
           widget.isLogin ? 'verifyMfaLoginCode' : 'enableMfa';
 
@@ -67,11 +80,14 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
           .call({'code': code});
 
       if (!mounted) return;
+
+      // se o código for correto, vai para a tela principal do app
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const CatalogoStartUp()),
       );
     } on FirebaseFunctionsException catch (e) {
+      // captura erros específicos do Firebase e exibe a mensagem retornada pela função
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -81,10 +97,12 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
         );
       }
     } finally {
+      // desativa o carregamento independente de sucesso ou erro
       if (mounted) setState(() => _carregando = false);
     }
   }
 
+  // libera o controller da memória quando a tela é destruída
   @override
   void dispose() {
     _codeController.dispose();
@@ -97,6 +115,7 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            // cabeçalho com gradiente azul-roxo, ícone de cadeado e título
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(24, 48, 24, 90),
@@ -112,6 +131,7 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
               ),
               child: Column(
                 children: [
+                  // botão de voltar alinhado à esquerda
                   Align(
                     alignment: Alignment.centerLeft,
                     child: CircleAvatar(
@@ -126,6 +146,7 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  // ícone de cadeado reforçando visualmente o tema de segurança
                   const Icon(
                     Icons.lock_outline_rounded,
                     color: Colors.white,
@@ -154,9 +175,9 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
               ),
             ),
 
-            // card com o formulário
+            // card branco com formulário sobreposto ao cabeçalho
             Transform.translate(
-              offset: const Offset(0, -55),
+              offset: const Offset(0, -55), // sobe 55px para sobrepor ao gradiente
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 22),
                 child: Container(
@@ -176,6 +197,7 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // título muda dependendo se é login ou ativação do MFA
                       Text(
                         widget.isLogin
                             ? 'Confirme sua identidade'
@@ -187,6 +209,7 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
+                      // instrução também varia conforme o contexto da tela
                       Text(
                         widget.isLogin
                             ? 'Enviamos um código de 6 dígitos para o seu e-mail. Digite abaixo para continuar.'
@@ -207,6 +230,8 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
+
+                      // campo de entrada do código com estilo grande e espaçado
                       Container(
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1F3FA),
@@ -216,8 +241,9 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
                         child: TextField(
                           controller: _codeController,
                           keyboardType: TextInputType.number,
-                          maxLength: 6,
+                          maxLength: 6, // limita a entrada a exatamente 6 dígitos
                           textAlign: TextAlign.center,
+                          // estilo com fonte grande e espaçamento entre os dígitos
                           style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w700,
@@ -226,7 +252,7 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
                           ),
                           decoration: const InputDecoration(
                             border: InputBorder.none,
-                            counterText: '',
+                            counterText: '', // esconde o contador padrão do maxLength
                             contentPadding: EdgeInsets.symmetric(vertical: 22),
                             hintText: '______',
                             hintStyle: TextStyle(
@@ -238,6 +264,8 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
+
+                      // botão de confirmar com gradiente e sombra colorida
                       SizedBox(
                         width: double.infinity,
                         height: 70,
@@ -260,6 +288,7 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
                             ],
                           ),
                           child: ElevatedButton(
+                            // desabilita o botão enquanto está carregando
                             onPressed: _carregando ? null : _confirmarCodigo,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
@@ -268,6 +297,7 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
                                 borderRadius: BorderRadius.circular(35),
                               ),
                             ),
+                            // mostra spinner enquanto verifica ou o texto quando ocioso
                             child: _carregando
                                 ? const CircularProgressIndicator(
                                     color: Colors.white)
@@ -283,6 +313,8 @@ class _MfaCodeScreenState extends State<MfaCodeScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
+
+                      // botão para reenviar o código caso o usuário não tenha recebido
                       Center(
                         child: TextButton(
                           onPressed: _enviarCodigo,

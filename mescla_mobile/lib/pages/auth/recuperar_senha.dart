@@ -7,6 +7,7 @@ import '../../widgets/app_button.dart';
 import '../../utils/validators.dart';
 import '../../services/auth_service.dart';
 
+
 class RecuperarSenhaScreen extends StatefulWidget {
   const RecuperarSenhaScreen({super.key});
   
@@ -15,44 +16,53 @@ class RecuperarSenhaScreen extends StatefulWidget {
 }
 
 class _RecuperarSenhaScreenState extends State<RecuperarSenhaScreen> {
+  // controller para capturar o e-mail digitado pelo usuário
   final emailController = TextEditingController();
+
+  // controla a exibição do indicador de carregamento no botão
   bool carregando = false;
 
+  // libera o controller da memória quando a tela é destruída
   @override
   void dispose() {
     emailController.dispose();
     super.dispose();
   }
 
+  // valida o e-mail e solicita o envio do link de recuperação
   Future<void> enviarRecuperacao() async {
     final email = emailController.text.trim();
 
+    // verifica se o campo está vazio
     if (email.isEmpty) {
       mostrarErro("Digite seu e-mail.");
       return;
     }
 
+    // verifica se o formato do e-mail é válido usando a função de validators.dart
     if (!validarEmail(email)) {
       mostrarErro("Digite um e-mail válido.");
       return;
     }
-
 
     setState(() {
       carregando = true;
     });
 
     try {
+      // chama o serviço que envia o e-mail de redefinição via Firebase
       await AuthService.requestPasswordResetEmail(email: email);
 
       if (!mounted) return;
 
+      // exibe confirmação de que o e-mail foi enviado com sucesso
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("E-mail de redefinição enviado com sucesso."),
         ),
       );
 
+      // redireciona para o login após o envio
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -62,6 +72,7 @@ class _RecuperarSenhaScreenState extends State<RecuperarSenhaScreen> {
     } catch (e) {
       mostrarErro("Erro ao enviar e-mail de redefinição.");
     } finally {
+      // desativa o carregamento independente de sucesso ou erro
       if (mounted) {
         setState(() {
           carregando = false;
@@ -70,6 +81,7 @@ class _RecuperarSenhaScreenState extends State<RecuperarSenhaScreen> {
     }
   }
 
+  // exibe uma mensagem de erro vermelha na parte inferior da tela
   void mostrarErro(String mensagem) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -78,11 +90,13 @@ class _RecuperarSenhaScreenState extends State<RecuperarSenhaScreen> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FF),
 
+      // appBar com gradiente azul-roxo no lugar da cor sólida padrão
       appBar: AppBar(
         elevation: 0,
         foregroundColor: Colors.white,
@@ -92,6 +106,7 @@ class _RecuperarSenhaScreenState extends State<RecuperarSenhaScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        // flexibleSpace permite aplicar gradiente no fundo da AppBar
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -136,6 +151,7 @@ class _RecuperarSenhaScreenState extends State<RecuperarSenhaScreen> {
 
                 const SizedBox(height: 12),
 
+                // instrução explicando o que acontece ao enviar o formulário
                 const Text(
                   "Insira seu e-mail cadastrado. Enviaremos um link para redefinição de senha.",
                   style: TextStyle(
@@ -157,6 +173,7 @@ class _RecuperarSenhaScreenState extends State<RecuperarSenhaScreen> {
 
                 const SizedBox(height: 10),
 
+                // campo de e-mail com fundo preenchido e borda removida
                 TextField(
                   controller: emailController,
                   decoration: InputDecoration(
@@ -173,6 +190,7 @@ class _RecuperarSenhaScreenState extends State<RecuperarSenhaScreen> {
 
                 const SizedBox(height: 28),
 
+                // botão reutilizável que mostra spinner quando loading é true
                 AppButton(
                   text: "Enviar link de Redefinição",
                   loading: carregando,
@@ -181,10 +199,12 @@ class _RecuperarSenhaScreenState extends State<RecuperarSenhaScreen> {
 
                 const SizedBox(height: 25),
 
+                // divisor visual separando o botão principal do link de voltar
                 const Divider(),
 
                 const SizedBox(height: 10),
 
+                // link para voltar ao login sem enviar o formulário
                 Center(
                   child: TextButton.icon(
                     onPressed: () {
@@ -210,6 +230,7 @@ class _RecuperarSenhaScreenState extends State<RecuperarSenhaScreen> {
         ),
       ),
 
+      // rodapé fixo na parte inferior da tela
       bottomNavigationBar: const Padding(
         padding: EdgeInsets.all(18),
         child: Text(
