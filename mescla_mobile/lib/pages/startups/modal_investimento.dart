@@ -74,7 +74,7 @@ void abrirModalInvestimento(
               final resultado = await StartupService.buyTokens(
                 startupId: startupId,
                 quantity: qtd,
-              );
+              ); // chama o bacakend para tokens
 
               final novoSaldoCents =
                   resultado['balanceCents'] as int? ?? 0;

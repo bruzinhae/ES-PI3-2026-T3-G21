@@ -20,6 +20,7 @@ import 'widgets/card_info.dart';
 import 'widgets/card_secao.dart';
 import 'widgets/botao_gradiente.dart';
 
+// classe com tela imutável
 class StartupInicial extends StatelessWidget {
   final String startupId;
 
@@ -34,6 +35,7 @@ class StartupInicial extends StatelessWidget {
   }
 }
 
+// classe com tela mutável
 class InvestPage extends StatefulWidget {
   final String startupId;
 
@@ -46,20 +48,25 @@ class InvestPage extends StatefulWidget {
   State<InvestPage> createState() => _InvestPageState();
 }
 
+// A classe extende de investPage
 class _InvestPageState extends State<InvestPage> {
-  final TextEditingController _controller = TextEditingController();
+  final TextEditingController _controller = TextEditingController(); // controler
 
   bool carregando = true;
   bool enviandoPergunta = false;
   String? erro;
 
+  // cria uma lista com as mensagens locais
   final List<Map<String, dynamic>> mensagensLocais = [];
 
+  // detalhes da startup escolhida
   StartupDetails? startup;
 
+  // parte do gráfico -- ainda não carrega ele
   String periodoSelecionado = '6M';
   bool carregandoGrafico = false;
 
+  // Map dos períodos do gráfico de valoriazação
   final Map<String, String> periodoBackend = {
     '1D': 'diario',
     '7D': 'semanal',
@@ -68,6 +75,7 @@ class _InvestPageState extends State<InvestPage> {
     'YTD': 'ytd',
   };
 
+  // map dos valores e tempo (1 dia, 7 dias, etc) em double
   Map<String, List<double>> valoresGrafico = {
     '1D': [],
     '7D': [],
@@ -76,6 +84,7 @@ class _InvestPageState extends State<InvestPage> {
     'YTD': [],
   };
 
+  // map dos valores também mas em string
   Map<String, List<String>> labelsGrafico = {
     '1D': [],
     '7D': [],
@@ -84,6 +93,7 @@ class _InvestPageState extends State<InvestPage> {
     'YTD': [],
   };
 
+  // map com os valores do gráfico para cada tempo
   final Map<String, List<double>> valoresGraficoFallback = {
     '1D': [20.0, 40.0, 35.0, 55.0, 70.0, 90.0],
     '7D': [35.0, 55.0, 48.0, 80.0, 95.0, 120.0],
@@ -92,6 +102,7 @@ class _InvestPageState extends State<InvestPage> {
     'YTD': [60.0, 95.0, 125.0, 160.0, 200.0, 190.0],
   };
 
+  // map com as especificações do tempo
   final Map<String, List<String>> labelsGraficoFallback = {
     '1D': ['09h', '11h', '13h', '15h', '17h', '19h'],
     '7D': ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
@@ -100,32 +111,38 @@ class _InvestPageState extends State<InvestPage> {
     'YTD': ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
   };
 
+  // inicia a tela
   @override
   void initState() {
     super.initState();
     carregarDadosDaTela();
   }
 
+  // para fechar a tela e limpar
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
+  // carregar os dados da startup escolhida na tela
   Future<void> carregarDadosDaTela() async {
+    // atualiza o estado da tela
     setState(() {
       carregando = true;
       erro = null;
     });
 
     try {
-      final dados = await StartupService.getStartupDetails(widget.startupId);
+      final dados = await StartupService.getStartupDetails(widget.startupId); // pega o id da startup
 
+      // atualiza o estado
       setState(() {
         startup = dados;
         carregando = false;
       });
 
+      // carregara o histórico no gráfico -- erros
       await carregarHistoricoGrafico(periodoSelecionado);
     } on FirebaseFunctionsException catch (e) {
       setState(() {
@@ -146,25 +163,27 @@ class _InvestPageState extends State<InvestPage> {
     }
   }
 
+  // enviar perguntas e respostaa genérica
   Future<void> enviarPergunta() async {
     final texto = _controller.text.trim();
     if (texto.isEmpty) return;
 
-    final user = FirebaseAuth.instance.currentUser;
+    final user = FirebaseAuth.instance.currentUser; // reconhece o user o firebase
 
     setState(() => enviandoPergunta = true);
 
 
     try {
-      await StartupService.createStartupQuestion(
+      await StartupService.createStartupQuestion( // chama o createstartup question
         startupId: widget.startupId,
         message: texto,
       );
 
       _controller.clear();
 
-      if (!mounted) return;
+      if (!mounted) return; // verifica se a tela ainda não foi fechada
 
+      // atualiza a tela quando enviada a mensagem
       setState(() {
         mensagensLocais.add({
           'authorName': user?.displayName?.trim().isNotEmpty == true
@@ -174,6 +193,7 @@ class _InvestPageState extends State<InvestPage> {
           'isAnswer': false,
         });
 
+        // envia uma mensagem genérica local
         mensagensLocais.add({
           'authorName': startup?.name ?? 'Time da startup',
           'message':
@@ -181,6 +201,7 @@ class _InvestPageState extends State<InvestPage> {
           'isAnswer': true,
         });
       });
+      // trataamento de erros
     } on FirebaseFunctionsException catch (e) {
       setState(() => erro = 'Erro: ${e.message}');
       debugPrint('Código: ${e.code}');
@@ -193,6 +214,7 @@ class _InvestPageState extends State<InvestPage> {
     }
   }
 
+  // tratamentos de nomes
   String iniciais(String nome) {
     final partes = nome.trim().split(' ');
     if (partes.isEmpty) return '?';
@@ -201,7 +223,9 @@ class _InvestPageState extends State<InvestPage> {
   }
 
 
+  // FRONT END PARTE
   @override
+  // corpo da página
   Widget build(BuildContext context) {
     if (carregando) {
       return const Scaffold(
@@ -301,7 +325,7 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
-
+  // Top bar (usa widget separado)
   Widget _topBar() {
     return BarraSuperiorMescla(
       mostrarFavorito: true,
@@ -312,6 +336,7 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
+  // detalhes da startup
   Widget _chips(StartupDetails s) {
     return Wrap(
       spacing: 10,
@@ -329,6 +354,7 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
+  // icone do lado da startup
   Widget _series(StartupDetails s) {
     return Row(
       children: [
@@ -346,6 +372,7 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
+  // métricas e mostrando detalhes sobre valorizzação da startup
   Widget _metrics(StartupDetails s) {
     final valorizacaoPositiva = !s.valorizacaoFormatada.contains('-');
 
@@ -384,6 +411,7 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
+  // area do investidor (chama a páagina de modal_perguntaprivda)
   Widget _investorAreaCard(StartupDetails s) {
     return Container(
       width: double.infinity,
@@ -471,18 +499,20 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
-
+  // carrega os dados para o gráfico
   Future<void> carregarHistoricoGrafico(String periodoTela) async {
     final periodo = periodoBackend[periodoTela];
 
     if (periodo == null) return;
 
+    // atualiza o estado do gráfico e carrega ele
     setState(() {
       carregandoGrafico = true;
     });
 
     try {
-      final history = await _chamarHistoricoTokens(periodo);
+      final history = await _chamarHistoricoTokens(periodo); // chama a firebase function do histórico dos tokens
+
 
       final pontosAgrupados = <String, Map<String, dynamic>>{};
 
@@ -496,6 +526,7 @@ class _InvestPageState extends State<InvestPage> {
 
         String chave;
 
+        // coloca os dados de acordo com o período escolhido
         switch (periodoTela) {
           case '1D':
             chave =
@@ -528,6 +559,7 @@ class _InvestPageState extends State<InvestPage> {
           return dataA.compareTo(dataB);
         });
 
+      // organiza o gráfico
       final valores = <double>[];
       final labels = <String>[];
 
@@ -549,10 +581,12 @@ class _InvestPageState extends State<InvestPage> {
 
       if (!mounted) return;
 
+      // atualiza o estado do gráfico
       setState(() {
         valoresGrafico[periodoTela] = valores;
         labelsGrafico[periodoTela] = labels;
       });
+      // tratamento de erros
     } on FirebaseFunctionsException catch (e) {
       debugPrint('Erro ao buscar histórico: ${e.code} - ${e.message}');
     } catch (e) {
@@ -566,23 +600,24 @@ class _InvestPageState extends State<InvestPage> {
     }
   }
 
+  // Ponte front e back para o gráfico
   Future<List<Map<String, dynamic>>> _chamarHistoricoTokens(String periodo) async {
     try {
       final callable = FirebaseFunctions.instance.httpsCallable(
         'getTokenPriceHistoryHandler',
-      );
+      ); // chama o baackend
 
       final result = await callable.call({
         'startupId': widget.startupId,
         'periodo': periodo,
-      });
+      }); // envia a requisição
 
-      final data = Map<String, dynamic>.from(result.data as Map);
-      final history = data['history'] as List? ?? [];
+      final data = Map<String, dynamic>.from(result.data as Map); // converte a resposta de JSON para um map em dart
+      final history = data['history'] as List? ?? []; // extrai o histórico de tokens
 
       return history
           .map((item) => Map<String, dynamic>.from(item as Map))
-          .toList();
+          .toList(); // converte cada item em um map
     } on FirebaseFunctionsException catch (e) {
       if (e.code != 'not-found') rethrow;
 
@@ -604,6 +639,7 @@ class _InvestPageState extends State<InvestPage> {
     }
   }
 
+  // Monta o eixo X do gráfico
   String _labelGrafico(String periodoTela, DateTime? data) {
     if (data == null) return '';
 
@@ -638,10 +674,12 @@ class _InvestPageState extends State<InvestPage> {
     }
   }
 
+  // formata os vaalores
   String _formatarValorEscala(double valor) {
     return 'R\$ ${valor.toStringAsFixed(valor >= 10 ? 0 : 2)}';
   }
 
+  // monta a escala do eixo y do gráfico
   List<String> _montarEscala(List<double> values) {
     if (values.isEmpty) {
       return ['R\$ 0', 'R\$ 0', 'R\$ 0', 'R\$ 0'];
@@ -673,6 +711,7 @@ class _InvestPageState extends State<InvestPage> {
     ];
   }
 
+  // widget do gráfico
   Widget _chartCard() {
     final values = valoresGrafico[periodoSelecionado]!.isNotEmpty
         ? valoresGrafico[periodoSelecionado]!
@@ -851,6 +890,7 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
+  // botões de selecionar o período do gráfico
   Widget _period(String text, {bool active = false}) {
     return GestureDetector(
       onTap: () async {
@@ -879,6 +919,7 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
+  // widgets dos donos da startup
   Widget _teamCard(StartupDetails s) {
     if (s.founders.isEmpty) {
       return const CardSecao(
@@ -910,6 +951,7 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
+  // widget da barra de progresso
   Widget _progress(String name, double value, String percent) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -936,6 +978,7 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
+  // widget dos documentos (vídeo, regra de negócio, etc)
   Widget _docs(StartupDetails s) {
     if (s.documents.isEmpty) {
       return const Text(
@@ -961,6 +1004,7 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
+  // card dos documentos
   Widget _doc(String text, IconData icon, String url) {
     return GestureDetector(
       onTap: () async {
@@ -1007,8 +1051,9 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
+  // widgets de perguntas da comunidade
   Widget _questionsCard(StartupDetails s) {
-    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    final currentUid = FirebaseAuth.instance.currentUser?.uid; // verifica o ID do usu´rio
 
     return CardSecao(
       padding: const EdgeInsets.all(22),
@@ -1045,6 +1090,7 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
+  // widgets das mensagens em si e perguntas já feitas se houver
   Widget _localQuestionBubble(Map<String, dynamic> mensagem) {
     final isAnswer = mensagem['isAnswer'] == true;
     final authorName = mensagem['authorName']?.toString() ?? 'Usuário';
@@ -1100,6 +1146,7 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
+  // widget que cria o balão da mensagem enviada
   Widget _questionBubble({
     required StartupQuestion question,
     required String? currentUid,
@@ -1165,6 +1212,7 @@ class _InvestPageState extends State<InvestPage> {
       ],
     );
   }
+  // excluir pergunta
   Future<void> _confirmarExclusao(StartupQuestion question) async {
     final confirmar = await showDialog<bool>(
       context: context,
@@ -1202,7 +1250,7 @@ class _InvestPageState extends State<InvestPage> {
     }
   }
 
-
+  // onde o usuário digita a pergunta e envia
   Widget _inputField() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1236,6 +1284,7 @@ class _InvestPageState extends State<InvestPage> {
     );
   }
 
+  // botão de investir na startup
   Widget _investButton() {
     return BotaoGradiente(
       texto: 'Quero Investir  →',

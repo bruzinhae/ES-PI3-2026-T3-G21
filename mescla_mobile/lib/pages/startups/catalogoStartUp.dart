@@ -10,45 +10,56 @@ import '../balcão/balcao.dart';
 import '../carteira/carteira.dart';
 import '../../widgets/bottom_navBar.dart';
 
+// Cria a classe catálogo de startUp -- herda de stateless (não muda sozinho durante a execução)
 class CatalogoStartUp extends StatelessWidget {
   const CatalogoStartUp({super.key});
 
+  // override significa que está substituindo a classe pai em um método
   @override
-  Widget build(BuildContext context) {
-    return const HomeScreen();
+  Widget build(BuildContext context) { // informações sobre a posição desse widget
+    return const HomeScreen(); // retorna uma tela homeScreen
   }
 }
 
+// cria um widget com estado diferente -- agora ele é mutável e pode sofrer alterações
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  // cria o objeto que vai armazenar o estado da tela
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
+  // variáveis de estado
   String filtroSelecionado = "Todas";
   String busca = "";
 
   bool carregando = true;
   String? erro;
 
+  // Lista de startups retornadas pelo firebase
   List<Map<String, dynamic>> startups = [];
+  // Armazena a valorizzação de cada uma em um map
   Map<String, String> valorizacoesFormatadas = {};
   bool carregandoValorizacoes = false;
 
+  // inicia quando a tela é aberta
   @override
   void initState() {
     super.initState();
     carregarStartups();
   }
 
+  // atuaaliza a startup -- e roda o circulo de erro
   Future<void> carregarStartups() async {
     setState(() {
       carregando = true;
       erro = null;
     });
 
+    // para fazer a filtragem por stage -- transforma o texto do botão em aalgo que o back vai entender
     try {
       String? stage;
 
@@ -60,6 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
         stage = "em_expansao";
       }
 
+      // CHAMADA DA CLOUD FUNCTION -- chama a função listStartups
       final result = await FirebaseFunctions.instanceFor(
         region: "us-central1",
       ).httpsCallable("listStartups").call({
@@ -67,12 +79,14 @@ class _HomeScreenState extends State<HomeScreen> {
         "search": busca,
       });
 
-      final List data = result.data["data"];
+      final List data = result.data["data"]; // recebe o resultado
 
+      // converte para map e pega o JSON e transforma para objetos em dart
       final startupsCarregadas = data.map((item) {
         return Map<String, dynamic>.from(item);
       }).toList();
 
+      // atualiza a tela (startups aparecem)
       setState(() {
         startups = startupsCarregadas;
         valorizacoesFormatadas = {};
@@ -80,6 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
         carregando = false;
       });
 
+      // Busca das valorizações e erros
       await carregarValorizacoesDasStartups(startupsCarregadas);
     } on FirebaseFunctionsException catch (e) {
       setState(() {
@@ -100,6 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Extrair o ID da startup
   String? _extrairStartupId(Map<String, dynamic> startup) {
     final id = startup["id"] ??
         startup["startupId"] ??
@@ -111,6 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return texto;
   }
 
+  // formatação dos dados para colocar a valoriaçõ no card da startup
   String _formatarValorizacaoParaCard(dynamic valor) {
     if (valor == null) return 'Não informado';
 
@@ -122,6 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return formatarPorcentagem(valor);
   }
 
+  // acessa o map com a valorização das startups -- busca esses valores de vaalorização
   Future<String?> buscarValorizacaoStartup(String startupId) async {
     try {
       final detalhes = await StartupService.getStartupDetails(startupId);
@@ -140,12 +158,15 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // carrega as valorizações encontradas
   Future<void> carregarValorizacoesDasStartups(
       List<Map<String, dynamic>> listaStartups,
       ) async {
     final novasValorizacoes = <String, String>{};
 
+    // percorre cada uma das startups
     for (final startup in listaStartups) {
+      // extrai o ID
       final startupId = _extrairStartupId(startup);
       if (startupId == null) continue;
 
@@ -157,14 +178,17 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
+    // verifica se a tela existe antes de atualiza-la
     if (!mounted) return;
 
+    // atualiza a tela
     setState(() {
       valorizacoesFormatadas = novasValorizacoes;
       carregandoValorizacoes = false;
     });
   }
 
+  // formata o stage da startup
   String formatarStage(String? stage) {
     if (stage == "nova") return "Nova";
     if (stage == "em_operacao") return "Em operação";
@@ -172,6 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return "Sem estágio";
   }
 
+  // cores do stage
   Color corStage(String? stage) {
     if (stage == "nova") return kPrimary.withOpacity(0.12);
     if (stage == "em_operacao") return kSecondary.withOpacity(0.12);
@@ -179,6 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return kOutline.withOpacity(0.15);
   }
 
+  // ícones das startups
   IconData iconeStartup(Map<String, dynamic> startup) {
     final tags = startup["tags"];
 
@@ -201,6 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Icons.rocket_launch;
   }
 
+  // método para as tags
   String formatarTags(dynamic tags) {
     if (tags is List && tags.isNotEmpty) {
       return tags.join(" • ").toUpperCase();
@@ -209,22 +236,24 @@ class _HomeScreenState extends State<HomeScreen> {
     return "STARTUP";
   }
 
+  // função para conversão e formatação de números --- num retorna um número
   num? _converterNumero(dynamic valor) {
-    if (valor == null) return null;
+    if (valor == null) return null; // verifica se é nulo
 
-    if (valor is num) return valor;
+    if (valor is num) return valor; // is verifica o tipo da variável
 
     final texto = valor
-        .toString()
-        .replaceAll('R\$', '')
-        .replaceAll('%', '')
-        .replaceAll('.', '')
-        .replaceAll(',', '.')
-        .trim();
+        .toString() // converte para string
+        .replaceAll('R\$', '') // remove os R$
+        .replaceAll('%', '') // remove as porcentagens
+        .replaceAll('.', '') // =
+        .replaceAll(',', '.') // =
+        .trim(); // remove os espaços
 
-    return num.tryParse(texto);
+    return num.tryParse(texto); // transforma string em número
   }
 
+  // formatação dos números grandes
   String _formatarCompacto(num valor) {
     final absoluto = valor.abs();
 
@@ -246,6 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return valor.toStringAsFixed(0).replaceAll('.', ',');
   }
 
+  // mais formatação na parte de dinheiro -- erros e centavos
   String formatarDinheiro(dynamic valor, {bool emCentavos = true}) {
     final numero = _converterNumero(valor);
 
@@ -258,6 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'R\$ ${_formatarCompacto(valorReais)}';
   }
 
+  // mais formatação
   String formatarQuantidade(dynamic valor) {
     final numero = _converterNumero(valor);
 
@@ -266,17 +297,19 @@ class _HomeScreenState extends State<HomeScreen> {
     return _formatarCompacto(numero);
   }
 
+  // formatação de porcentagem
   String formatarPorcentagem(dynamic valor) {
     final numero = _converterNumero(valor);
 
     if (numero == null) return 'Não informado';
 
     final texto = numero.toStringAsFixed(2).replaceAll('.', ',');
-    final sinal = numero > 0 ? '+' : '';
+    final sinal = numero > 0 ? '+' : ''; // ? significa if/else verdadeiro : falso
 
     return '$sinal$texto%';
   }
 
+  // FRONT END PARTEEEEEE
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -342,6 +375,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // TOP BAR
   Widget _topBar() {
     return const Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -357,6 +391,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // BARRA DE PESQUISA
   Widget _search() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -380,6 +415,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // FILTROS DE STAGE
   Widget _filters() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -394,6 +430,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // CRIA O BOTÃO DO FILTRO DA TELA
   Widget _chip(String text) {
     final selected = filtroSelecionado == text;
 
@@ -427,6 +464,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // CARDS DA STARTUP
   Widget _startupCard(BuildContext context, Map<String, dynamic> startup) {
     final nome = startup["name"] ?? "Startup sem nome";
     final descricao = startup["shortDescription"] ?? "Sem descrição.";
@@ -605,6 +643,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // CAIXAS DENTRO DO CARD DA STARTUP COM AS INFORMAÇÕES
   Widget _info(
       String title,
       String value, {

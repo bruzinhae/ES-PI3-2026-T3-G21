@@ -61,7 +61,7 @@ class _AlterarSenhaPageState extends State<AlterarSenhaPage> {
     });
 
     try {
-      final usuario = FirebaseAuth.instance.currentUser;
+      final usuario = FirebaseAuth.instance.currentUser; // chamada do backend
 
       if (usuario == null || usuario.email == null) {
         mostrarMensagem('Usuário não encontrado.');
@@ -71,7 +71,7 @@ class _AlterarSenhaPageState extends State<AlterarSenhaPage> {
       final credencial = EmailAuthProvider.credential(
         email: usuario.email!,
         password: senhaAtual,
-      );
+      ); // verific  credencial do usuário
 
       await usuario.reauthenticateWithCredential(credencial);
 

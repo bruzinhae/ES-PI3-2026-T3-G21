@@ -62,7 +62,7 @@ class _AlterarEmailPageState extends State<AlterarEmailPage> {
     try {
       final result = await _userService.updateUserEmail(
         newEmail: novoEmail,
-      );
+      ); // chamada do backend
 
       if (!mounted) return;
 
