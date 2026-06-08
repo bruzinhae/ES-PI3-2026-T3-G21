@@ -127,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return texto;
   }
 
-  // formatação dos dados para colocar a valoriaçõ no card da startup
+  // formatação dos dados para colocar a valoriação no card da startup
   String _formatarValorizacaoParaCard(dynamic valor) {
     if (valor == null) return 'Não informado';
 

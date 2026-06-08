@@ -13,8 +13,9 @@ class AlterarSenhaPage extends StatefulWidget {
   State<AlterarSenhaPage> createState() => _AlterarSenhaPageState();
 }
 
+
 class _AlterarSenhaPageState extends State<AlterarSenhaPage> {
-  final senhaAtualController = TextEditingController();
+  final senhaAtualController = TextEditingController();// alterar senha usa vários controllers porque vai ser editado pelo back end mesmo
   final novaSenhaController = TextEditingController();
   final confirmarSenhaController = TextEditingController();
 
@@ -23,6 +24,7 @@ class _AlterarSenhaPageState extends State<AlterarSenhaPage> {
   bool mostrarConfirmarSenha = false;
   bool carregando = false;
 
+  // faz o dispose de cada controller quando ele for finalizado -- dispose é usado quando é necessário guardar algo na memória que precisa ser quebrado quando finalizada a página
   @override
   void dispose() {
     senhaAtualController.dispose();
@@ -32,10 +34,11 @@ class _AlterarSenhaPageState extends State<AlterarSenhaPage> {
   }
 
   Future<void> alterarSenha() async {
-    final senhaAtual = senhaAtualController.text.trim();
+    final senhaAtual = senhaAtualController.text.trim(); // o trim remove os espaços
     final novaSenha = novaSenhaController.text.trim();
     final confirmarSenha = confirmarSenhaController.text.trim();
 
+    // padrões de senha
     if (senhaAtual.isEmpty || novaSenha.isEmpty || confirmarSenha.isEmpty) {
       mostrarMensagem('Preencha todos os campos.');
       return;
@@ -71,12 +74,13 @@ class _AlterarSenhaPageState extends State<AlterarSenhaPage> {
       final credencial = EmailAuthProvider.credential(
         email: usuario.email!,
         password: senhaAtual,
-      ); // verific  credencial do usuário
+      ); // verifica  credencial do usuário
 
       await usuario.reauthenticateWithCredential(credencial);
 
       await usuario.updatePassword(novaSenha);
 
+      // limpa o controller
       senhaAtualController.clear();
       novaSenhaController.clear();
       confirmarSenhaController.clear();
@@ -299,6 +303,7 @@ class _AlterarSenhaPageState extends State<AlterarSenhaPage> {
     );
   }
 
+  // local para preencher a senha
   Widget _passwordField({
     required TextEditingController controller,
     required String hint,

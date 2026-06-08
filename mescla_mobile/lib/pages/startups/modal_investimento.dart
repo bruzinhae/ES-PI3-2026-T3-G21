@@ -12,10 +12,12 @@ import '../startups/services/startup_service.dart';
 /// ```dart
 /// abrirModalInvestimento(context, startup: s, startupId: widget.startupId);
 /// ```
+
+// só abre o modal se for investidor
 void abrirModalInvestimento(
   BuildContext context, {
-  required StartupDetails startup,
-  required String startupId,
+  required StartupDetails startup, // requer os detalhes da startup
+  required String startupId, // ele requere o id da startup
   VoidCallback? onSucesso, // opcional: recarregar dados da tela pai
 }) {
   final tokenPriceReais = startup.currentTokenPriceCents / 100;
@@ -53,12 +55,14 @@ void abrirModalInvestimento(
             atualizando = false;
           }
 
+          // comprar tokens
           Future<void> confirmar() async {
             final qtd = int.tryParse(
                   tokenController.text.trim().split('.').first,
                 ) ??
                 0;
 
+            // caso ele coloque menos que 0
             if (qtd <= 0) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -79,7 +83,7 @@ void abrirModalInvestimento(
               final novoSaldoCents =
                   resultado['balanceCents'] as int? ?? 0;
               final novoSaldo =
-                  StartupDetails.formatarReais(novoSaldoCents);
+                  StartupDetails.formatarReais(novoSaldoCents); // atualiza o saldo
 
               if (context.mounted) {
                 Navigator.pop(context);

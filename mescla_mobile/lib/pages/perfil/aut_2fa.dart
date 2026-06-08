@@ -50,7 +50,7 @@ class _Seguranca2FAPageState extends State<Seguranca2FAPage> {
     setState(() => carregando = true);
 
     try {
-      await _userService.sendMfaCodeByEmail();
+      await _userService.sendMfaCodeByEmail(); // chama o back para enviar o código no email
 
       if (!mounted) return;
 

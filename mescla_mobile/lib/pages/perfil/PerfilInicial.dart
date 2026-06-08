@@ -27,15 +27,16 @@ class _PerfilPageState extends State<PerfilPage> {
   bool carregando = true;
   bool salvandoTelefone = false;
 
-  UserDetails? user;
+  UserDetails? user; // pega os detalhes do usuário
 
-  final UserService userService = UserService();
+  final UserService userService = UserService(); // instância da classe user service -- conversa com o backend
   final TextEditingController telefoneController = TextEditingController();
 
+  // para a imagem de perfil
   File? imagemPerfil;
   final ImagePicker picker = ImagePicker();
 
-  bool salvandoImagemPerfil = false;
+  bool salvandoImagemPerfil = false; // começa como false porque nenhuma imagem está no processo de salvar ainda
 
   @override
   void initState() {
@@ -45,18 +46,20 @@ class _PerfilPageState extends State<PerfilPage> {
 
   Future<void> carregarUsuario() async {
     try {
-      final usuario = await userService.getUserDetails();
+      final usuario = await userService.getUserDetails(); // chama o backend com os detalhes do user
 
+      // atualiza o estado com as infos do usuário
       setState(() {
         user = usuario;
         telefoneController.text = usuario.telefone;
-        carregando = false;
+        carregando = false; // para de carregar
       });
     } catch (e) {
       setState(() {
         carregando = false;
       });
 
+      // caso de erro
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Erro ao carregar dados do usuário.'),
@@ -66,15 +69,16 @@ class _PerfilPageState extends State<PerfilPage> {
   }
 
   Future<void> salvarTelefone() async {
-    final novoTelefone = telefoneController.text.trim();
+    final novoTelefone = telefoneController.text.trim(); // usa um controller para que possa ser alterado o telefone
 
     try {
       setState(() => salvandoTelefone = true);
 
-      final response = await userService.updateUserPhone(newPhone: novoTelefone);
+      final response = await userService.updateUserPhone(newPhone: novoTelefone); // chama a function de salvar o telefone
 
       // ← variável LOCAL, definida aqui dentro
-      final telefoneAtualizado = response['phone']?.toString() ??
+      // variável local: só roda no método, quando ele acaba não é mais usada
+      final telefoneAtualizado = response['phone']?.toString() ?? // transforma phone em uma string
           response['telefone']?.toString() ??
           response['newPhone']?.toString() ??
           novoTelefone;
@@ -102,6 +106,7 @@ class _PerfilPageState extends State<PerfilPage> {
 
   Future<void> selecionarImagem() async {
     try {
+      // define os padrões da imagem
       final XFile? imagem = await picker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 1024,
@@ -113,12 +118,14 @@ class _PerfilPageState extends State<PerfilPage> {
 
       final arquivo = File(imagem.path);
 
+      // atualiza o estado
       setState(() {
         imagemPerfil = arquivo;
         salvandoImagemPerfil = true;
       });
 
-      final uid = FirebaseAuth.instance.currentUser!.uid;
+      // PEGA A FOTO E ENVIA PARA O FIREBASE
+      final uid = FirebaseAuth.instance.currentUser!.uid; // verifica o id -- utiliza uma instancia geral do firebase auth
       final storageRef =
       FirebaseStorage.instance.ref().child('users/$uid/profile/avatar.jpg');
 
@@ -380,10 +387,11 @@ class _PerfilPageState extends State<PerfilPage> {
   }
 }
 
+// Card das informações
 class _InfoCard extends StatelessWidget {
   final bool editando;
   final bool salvandoTelefone;
-  final TextEditingController telefoneController;
+  final TextEditingController telefoneController; // porque o telefone pode ser editado pela página inicial
   final String telefone;                          // ← add
   final String cpf;
   final String tipoConta;
@@ -500,6 +508,7 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
+// class da parte de editar pela página inicial (ex. telefone)
 class _EditableInfoRow extends StatelessWidget {
   final String label;
   final TextEditingController controller;
@@ -537,7 +546,8 @@ class _EditableInfoRow extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
+// row de informações
+class _InfoRow extends StatelessWidget { //stateless não muda sozinho
   final String label;
   final String value;
   final IconData? icon;
@@ -599,6 +609,7 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
+// cabeçalho da tela
 class _Header extends StatelessWidget {
   const _Header();
 
@@ -634,11 +645,12 @@ class _Header extends StatelessWidget {
   }
 }
 
+// aquela card com a parte de alterar email, 2FA, etc.
 class _SecurityCard extends StatelessWidget {
   final Future<void> Function() onEmailAtualizado;
 
   const _SecurityCard({
-    required this.onEmailAtualizado,
+    required this.onEmailAtualizado, // requere
   });
 
   @override
